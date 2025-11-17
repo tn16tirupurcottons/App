@@ -1,4 +1,6 @@
 import sequelize from "../config/db.js";
+import { migrateLegacyProductSlugs } from "../utils/migrateLegacyProductSlugs.js";
+import { migrateLegacyProductCategories } from "../utils/migrateLegacyProductCategories.js";
 
 // Import models after sequelize is initialized
 import User from "./User.js";
@@ -45,6 +47,8 @@ RefreshToken.belongsTo(User, { foreignKey: "userId" });
 // =============================
 export const syncDB = async () => {
   try {
+    await migrateLegacyProductSlugs();
+    await migrateLegacyProductCategories();
     await sequelize.sync({ alter: true });
     console.log("✅ Database & tables synced!");
   } catch (err) {

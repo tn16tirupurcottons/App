@@ -25,6 +25,9 @@ import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
 import adminProductRoutes from "./routes/admin/adminProductRoutes.js";
 import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
 
+// Utils
+import { bootstrapCatalog } from "./utils/bootstrapCatalog.js";
+
 // Middlewares
 import { errorHandler } from "./middlewares/errorMiddleware.js";
 
@@ -111,8 +114,11 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 syncDB()
-  .then(() => {
+  .then(async () => {
     console.log("✅ Database synced successfully!");
+    await bootstrapCatalog().catch((error) =>
+      console.error("❌ Catalog bootstrap failed:", error?.message || error)
+    );
     app.listen(PORT, () =>
       console.log(`🚀 Server running at http://localhost:${PORT}`)
     );

@@ -17,14 +17,14 @@ export default function Catalog() {
     <div className="max-w-7xl mx-auto px-4 py-12 space-y-6">
       <div>
         <p className="text-xs uppercase tracking-[0.4em] text-pink-500 font-semibold">
-          TN16 Decor Edit
+          TN16 Cotton Edit
         </p>
         <h1 className="text-3xl font-bold text-gray-900">
-          Browse the entire LimeRoad-inspired catalog
+          Browse the complete TN16 Tirupur Cotton catalog
         </h1>
         <p className="text-gray-600 mt-2">
-          Filter by category, sort by price and discover curated cotton decor
-          stories.
+          Filter by category, sort by price and discover curated cotton looks
+          from Tirupur’s ateliers.
         </p>
       </div>
 

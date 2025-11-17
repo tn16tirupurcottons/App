@@ -59,7 +59,7 @@ export default function ProductList({ initialQuery = {} }) {
     <div className="space-y-6">
       <div className="flex flex-wrap gap-3">
         <input
-          placeholder="Search decor..."
+          placeholder="Search TN16 cotton looks..."
           value={query.search}
           onChange={(e) => handleChange("search", e.target.value)}
           className="flex-1 min-w-[180px] rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
