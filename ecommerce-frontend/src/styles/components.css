@@ -1,0 +1,20 @@
+/* styles/components.css */
+.product-card {
+  @apply bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300;
+}
+
+.product-card img {
+  @apply w-full h-48 object-cover;
+}
+
+.product-card h3 {
+  @apply text-lg font-semibold mt-2 px-2;
+}
+
+.product-card p {
+  @apply text-gray-700 px-2 mb-2;
+}
+
+.product-card .price {
+  @apply text-green-600 font-bold px-2 mb-2;
+}

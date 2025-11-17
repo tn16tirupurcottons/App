@@ -1,0 +1,31 @@
+### -------------------------------
+### 1️⃣ Login (get token)
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Ajith123!" 
+}
+
+### Get Products
+GET http://localhost:5000/api/products
+
+
+### Get Cart
+POST http://localhost:5000/api/cart
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk5OGQyYTNiLTJhZDQtNGIxZS1hZTM2LTIxYmY2NjUzNmMxOCIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc2MzM2NTc2NSwiZXhwIjoxNzYzOTcwNTY1fQ.zuXA2w3HLmkvHYdOHt9R8W_fvC_MuUon_njlZ7Nb-dk
+
+{
+  "productId": "37fef6a3-f2b1-4d56-9714-d89198330a38",
+  "quantity": 1
+}
+
+### Create Order
+POST http://localhost:5000/api/orders
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk5OGQyYTNiLTJhZDQtNGIxZS1hZTM2LTIxYmY2NjUzNmMxOCIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc2MzM2NTc2NSwiZXhwIjoxNzYzOTcwNTY1fQ.zuXA2w3HLmkvHYdOHt9R8W_fvC_MuUon_njlZ7Nb-dk
+
+{
+  "address": "Chennai"
+}

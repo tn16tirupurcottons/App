@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scroll & smooth transitions */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Small custom */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* Hide scrollbar on mobile */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 10px;
+}
+
+/* Example input styling */
+.input {
+  @apply w-full p-2 border rounded;
+}
