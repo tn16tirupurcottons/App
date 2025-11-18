@@ -40,15 +40,19 @@ export default function Navbar() {
         <div className="flex flex-wrap items-center justify-between gap-4 py-3">
           <button
             className="md:hidden text-gray-700"
+            aria-label="Open navigation menu"
             onClick={() => setMobileMenuOpen(true)}
           >
             <FaBars size={22} />
           </button>
-          <Link to="/" className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="flex items-center gap-3 flex-1 justify-center md:flex-none md:justify-start"
+          >
             <div className="h-12 w-12 rounded-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-black grid place-items-center">
               TN16
             </div>
-            <div>
+            <div className="text-center md:text-left">
               <p className="font-bold text-lg text-gray-900 leading-tight">
                 {brand}
               </p>
@@ -74,10 +78,11 @@ export default function Navbar() {
             />
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold text-gray-800">
+          <div className="flex items-center gap-4 text-sm font-semibold text-gray-800 ml-auto">
             <Link
               to="/cart"
-              className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-pink-600"
+              aria-label="View cart"
+              className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-pink-600 transition"
             >
               <FaShoppingCart /> Cart
             </Link>
@@ -100,7 +105,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/register"
-                  className="text-white bg-pink-600 px-4 py-2 rounded-full hover:bg-pink-700"
+                  className="text-white bg-pink-600 px-4 py-2 rounded-full hover:bg-pink-700 transition"
                 >
                   Join Free
                 </Link>
@@ -170,7 +175,10 @@ export default function Navbar() {
           <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl p-5 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900">Browse</h3>
-              <button onClick={() => setMobileMenuOpen(false)}>
+              <button
+                aria-label="Close navigation"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <FaTimes />
               </button>
             </div>

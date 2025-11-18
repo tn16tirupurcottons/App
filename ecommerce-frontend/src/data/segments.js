@@ -6,6 +6,7 @@ export const heroSlides = [
     ctaPrimary: "Shop the Fest",
     ctaSecondary: "View Coupons",
     badge: "UP TO 70% OFF",
+    segment: "men",
     image:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=80",
     gradient: "from-[#ffdee2] via-white to-[#fde8ce]",
@@ -15,19 +16,21 @@ export const heroSlides = [
     title: "Gen-Z Hyper Drop",
     subtitle: "Street cotton fits with neon pops & athleisure ease.",
     ctaPrimary: "Shop Gen-Z",
-    ctaSecondary: "Lookbook",
+    ctaSecondary: "TN16 Studio",
     badge: "NEW",
+    segment: "genz",
     image:
       "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=80",
     gradient: "from-[#f6f0ff] via-white to-[#e5edff]",
   },
   {
     id: "women",
-    title: "Women’s Signature Edit",
+    title: "Women's Signature Edit",
     subtitle: "Lightweight kurtas & coordinates in Tirupur organic blends.",
     ctaPrimary: "Shop Women",
     ctaSecondary: "TN16 Studio",
     badge: "CURATED",
+    segment: "women",
     image:
       "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?auto=format&fit=crop&w=1400&q=80",
     gradient: "from-[#ffe0f1] via-white to-[#fde2d5]",

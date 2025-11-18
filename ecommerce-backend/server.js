@@ -19,6 +19,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 // Admin Routes
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
@@ -95,6 +96,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/upload", uploadRoutes);
 
 /* -------------------------------
    ADMIN ROUTES

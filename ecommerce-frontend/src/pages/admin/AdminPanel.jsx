@@ -18,78 +18,105 @@ export default function AdminPanel() {
 
   return (
     <AdminLayout title="Admin Dashboard">
-      <div className="bg-white rounded-3xl shadow p-6">
+      <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6">
         {isLoading ? (
-          <p>Loading analytics…</p>
+          <div className="space-y-4">
+            <div className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-24 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="h-24 bg-gray-200 rounded-xl animate-pulse" />
+            </div>
+          </div>
         ) : isError ? (
-          <p className="text-red-600">Failed to load overview.</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+            <p className="text-red-600 font-semibold">Failed to load overview.</p>
+            <p className="text-sm text-red-500 mt-1">Please try refreshing the page.</p>
+          </div>
         ) : (
-          <div className="space-y-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard label="Products" value={metrics.productCount} />
-            <MetricCard label="Categories" value={metrics.categoryCount} />
-            <MetricCard label="Orders" value={metrics.orderCount} />
-            <MetricCard label="Customers" value={metrics.userCount} />
-          </div>
+          <div className="space-y-6 md:space-y-8">
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              <MetricCard label="Products" value={metrics.productCount} />
+              <MetricCard label="Categories" value={metrics.categoryCount} />
+              <MetricCard label="Orders" value={metrics.orderCount} />
+              <MetricCard label="Customers" value={metrics.userCount} />
+            </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            <section>
-              <h3 className="text-lg font-semibold mb-3">Latest Orders</h3>
-              <div className="space-y-3">
-                {latestOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="border border-gray-100 rounded-2xl p-4 flex justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        ₹{order.total?.toFixed(0)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.User?.name || "Guest"}
-                      </p>
+            {/* Latest Orders and Low Stock */}
+            <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+              {/* Latest Orders Section */}
+              <section className="bg-gray-50 rounded-xl p-4 md:p-5">
+                <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">
+                  Latest Orders
+                </h3>
+                <div className="space-y-2 md:space-y-3">
+                  {latestOrders.length > 0 ? (
+                    latestOrders.slice(0, 5).map((order) => (
+                      <div
+                        key={order.id}
+                        className="bg-white border border-gray-200 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm md:text-base">
+                            ₹{Number(order.total || 0).toFixed(0)}
+                          </p>
+                          <p className="text-xs md:text-sm text-gray-500 truncate">
+                            {order.User?.name || "Guest"}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right flex-shrink-0">
+                          <span className="inline-block text-xs uppercase tracking-wider text-pink-600 font-semibold mb-1">
+                            {order.status || "pending"}
+                          </span>
+                          <p className="text-xs text-gray-400">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-500">No orders yet.</p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs uppercase tracking-widest text-pink-600">
-                        {order.status}
-                      </span>
-                      <p className="text-xs text-gray-400">
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {!latestOrders.length && (
-                  <p className="text-sm text-gray-500">No orders yet.</p>
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section>
-              <h3 className="text-lg font-semibold mb-3">Low stock alerts</h3>
-              <div className="space-y-3">
-                {lowStock.map((product) => (
-                  <div
-                    key={product.id}
-                    className="border border-gray-100 rounded-2xl p-4 flex justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {product.name}
-                      </p>
-                      <p className="text-sm text-gray-500">{product.brand}</p>
+              {/* Low Stock Alerts Section */}
+              <section className="bg-gray-50 rounded-xl p-4 md:p-5">
+                <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">
+                  Low Stock Alerts
+                </h3>
+                <div className="space-y-2 md:space-y-3 max-h-[400px] overflow-y-auto">
+                  {lowStock.length > 0 ? (
+                    lowStock.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-white border border-gray-200 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm md:text-base truncate">
+                            {product.name}
+                          </p>
+                          <p className="text-xs md:text-sm text-gray-500">
+                            {product.brand || "TN16"}
+                          </p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className="inline-block text-xs md:text-sm font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
+                            {product.inventory || 0} pcs
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-500">Inventory looks good.</p>
                     </div>
-                    <span className="text-sm font-semibold text-red-600">
-                      {product.inventory} pcs
-                    </span>
-                  </div>
-                ))}
-                {!lowStock.length && (
-                  <p className="text-sm text-gray-500">Inventory looks good.</p>
-                )}
-              </div>
-            </section>
-          </div>
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         )}
       </div>
@@ -99,11 +126,13 @@ export default function AdminPanel() {
 
 function MetricCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-gray-100 p-4 bg-gradient-to-br from-white to-gray-50">
-      <p className="text-xs uppercase tracking-[0.4em] text-gray-400">
+    <div className="rounded-xl md:rounded-2xl border border-gray-200 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-md transition-shadow">
+      <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] md:tracking-[0.4em] text-gray-500 font-semibold">
         {label}
       </p>
-      <p className="text-3xl font-bold text-gray-900 mt-2">{value ?? 0}</p>
+      <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">
+        {value ?? 0}
+      </p>
     </div>
   );
 }

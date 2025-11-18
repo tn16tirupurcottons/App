@@ -1,35 +1,58 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
+import { AuthContext } from "../context/AuthContext";
+
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80";
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = React.useContext(AuthContext);
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState("");
 
-  const { data: product, isLoading, error } = useQuery({
+  const { data: product, isLoading, error, isError } = useQuery({
     queryKey: ["product", id],
     queryFn: async () => {
-      const res = await axiosClient.get(`/products/${id}`);
-      return res.data;
+      try {
+        const res = await axiosClient.get(`/products/${id}`);
+        return res.data;
+      } catch (err) {
+        console.error("Product fetch error:", err);
+        throw err;
+      }
     },
+    retry: 2,
   });
 
   const gallery = useMemo(() => {
-    const images = product?.gallery?.length
-      ? product.gallery
-      : [product?.thumbnail || product?.image];
-    return images.filter(Boolean);
+    if (!product) return [FALLBACK_IMAGE];
+    const images = [];
+    if (product.gallery && Array.isArray(product.gallery) && product.gallery.length > 0) {
+      images.push(...product.gallery);
+    }
+    if (product.thumbnail && !images.includes(product.thumbnail)) {
+      images.unshift(product.thumbnail);
+    }
+    if (product.image && !images.includes(product.image)) {
+      images.push(product.image);
+    }
+    return images.length > 0 ? images : [FALLBACK_IMAGE];
   }, [product]);
+
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [zoom, setZoom] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     setActiveImage(0);
-  }, [gallery.length]);
+    setZoom(false);
+  }, [id]);
 
   useEffect(() => {
     if (product?.sizes?.length) {
@@ -41,167 +64,366 @@ export default function ProductDetails() {
   }, [product]);
 
   const addToCart = useMutation(
-    async () =>
-      axiosClient.post("/cart", {
+    async () => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+      return axiosClient.post("/cart", {
         productId: product.id,
         quantity,
-        selectedSize,
-        selectedColor,
-      }),
+        selectedSize: selectedSize || null,
+        selectedColor: selectedColor || null,
+        unitPrice: Number(product.price || 0) - Number(product.discount || 0),
+      });
+    },
     {
       onSuccess: () => {
-        setFeedback("Added to bag!");
+        setFeedback("Added to bag! 🛍️");
         setTimeout(() => setFeedback(""), 3000);
       },
       onError: (err) => {
-        setFeedback(
-          err.response?.data?.message || "Unable to add to bag right now."
-        );
+        if (err.response?.status === 401) {
+          navigate("/login");
+        } else {
+          setFeedback(
+            err.response?.data?.message || "Unable to add to bag right now."
+          );
+          setTimeout(() => setFeedback(""), 5000);
+        }
       },
     }
   );
 
-  if (isLoading)
-    return <div className="text-center mt-10 text-gray-500">Loading...</div>;
-  if (error || !product)
+  if (isLoading) {
     return (
-      <div className="text-center mt-10 text-red-600">
-        Product not found.
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="grid md:grid-cols-2 gap-10">
+          <div className="h-[480px] bg-gray-200 rounded-3xl animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-8 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
+  }
+
+  if (isError || !product) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <div className="bg-white rounded-3xl p-12 shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Product Not Found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            The product you're looking for doesn't exist or has been removed.
+          </p>
+          <Link
+            to="/catalog"
+            className="inline-block bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold"
+          >
+            Browse Catalog
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const finalPrice =
     Number(product.price || 0) - Number(product.discount || 0);
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
-      <div>
-        <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
-          <img
-            src={gallery[activeImage]}
-            alt={product.name}
-            className="w-full h-[480px] object-cover"
-          />
-        </div>
-        <div className="flex gap-3 mt-4">
-          {gallery.map((img, idx) => (
-            <button
-              key={img}
-              onClick={() => setActiveImage(idx)}
-              className={`h-20 w-20 rounded-2xl overflow-hidden border ${
-                activeImage === idx
-                  ? "border-pink-500"
-                  : "border-transparent opacity-60"
-              }`}
-            >
-              <img src={img} alt="Thumb" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      </div>
+  const handleTouchStart = (e) => {
+    setTouchStart(e.touches[0].clientX);
+  };
 
-      <div>
-        <p className="text-xs uppercase tracking-[0.4em] text-pink-500 font-semibold">
-          {product.Category?.name || "TN16 Collection"}
-        </p>
-        <h1 className="text-3xl font-bold text-gray-900 mt-2">
-          {product.name}
-        </h1>
-        <div className="flex items-center gap-3 mt-4">
-          <span className="text-3xl font-bold text-gray-900">
-            ₹{finalPrice.toFixed(0)}
-          </span>
-          {product.discount > 0 && (
-            <span className="text-gray-400 line-through">
-              ₹{Number(product.price).toFixed(0)}
-            </span>
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && activeImage < gallery.length - 1) {
+      setActiveImage(activeImage + 1);
+    }
+    if (isRightSwipe && activeImage > 0) {
+      setActiveImage(activeImage - 1);
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
+      <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+        {/* Image Gallery */}
+        <div>
+          <div
+            className="rounded-3xl overflow-hidden shadow-lg bg-white relative cursor-zoom-in"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onClick={() => setZoom(!zoom)}
+          >
+            <img
+              src={gallery[activeImage] || FALLBACK_IMAGE}
+              alt={product.name || "Product"}
+              className={`w-full h-[400px] md:h-[480px] object-cover transition-transform ${
+                zoom ? "scale-150" : "scale-100"
+              }`}
+              onError={(e) => {
+                e.target.src = FALLBACK_IMAGE;
+              }}
+            />
+            {product.discount > 0 && (
+              <span className="absolute top-4 left-4 bg-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                {Math.round((product.discount / product.price) * 100)}% OFF
+              </span>
+            )}
+            {gallery.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImage(activeImage > 0 ? activeImage - 1 : gallery.length - 1);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition md:block hidden"
+                  aria-label="Previous image"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImage(activeImage < gallery.length - 1 ? activeImage + 1 : 0);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition md:block hidden"
+                  aria-label="Next image"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full md:hidden">
+              {activeImage + 1} / {gallery.length}
+            </div>
+          </div>
+          {gallery.length > 1 && (
+            <div className="flex gap-2 md:gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+              {gallery.map((img, idx) => (
+                <button
+                  key={`${img}-${idx}`}
+                  onClick={() => setActiveImage(idx)}
+                  className={`h-16 w-16 md:h-20 md:w-20 flex-shrink-0 rounded-xl md:rounded-2xl overflow-hidden border-2 transition ${
+                    activeImage === idx
+                      ? "border-pink-500 shadow-md ring-2 ring-pink-200"
+                      : "border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-300"
+                  }`}
+                >
+                  <img
+                    src={img || FALLBACK_IMAGE}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
           )}
         </div>
-        <p className="text-gray-600 mt-6 leading-relaxed">
-          {product.description}
-        </p>
 
-        {product.sizes?.length > 0 && (
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Size</p>
-            <div className="flex flex-wrap gap-2">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`px-4 py-2 rounded-full border ${
-                    selectedSize === size
-                      ? "bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
+        {/* Product Info */}
+        <div className="space-y-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-pink-500 font-semibold">
+              {product.Category?.name || product.brand || "TN16 Collection"}
+            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-2">
+              {product.name || "Product"}
+            </h1>
+          </div>
+
+          <div className="flex items-baseline gap-3">
+            <span className="text-3xl font-bold text-gray-900">
+              ₹{finalPrice.toFixed(0)}
+            </span>
+            {product.discount > 0 && (
+              <>
+                <span className="text-lg text-gray-400 line-through">
+                  ₹{Number(product.price || 0).toFixed(0)}
+                </span>
+                <span className="text-sm font-semibold text-pink-600">
+                  Save ₹{Number(product.discount || 0).toFixed(0)}
+                </span>
+              </>
+            )}
+          </div>
+
+          {product.description && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Description
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+          )}
+
+          {product.brand && (
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold">Brand:</span> {product.brand}
+            </div>
+          )}
+
+          {/* Size Selection */}
+          {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-3">
+                Select Size <span className="text-gray-400 font-normal">(Required)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-5 py-2.5 rounded-full border-2 transition ${
+                      selectedSize === size
+                        ? "bg-gray-900 text-white border-gray-900"
+                        : "border-gray-300 text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Color Selection */}
+          {product.colors && Array.isArray(product.colors) && product.colors.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-3">
+                Select Color <span className="text-gray-400 font-normal">(Required)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-5 py-2.5 rounded-full border-2 transition ${
+                      selectedColor === color
+                        ? "bg-pink-600 text-white border-pink-600"
+                        : "border-gray-300 text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quantity */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Quantity
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="1"
+                max={product.inventory || 5}
+                value={quantity}
+                onChange={(e) => {
+                  const val = Math.max(1, Math.min(product.inventory || 5, Number(e.target.value) || 1));
+                  setQuantity(val);
+                }}
+                className="w-20 border rounded-full px-4 py-2 text-center font-semibold"
+              />
+              <button
+                onClick={() => setQuantity(Math.min(product.inventory || 5, quantity + 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+              >
+                +
+              </button>
+            </div>
+            {product.inventory && (
+              <p className="text-xs text-gray-500 mt-2">
+                {product.inventory} available in stock
+              </p>
+            )}
+          </div>
+
+          {/* Feedback Message */}
+          {feedback && (
+            <div className={`p-3 rounded-lg text-sm font-semibold ${
+              feedback.includes("Added") 
+                ? "bg-green-50 text-green-700" 
+                : "bg-red-50 text-red-600"
+            }`}>
+              {feedback}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <button
+              onClick={() => addToCart.mutate()}
+              disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
+              className="flex-1 bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+            >
+              {addToCart.isLoading ? "Adding..." : "Add to Bag 🛍️"}
+            </button>
+            <button
+              onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
+                addToCart.mutate(undefined, {
+                  onSuccess: () => navigate("/checkout"),
+                });
+              }}
+              disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
+              className="flex-1 border-2 border-gray-300 text-gray-900 px-6 py-4 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-gray-400 transition"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          {/* Additional Info */}
+          <div className="pt-6 border-t border-gray-200 space-y-3 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Delivery:</span>
+              <span>Free shipping on orders above ₹1499</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Returns:</span>
+              <span>Easy 7-day returns</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Origin:</span>
+              <span>Tirupur, Tamil Nadu</span>
             </div>
           </div>
-        )}
-
-        {product.colors?.length > 0 && (
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Color</p>
-            <div className="flex flex-wrap gap-2">
-              {product.colors.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
-                  className={`px-4 py-2 rounded-full border ${
-                    selectedColor === color
-                      ? "bg-pink-600 text-white"
-                      : "border-gray-300 text-gray-700"
-                  }`}
-                >
-                  {color}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Quantity
-          </label>
-          <input
-            type="number"
-            min="1"
-            max="5"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            className="w-24 border rounded-full px-4 py-2 text-center"
-          />
-        </div>
-
-        {feedback && (
-          <div className="mt-4 text-sm text-pink-600 font-semibold">
-            {feedback}
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => addToCart.mutate()}
-            disabled={addToCart.isLoading}
-            className="flex-1 bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50"
-          >
-            {addToCart.isLoading ? "Adding..." : "Add to Bag"}
-          </button>
-          <button
-            onClick={() =>
-              addToCart.mutate(undefined, {
-                onSuccess: () => navigate("/checkout"),
-              })
-            }
-            disabled={addToCart.isLoading}
-            className="flex-1 border border-gray-300 text-gray-900 px-6 py-3 rounded-full font-semibold disabled:opacity-50"
-          >
-            Buy Now
-          </button>
         </div>
       </div>
     </div>

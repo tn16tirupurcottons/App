@@ -1,58 +1,102 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ShoppingBag,
   ListOrdered,
   Tags,
-  Menu,
   X,
+  LogOut,
+  Image,
+  Settings,
 } from "lucide-react";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen, onClose }) {
   const { pathname } = useLocation();
-  const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
 
   const menu = [
-    { name: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/admin" },
-    { name: "Products", icon: <ShoppingBag size={18} />, path: "/admin/products" },
-    { name: "Orders", icon: <ListOrdered size={18} />, path: "/admin/orders" },
-    { name: "Categories", icon: <Tags size={18} />, path: "/admin/categories" },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+    { name: "Products", icon: ShoppingBag, path: "/admin/products" },
+    { name: "Orders", icon: ListOrdered, path: "/admin/orders" },
+    { name: "Categories", icon: Tags, path: "/admin/categories" },
+    { name: "Banners", icon: Image, path: "/admin/banners" },
+    { name: "Brand Settings", icon: Settings, path: "/admin/brand-settings" },
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+    onClose();
+  };
+
   return (
-    <>
-      {/* Mobile Toggle */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-black text-white p-2 rounded-lg"
-        onClick={() => setOpen(!open)}
-      >
-        {open ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
-      {/* Sidebar */}
-      <div
-        className={`fixed top-0 left-0 h-full bg-gray-900 text-white p-4 w-64 transform
-          ${open ? "translate-x-0" : "-translate-x-full"}
-          transition-transform md:translate-x-0 z-40`}
-      >
-        <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
-
-        <ul className="space-y-3">
-          {menu.map((item) => (
-            <li key={item.name}>
-              <Link
-                to={item.path}
-                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 
-                ${pathname === item.path ? "bg-gray-700" : ""}`}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+    <aside
+      className={`fixed top-0 left-0 h-full bg-gray-900 text-white w-64 transform
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        transition-transform duration-300 ease-in-out md:translate-x-0 z-40
+        flex flex-col`}
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold">Admin Panel</h2>
+          <p className="text-xs text-gray-400 mt-1">TN16 Studio</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="md:hidden p-1 rounded hover:bg-gray-800"
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
       </div>
-    </>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        <ul className="space-y-2">
+          {menu.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.path || 
+              (item.path !== "/admin" && pathname.startsWith(item.path));
+            
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.path}
+                  onClick={() => {
+                    // Close sidebar on mobile when link is clicked
+                    if (window.innerWidth < 768) {
+                      onClose();
+                    }
+                  }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                    ${isActive 
+                      ? "bg-pink-600 text-white" 
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    }`}
+                >
+                  <Icon size={20} />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-800">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+        >
+          <LogOut size={20} />
+          <span className="font-medium">Logout</span>
+        </button>
+      </div>
+    </aside>
   );
 }

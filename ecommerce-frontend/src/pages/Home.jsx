@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate, Link } from "react-router-dom";
 import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
 import axiosClient from "../api/axiosClient";
@@ -76,6 +77,7 @@ const coupons = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
   const [activeCategorySlug, setActiveCategorySlug] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -144,10 +146,22 @@ export default function Home() {
               {currentSlide.subtitle}
             </p>
             <div className="flex flex-wrap gap-3">
-              <button className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition">
+              <button
+                onClick={() => {
+                  const segment = currentSlide.segment || "women";
+                  navigate(`/catalog?segment=${segment}`);
+                }}
+                className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition"
+              >
                 {currentSlide.ctaPrimary}
               </button>
-              <button className="bg-white/80 text-gray-900 px-6 py-3 rounded-full font-semibold border border-gray-200 hover:border-gray-400 transition">
+              <button
+                onClick={() => {
+                  const segment = currentSlide.segment || "genz";
+                  navigate(`/catalog?segment=${segment}&view=studio`);
+                }}
+                className="bg-white/80 text-gray-900 px-6 py-3 rounded-full font-semibold border border-gray-200 hover:border-gray-400 transition"
+              >
                 {currentSlide.ctaSecondary}
               </button>
             </div>
@@ -236,9 +250,12 @@ export default function Home() {
               Featured Cotton Drops
             </h2>
           </div>
-          <button className="text-sm font-semibold text-pink-600 hover:text-pink-700">
-            View catalog
-          </button>
+          <Link
+            to="/catalog"
+            className="text-sm font-semibold text-pink-600 hover:text-pink-700"
+          >
+            View catalog →
+          </Link>
         </div>
 
         {isError && (
@@ -287,7 +304,10 @@ export default function Home() {
           <p className="text-white/90 mt-2">
             New arrivals drop every Thursday. Get early access as an insider.
           </p>
-          <button className="mt-6 bg-white text-pink-600 font-semibold px-6 py-3 rounded-full shadow-lg">
+          <button
+            onClick={() => navigate("/register")}
+            className="mt-6 bg-white hover:bg-gray-50 text-pink-600 font-semibold px-6 py-3 rounded-full shadow-lg transition"
+          >
             Join Insider Club
           </button>
         </div>
@@ -315,18 +335,18 @@ function SegmentBand({ segment, flip }) {
             {segment.description}
           </h3>
           <div className="mt-6 flex gap-3">
-            <a
-              className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm text-center"
-              href={`/catalog?segment=${segment.key}`}
+            <button
+              onClick={() => navigate(`/catalog?segment=${segment.key}`)}
+              className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2 rounded-full text-sm text-center transition"
             >
               Shop {segment.label}
-            </a>
-            <a
-              className="border border-gray-300 px-5 py-2 rounded-full text-sm text-center"
-              href={`/catalog?segment=${segment.key}&view=studio`}
+            </button>
+            <button
+              onClick={() => navigate(`/catalog?segment=${segment.key}&view=studio`)}
+              className="border border-gray-300 hover:border-gray-400 px-5 py-2 rounded-full text-sm text-center transition"
             >
               Explore Looks
-            </a>
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 p-4">

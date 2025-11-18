@@ -34,15 +34,32 @@ export default function Cart() {
     }
   );
 
-  if (isLoading)
-    return <div className="p-6 text-gray-500">Loading cart...</div>;
-
-  if (isError)
+  if (isLoading) {
     return (
-      <div className="p-6 text-red-500">
-        Error loading cart: {error.response?.data?.message || error.message}
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+          ))}
+        </div>
       </div>
     );
+  }
+
+  if (isError) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-600 font-semibold mb-2">
+            Error loading cart
+          </p>
+          <p className="text-sm text-red-500">
+            {error.response?.data?.message || error.message || "Please try again later"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 grid lg:grid-cols-3 gap-6">
