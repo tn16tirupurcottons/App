@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import {
@@ -7,6 +7,7 @@ import {
   FaSearch,
   FaTimes,
   FaArrowRight,
+  FaChevronRight,
 } from "react-icons/fa";
 import MegaMenu from "./MegaMenu";
 import { segmentThemes } from "../data/segments";
@@ -180,57 +181,16 @@ export default function Navbar() {
         <MegaMenu segment={segmentThemes[activeMenu]} />
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer - Myntra style */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/50 backdrop-blur z-50">
-          <div className="absolute inset-y-0 left-0 w-72 bg-white border-r border-border p-6 overflow-y-auto shadow-large">
-            <div className="flex items-center justify-between mb-8 text-dark">
-              <h3 className="text-lg font-semibold">Collections</h3>
-              <button
-                aria-label="Close navigation"
-                className="text-muted hover:text-dark"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FaTimes />
-              </button>
-            </div>
-            <ul className="space-y-5 text-dark">
-              {segments.map((segment) => (
-                <li key={segment.key}>
-                  <button
-                    className="text-left w-full"
-                    onClick={() => handleSegmentNavigate(segment.key)}
-                  >
-                    <p className="text-base font-semibold">{segment.label}</p>
-                    <p className="text-xs text-muted">{segment.description}</p>
-                  </button>
-                </li>
-              ))}
-              {extraLinks.map((link) => (
-                <li key={link.slug}>
-                  <NavLink
-                    to={`/catalog?category=${link.slug}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm font-semibold text-dark/80 hover:text-primary"
-                  >
-                    {link.label}
-                  </NavLink>
-                </li>
-              ))}
-              <li>
-                <button
-                  onClick={() => {
-                    navigate("/admin");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-sm font-semibold text-dark/80 hover:text-primary"
-                >
-                  Admin
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
+        <MobileDrawer
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          segments={segments}
+          extraLinks={extraLinks}
+          onNavigate={(segmentKey) => handleSegmentNavigate(segmentKey)}
+          onLinkClick={() => setMobileMenuOpen(false)}
+        />
       )}
 
       {/* Mobile search overlay */}
@@ -266,5 +226,189 @@ export default function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+// Myntra-style Mobile Drawer Component
+function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLinkClick }) {
+  const drawerRef = useRef(null);
+  const overlayRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const navigate = useNavigate();
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Handle swipe to close
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.touches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    if (isLeftSwipe) {
+      onClose();
+    }
+  };
+
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={overlayRef}
+      className="md:hidden fixed inset-0 z-50"
+      onClick={(e) => {
+        if (e.target === overlayRef.current) {
+          onClose();
+        }
+      }}
+    >
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      
+      {/* Drawer */}
+      <div
+        ref={drawerRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        className={`absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between z-10">
+          <h3 className="text-xl font-bold text-dark">Collections</h3>
+          <button
+            aria-label="Close navigation"
+            className="p-2 rounded-full hover:bg-light text-dark transition"
+            onClick={onClose}
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto h-[calc(100vh-73px)] pb-24">
+          <div className="px-6 py-4">
+            {/* Home Link */}
+            <NavLink
+              to="/"
+              onClick={onLinkClick}
+              className={({ isActive }) =>
+                `flex items-center justify-between py-4 border-b border-border ${
+                  isActive ? "text-primary" : "text-dark"
+                }`
+              }
+            >
+              <span className="font-semibold text-base">Home</span>
+              <FaChevronRight className="text-muted" size={14} />
+            </NavLink>
+
+            {/* Segments */}
+            {segments.map((segment) => (
+              <button
+                key={segment.key}
+                onClick={() => onNavigate(segment.key)}
+                className="w-full flex items-center justify-between py-4 border-b border-border text-left hover:bg-light transition active:bg-light"
+              >
+                <div className="flex-1">
+                  <p className="font-semibold text-base text-dark">{segment.label}</p>
+                  <p className="text-xs text-muted mt-1">{segment.description}</p>
+                </div>
+                <FaChevronRight className="text-muted flex-shrink-0 ml-3" size={14} />
+              </button>
+            ))}
+
+            {/* Extra Links */}
+            {extraLinks.map((link) => (
+              <NavLink
+                key={link.slug}
+                to={`/catalog?category=${link.slug}`}
+                onClick={onLinkClick}
+                className={({ isActive }) =>
+                  `flex items-center justify-between py-4 border-b border-border ${
+                    isActive ? "text-primary" : "text-dark"
+                  }`
+                }
+              >
+                <span className="font-semibold text-base">{link.label}</span>
+                <FaChevronRight className="text-muted" size={14} />
+              </NavLink>
+            ))}
+
+            {/* Admin Link */}
+            <button
+              onClick={() => {
+                navigate("/admin");
+                onLinkClick();
+              }}
+              className="w-full flex items-center justify-between py-4 border-b border-border text-left hover:bg-light transition active:bg-light text-dark"
+            >
+              <span className="font-semibold text-base">Admin</span>
+              <FaChevronRight className="text-muted" size={14} />
+            </button>
+
+            {/* Account Section */}
+            <div className="mt-6 pt-6 border-t-2 border-border">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted mb-4 font-semibold">
+                Account
+              </p>
+              <NavLink
+                to="/wishlist"
+                onClick={onLinkClick}
+                className="flex items-center justify-between py-3 text-dark hover:bg-light transition active:bg-light"
+              >
+                <span className="font-medium">Wishlist</span>
+                <FaChevronRight className="text-muted" size={14} />
+              </NavLink>
+              <NavLink
+                to="/cart"
+                onClick={onLinkClick}
+                className="flex items-center justify-between py-3 text-dark hover:bg-light transition active:bg-light"
+              >
+                <span className="font-medium">Cart</span>
+                <FaChevronRight className="text-muted" size={14} />
+              </NavLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

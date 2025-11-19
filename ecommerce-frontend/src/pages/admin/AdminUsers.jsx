@@ -68,61 +68,110 @@ export default function AdminUsers() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email"
-            className="w-full border border-white/20 bg-transparent rounded-full px-4 py-2 text-sm text-white placeholder:text-white/40"
+            className="w-full border border-border bg-white rounded-full px-4 py-2 text-sm text-dark placeholder:text-muted focus:outline-none focus:border-primary"
           />
         </div>
       }
     >
-      <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4 text-white">
+      <div className="card p-4 md:p-6">
         {isLoading ? (
           <Skeleton />
         ) : isError ? (
-          <div className="p-6 text-center text-red-300">
+          <div className="p-6 text-center text-red-600 font-semibold">
             Unable to load users.
           </div>
         ) : data.length === 0 ? (
-          <div className="p-6 text-center text-white/60">No users yet.</div>
+          <div className="p-6 text-center text-muted">No users yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-white/50 uppercase text-xs tracking-[0.3em]">
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">Orders</th>
-                  <th className="p-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((user) => (
-                  <tr key={user.id} className="border-t border-white/10">
-                    <td className="p-3">
-                      <p className="font-semibold">{user.name}</p>
-                      <p className="text-white/50 text-xs">{user.email}</p>
-                    </td>
-                    <td className="p-3 capitalize">{user.role}</td>
-                    <td className="p-3">{user.orderCount}</td>
-                    <td className="p-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleRoleToggle(user)}
-                        disabled={roleMutation.isPending}
-                        className="px-3 py-1 rounded-full border border-white/30 text-xs uppercase tracking-[0.3em]"
-                      >
-                        {user.role === "admin" ? "Demote" : "Promote"}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user)}
-                        disabled={deleteMutation.isPending}
-                        className="px-3 py-1 rounded-full border border-red-400/50 text-xs uppercase tracking-[0.3em] text-red-300"
-                      >
-                        Remove
-                      </button>
-                    </td>
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {data.map((user) => (
+                <div key={user.id} className="card p-4 space-y-3">
+                  <div>
+                    <p className="font-semibold text-dark text-base">{user.name}</p>
+                    <p className="text-muted text-sm">{user.email}</p>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <span className="text-muted">Role: </span>
+                      <span className="font-medium text-dark capitalize">{user.role}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted">Orders: </span>
+                      <span className="font-medium text-dark">{user.orderCount || 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2 border-t border-border">
+                    <button
+                      onClick={() => handleRoleToggle(user)}
+                      disabled={roleMutation.isPending}
+                      className="flex-1 px-3 py-2 rounded-full border border-primary bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wide hover:bg-primary hover:text-white transition disabled:opacity-50"
+                    >
+                      {user.role === "admin" ? "Demote" : "Promote"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      disabled={deleteMutation.isPending}
+                      className="flex-1 px-3 py-2 rounded-full border border-red-500 bg-red-50 text-red-600 text-xs font-semibold uppercase tracking-wide hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted uppercase text-xs tracking-[0.3em] border-b-2 border-border bg-light">
+                    <th className="p-4 font-semibold">Name</th>
+                    <th className="p-4 font-semibold">Role</th>
+                    <th className="p-4 font-semibold">Orders</th>
+                    <th className="p-4 font-semibold text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data.map((user) => (
+                    <tr key={user.id} className="border-b border-border hover:bg-light transition">
+                      <td className="p-4">
+                        <p className="font-semibold text-dark">{user.name}</p>
+                        <p className="text-muted text-xs mt-1">{user.email}</p>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-xs capitalize">
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-medium text-dark">{user.orderCount || 0}</span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          <button
+                            onClick={() => handleRoleToggle(user)}
+                            disabled={roleMutation.isPending}
+                            className="px-4 py-2 rounded-full border border-primary bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wide hover:bg-primary hover:text-white transition disabled:opacity-50"
+                          >
+                            {user.role === "admin" ? "Demote" : "Promote"}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user)}
+                            disabled={deleteMutation.isPending}
+                            className="px-4 py-2 rounded-full border border-red-500 bg-red-50 text-red-600 text-xs font-semibold uppercase tracking-wide hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </AdminLayout>
@@ -133,7 +182,7 @@ function Skeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((row) => (
-        <div key={row} className="h-14 bg-white/10 rounded-2xl animate-pulse" />
+        <div key={row} className="h-14 bg-light rounded-2xl animate-pulse" />
       ))}
     </div>
   );

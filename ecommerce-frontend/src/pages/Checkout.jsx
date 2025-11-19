@@ -90,13 +90,181 @@ export default function Checkout() {
     <div className="max-w-5xl mx-auto px-4 py-10 grid lg:grid-cols-2 gap-8">
       <OrderSummary orderData={orderData} />
       {demoMode ? (
-        <CheckoutForm orderData={orderData} isDemoMode />
-      ) : (
+        <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />
+      ) : stripePromise && clientSecret ? (
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutForm orderData={orderData} />
+          <CheckoutFormWrapper orderData={orderData} isDemoMode={false} />
         </Elements>
+      ) : (
+        <div className="card p-6">
+          <p className="text-muted">Initializing payment...</p>
+        </div>
       )}
     </div>
+  );
+}
+
+// Wrapper component to handle conditional hook usage
+function CheckoutFormWrapper({ orderData, isDemoMode = false }) {
+  if (isDemoMode) {
+    return <CheckoutFormDemo orderData={orderData} />;
+  }
+  return <CheckoutForm orderData={orderData} />;
+}
+
+// Demo mode form (no Stripe hooks)
+function CheckoutFormDemo({ orderData }) {
+  const qc = useQueryClient();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [shipping, setShipping] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    address2: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "India",
+  });
+
+  if (!orderData) {
+    return (
+      <div className="card p-6">
+        <p className="text-muted">Loading checkout form...</p>
+      </div>
+    );
+  }
+
+  const handleChange = (field, value) =>
+    setShipping((prev) => ({ ...prev, [field]: value }));
+
+  const shippingValid = useMemo(() => {
+    const required = {
+      name: shipping.name.trim(),
+      phone: shipping.phone.trim(),
+      address: shipping.address.trim(),
+      city: shipping.city.trim(),
+      state: shipping.state.trim(),
+      zip: shipping.zip.trim(),
+    };
+    return Object.values(required).every(Boolean);
+  }, [shipping]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      if (!orderData || !orderData.paymentIntentId) {
+        setError("Order data is missing. Please refresh and try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      const shippingPayload = {
+        ...shipping,
+        address: shipping.address2
+          ? `${shipping.address}\n${shipping.address2}`
+          : shipping.address,
+      };
+      delete shippingPayload.address2;
+
+      await axiosClient.post("/orders", {
+        paymentIntentId: orderData.paymentIntentId,
+        shipping: shippingPayload,
+      });
+      qc.invalidateQueries({ queryKey: ["cart"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="card p-6 text-center">
+        <h2 className="text-xl font-semibold text-dark">
+          Order placed successfully 🎉
+        </h2>
+        <p className="text-muted mt-2">
+          We'll keep you posted once your Tirupur cotton fit ships.
+        </p>
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="mt-6 bg-primary text-white px-6 py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs hover:bg-primary/90"
+        >
+          Continue shopping
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+      <h2 className="text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Full name"
+          value={shipping.name}
+          onChange={(e) => handleChange("name", e.target.value)}
+        />
+        <Input
+          label="Phone"
+          value={shipping.phone}
+          inputMode="tel"
+          maxLength={12}
+          onChange={(e) => handleChange("phone", e.target.value)}
+        />
+        <Input
+          label="Address"
+          value={shipping.address}
+          onChange={(e) => handleChange("address", e.target.value)}
+          className="col-span-2"
+        />
+        <Input
+          label="Apartment / Suite (optional)"
+          value={shipping.address2}
+          onChange={(e) => handleChange("address2", e.target.value)}
+          className="col-span-2"
+        />
+        <Input
+          label="City"
+          value={shipping.city}
+          onChange={(e) => handleChange("city", e.target.value)}
+        />
+        <Input
+          label="State"
+          value={shipping.state}
+          onChange={(e) => handleChange("state", e.target.value)}
+        />
+        <Input
+          label="Postal code"
+          value={shipping.zip}
+          onChange={(e) => handleChange("zip", e.target.value)}
+        />
+        <Input
+          label="Country"
+          value={shipping.country}
+          onChange={(e) => handleChange("country", e.target.value)}
+        />
+      </div>
+
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={!shippingValid || submitting}
+        className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
+      >
+        {submitting ? "Processing..." : "Place Order"}
+      </button>
+    </form>
   );
 }
 
@@ -143,7 +311,8 @@ function OrderSummary({ orderData }) {
   );
 }
 
-function CheckoutForm({ orderData, isDemoMode = false }) {
+// Stripe mode form (uses Stripe hooks)
+function CheckoutForm({ orderData }) {
   const qc = useQueryClient();
   const stripe = useStripe();
   const elements = useElements();
@@ -184,13 +353,11 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
     return Object.values(required).every(Boolean);
   }, [shipping]);
 
-  const canSubmit = isDemoMode
-    ? shippingValid
-    : shippingValid && stripe && elements;
+  const canSubmit = shippingValid && stripe && elements;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isDemoMode && (!stripe || !elements)) {
+    if (!stripe || !elements) {
       setError("Payment session unavailable. Please refresh.");
       setSubmitting(false);
       return;
@@ -205,31 +372,27 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
         return;
       }
 
-      let paymentIntentId = orderData.paymentIntentId;
-
-      if (!isDemoMode) {
-        const { error: stripeError, paymentIntent } =
-          await stripe.confirmPayment({
-            elements,
-            redirect: "if_required",
-            confirmParams: {
-              payment_method_data: {
-                billing_details: {
-                  name: shipping.name,
-                  phone: shipping.phone,
-                },
+      const { error: stripeError, paymentIntent } =
+        await stripe.confirmPayment({
+          elements,
+          redirect: "if_required",
+          confirmParams: {
+            payment_method_data: {
+              billing_details: {
+                name: shipping.name,
+                phone: shipping.phone,
               },
             },
-          });
+          },
+        });
 
-        if (stripeError) {
-          setError(stripeError.message || "Payment failed");
-          setSubmitting(false);
-          return;
-        }
-
-        paymentIntentId = paymentIntent?.id || orderData.paymentIntentId;
+      if (stripeError) {
+        setError(stripeError.message || "Payment failed");
+        setSubmitting(false);
+        return;
       }
+
+      const paymentIntentId = paymentIntent?.id || orderData.paymentIntentId;
 
       const shippingPayload = {
         ...shipping,
@@ -325,11 +488,9 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
         />
       </div>
 
-      {!isDemoMode && (
-        <div className="border border-border rounded-2xl p-4 bg-light">
-          <PaymentElement />
-        </div>
-      )}
+      <div className="border border-border rounded-2xl p-4 bg-light">
+        <PaymentElement />
+      </div>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
@@ -338,11 +499,7 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
           disabled={!canSubmit || submitting}
           className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
         >
-          {submitting
-            ? "Processing..."
-            : isDemoMode
-            ? "Place Order"
-            : "Confirm & Pay"}
+          {submitting ? "Processing..." : "Confirm & Pay"}
         </button>
     </form>
   );
