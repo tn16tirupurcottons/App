@@ -50,7 +50,7 @@ export default function Navbar() {
           </button>
           <Link
             to="/"
-            className="flex items-center gap-3 flex-1 md:flex-none md:gap-4"
+            className="hidden md:flex items-center gap-4"
           >
             <div className="h-12 w-12 rounded-full border-2 border-primary text-primary font-display text-lg tracking-[0.3em] grid place-items-center bg-primary/5">
               TN
@@ -62,6 +62,15 @@ export default function Navbar() {
               <p className="pill text-[10px] text-muted">
                 Tirupur · Established MMXXV
               </p>
+            </div>
+          </Link>
+          {/* Mobile: Only show logo */}
+          <Link
+            to="/"
+            className="md:hidden"
+          >
+            <div className="h-10 w-10 rounded-full border-2 border-primary text-primary font-display text-base tracking-[0.3em] grid place-items-center bg-primary/5">
+              TN
             </div>
           </Link>
 
