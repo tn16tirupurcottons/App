@@ -38,15 +38,50 @@ export default function Checkout() {
   if (loading) return <div className="p-8 text-center text-dark">Preparing checkout…</div>;
   if (error)
     return (
-      <div className="p-8 text-center text-red-600">
-        {error || "Stripe not configured."}
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="card p-8 text-center">
+          <h2 className="text-xl font-semibold text-dark mb-2">Checkout Error</h2>
+          <p className="text-red-600">{error || "Stripe not configured."}</p>
+          <button
+            onClick={() => window.location.href = "/cart"}
+            className="mt-4 bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/90"
+          >
+            Back to Cart
+          </button>
+        </div>
       </div>
     );
 
+  if (!orderData) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="card p-8 text-center">
+          <h2 className="text-xl font-semibold text-dark mb-2">No Items to Checkout</h2>
+          <p className="text-muted">Your cart is empty. Add items to proceed.</p>
+          <button
+            onClick={() => window.location.href = "/catalog"}
+            className="mt-4 bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/90"
+          >
+            Browse Products
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!demoMode && (!clientSecret || !stripePromise)) {
     return (
-      <div className="p-8 text-center text-muted">
-        Checkout temporarily unavailable. Please try again later.
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="card p-8 text-center">
+          <h2 className="text-xl font-semibold text-dark mb-2">Payment Unavailable</h2>
+          <p className="text-muted">Checkout temporarily unavailable. Please try again later.</p>
+          <button
+            onClick={() => window.location.href = "/cart"}
+            className="mt-4 bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/90"
+          >
+            Back to Cart
+          </button>
+        </div>
       </div>
     );
   }
@@ -66,6 +101,14 @@ export default function Checkout() {
 }
 
 function OrderSummary({ orderData }) {
+  if (!orderData) {
+    return (
+      <div className="card p-6">
+        <p className="text-muted">Loading order summary...</p>
+      </div>
+    );
+  }
+  
   const items = orderData?.items || [];
   const totals = orderData?.totals || {};
 
@@ -118,6 +161,14 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
     country: "India",
   });
 
+  if (!orderData) {
+    return (
+      <div className="card p-6">
+        <p className="text-muted">Loading checkout form...</p>
+      </div>
+    );
+  }
+
   const handleChange = (field, value) =>
     setShipping((prev) => ({ ...prev, [field]: value }));
 
@@ -148,6 +199,12 @@ function CheckoutForm({ orderData, isDemoMode = false }) {
     setError("");
 
     try {
+      if (!orderData || !orderData.paymentIntentId) {
+        setError("Order data is missing. Please refresh and try again.");
+        setSubmitting(false);
+        return;
+      }
+
       let paymentIntentId = orderData.paymentIntentId;
 
       if (!isDemoMode) {

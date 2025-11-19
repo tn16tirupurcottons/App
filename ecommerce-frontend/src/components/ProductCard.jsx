@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaHeart } from "react-icons/fa";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
@@ -10,6 +10,7 @@ export default function ProductCard({ product }) {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const image =
     product?.thumbnail ||
     product?.gallery?.[0] ||
@@ -27,6 +28,7 @@ export default function ProductCard({ product }) {
     onSuccess: (response) => {
       const message = response?.data?.message || "Saved to wishlist";
       toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     },
     onError: (err) => {
       const message =

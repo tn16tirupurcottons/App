@@ -59,11 +59,16 @@ const fallbackProducts = [
 
 const FilterChip = ({ label, active, onClick }) => (
   <button
-    onClick={onClick}
-    className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm tracking-[0.3em] uppercase transition border ${
+    type="button"
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    }}
+    className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm tracking-[0.3em] uppercase transition border cursor-pointer ${
       active
-        ? "bg-primary text-white border-primary"
-        : "bg-transparent text-muted border-border hover:text-primary hover:border-primary"
+        ? "bg-primary text-white border-primary shadow-soft"
+        : "bg-transparent text-muted border-border hover:text-primary hover:border-primary hover:shadow-soft"
     }`}
   >
     {label}

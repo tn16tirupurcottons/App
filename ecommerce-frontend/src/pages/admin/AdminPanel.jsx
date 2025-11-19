@@ -18,7 +18,7 @@ export default function AdminPanel() {
 
   return (
     <AdminLayout title="Admin Dashboard">
-      <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6">
+      <div className="card p-4 md:p-6">
         {isLoading ? (
           <div className="space-y-4">
             <div className="h-32 bg-gray-200 rounded-xl animate-pulse" />
@@ -45,8 +45,8 @@ export default function AdminPanel() {
             {/* Latest Orders and Low Stock */}
             <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
               {/* Latest Orders Section */}
-              <section className="bg-gray-50 rounded-xl p-4 md:p-5">
-                <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">
+              <section className="card p-4 md:p-5">
+                <h3 className="text-base md:text-lg font-semibold mb-3 text-dark">
                   Latest Orders
                 </h3>
                 <div className="space-y-2 md:space-y-3">
@@ -54,37 +54,37 @@ export default function AdminPanel() {
                     latestOrders.slice(0, 5).map((order) => (
                       <div
                         key={order.id}
-                        className="bg-white border border-gray-200 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
+                        className="bg-light border border-border rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm md:text-base">
+                          <p className="font-semibold text-dark text-sm md:text-base">
                             ₹{Number(order.total || 0).toFixed(0)}
                           </p>
-                          <p className="text-xs md:text-sm text-gray-500 truncate">
+                          <p className="text-xs md:text-sm text-muted truncate">
                             {order.User?.name || "Guest"}
                           </p>
                         </div>
                         <div className="text-left sm:text-right flex-shrink-0">
-                          <span className="inline-block text-xs uppercase tracking-wider text-pink-600 font-semibold mb-1">
+                          <span className="inline-block text-xs uppercase tracking-wider text-primary font-semibold mb-1">
                             {order.status || "pending"}
                           </span>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted">
                             {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-gray-500">No orders yet.</p>
+                    <div className="bg-light border border-border rounded-lg p-4 text-center">
+                      <p className="text-sm text-muted">No orders yet.</p>
                     </div>
                   )}
                 </div>
               </section>
 
               {/* Low Stock Alerts Section */}
-              <section className="bg-gray-50 rounded-xl p-4 md:p-5">
-                <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">
+              <section className="card p-4 md:p-5">
+                <h3 className="text-base md:text-lg font-semibold mb-3 text-dark">
                   Low Stock Alerts
                 </h3>
                 <div className="space-y-2 md:space-y-3 max-h-[400px] overflow-y-auto">
@@ -92,13 +92,13 @@ export default function AdminPanel() {
                     lowStock.map((product) => (
                       <div
                         key={product.id}
-                        className="bg-white border border-gray-200 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
+                        className="bg-light border border-border rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm md:text-base truncate">
+                          <p className="font-semibold text-dark text-sm md:text-base truncate">
                             {product.name}
                           </p>
-                          <p className="text-xs md:text-sm text-gray-500">
+                          <p className="text-xs md:text-sm text-muted">
                             {product.brand || "TN16"}
                           </p>
                         </div>
@@ -110,8 +110,8 @@ export default function AdminPanel() {
                       </div>
                     ))
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-gray-500">Inventory looks good.</p>
+                    <div className="bg-light border border-border rounded-lg p-4 text-center">
+                      <p className="text-sm text-muted">Inventory looks good.</p>
                     </div>
                   )}
                 </div>
@@ -126,11 +126,11 @@ export default function AdminPanel() {
 
 function MetricCard({ label, value }) {
   return (
-    <div className="rounded-xl md:rounded-2xl border border-gray-200 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-md transition-shadow">
-      <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] md:tracking-[0.4em] text-gray-500 font-semibold">
+    <div className="card p-3 md:p-4 hover:shadow-medium transition-shadow">
+      <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] md:tracking-[0.4em] text-muted font-semibold">
         {label}
       </p>
-      <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">
+      <p className="text-2xl md:text-3xl font-bold text-primary mt-1 md:mt-2">
         {value ?? 0}
       </p>
     </div>

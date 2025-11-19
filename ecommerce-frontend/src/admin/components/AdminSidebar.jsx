@@ -38,28 +38,28 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full bg-ink text-white w-64 transform
+      className={`fixed top-0 left-0 h-full bg-white text-dark w-64 transform
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         transition-transform duration-300 ease-in-out md:translate-x-0 z-40
-        flex flex-col border-r border-white/10`}
+        flex flex-col border-r border-border shadow-medium`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-white/10 flex items-center justify-between">
+      <div className="p-4 border-b border-border flex items-center justify-between bg-primary/5">
         <div>
-          <h2 className="text-xl font-bold">Admin Panel</h2>
-          <p className="text-xs text-white/50 mt-1">TN16 Studio</p>
+          <h2 className="text-xl font-bold text-primary">Admin Panel</h2>
+          <p className="text-xs text-muted mt-1">TN16 Studio</p>
         </div>
         <button
           onClick={onClose}
-          className="md:hidden p-1 rounded hover:bg-white/10"
+          className="md:hidden p-1 rounded hover:bg-light"
           aria-label="Close menu"
         >
-          <X size={20} />
+          <X size={20} className="text-dark" />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav className="flex-1 p-4 overflow-y-auto bg-white">
         <ul className="space-y-2">
           {menu.map((item) => {
             const Icon = item.icon;
@@ -78,8 +78,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
                   }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                     ${isActive 
-                      ? "bg-white text-ink" 
-                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                      ? "bg-primary text-white shadow-soft" 
+                      : "text-dark/70 hover:bg-light hover:text-primary"
                     }`}
                 >
                   <Icon size={20} />
@@ -92,10 +92,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-border bg-white">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-dark/70 hover:bg-light hover:text-primary transition-colors"
         >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>

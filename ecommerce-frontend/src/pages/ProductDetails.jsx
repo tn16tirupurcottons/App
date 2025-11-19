@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
@@ -12,6 +12,7 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { user } = React.useContext(AuthContext);
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState("");
 
@@ -105,6 +106,7 @@ export default function ProductDetails() {
     },
     onSuccess: (response) => {
       toast.success(response?.data?.message || "Saved to wishlist");
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     },
     onError: (err) => {
       const message =
