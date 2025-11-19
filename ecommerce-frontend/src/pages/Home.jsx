@@ -60,7 +60,7 @@ const fallbackProducts = [
 const FilterChip = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 rounded-full text-sm font-semibold transition border ${
+    className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base font-semibold transition border ${
       active
         ? "bg-pink-600 text-white border-pink-600"
         : "bg-white text-gray-700 border-gray-200 hover:border-pink-400"
@@ -139,19 +139,19 @@ export default function Home() {
             <p className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/80 text-pink-600 font-semibold text-xs uppercase tracking-[0.3em]">
               {currentSlide.badge}
             </p>
-            <h1 className="text-4xl font-black text-gray-900 leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 leading-tight">
               {currentSlide.title}
             </h1>
-            <p className="text-gray-600 text-lg leading-relaxed">
+            <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
               {currentSlide.subtitle}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mt-2">
               <button
                 onClick={() => {
                   const segment = currentSlide.segment || "women";
                   navigate(`/catalog?segment=${segment}`);
                 }}
-                className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition"
+                className="bg-pink-600 hover:bg-pink-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold shadow-lg transition"
               >
                 {currentSlide.ctaPrimary}
               </button>
@@ -160,7 +160,7 @@ export default function Home() {
                   const segment = currentSlide.segment || "genz";
                   navigate(`/catalog?segment=${segment}&view=studio`);
                 }}
-                className="bg-white/80 text-gray-900 px-6 py-3 rounded-full font-semibold border border-gray-200 hover:border-gray-400 transition"
+                className="bg-white/80 text-gray-900 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold border border-gray-200 hover:border-gray-400 transition"
               >
                 {currentSlide.ctaSecondary}
               </button>
@@ -170,7 +170,7 @@ export default function Home() {
             <img
               src={currentSlide.image}
               alt={currentSlide.title}
-              className="w-full h-[320px] object-cover"
+              className="w-full aspect-[16/9] object-cover"
               loading="lazy"
             />
           </div>
@@ -181,7 +181,7 @@ export default function Home() {
               key={slide.id}
               onClick={() => setActiveSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`h-2 w-8 rounded-full ${
+              className={`h-2 w-6 md:w-8 rounded-full ${
                 idx === activeSlide ? "bg-pink-600" : "bg-white/60"
               }`}
             />
@@ -209,7 +209,7 @@ export default function Home() {
 
       {/* Category filter pills */}
       <section className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 overflow-x-auto pb-2">
+        <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide">
           <FilterChip
             label="All Fits"
             active={!activeCategorySlug}
@@ -241,12 +241,12 @@ export default function Home() {
       })}
 
       <section className="max-w-7xl mx-auto px-4 py-10 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-pink-500 font-semibold">
               Inspired by LimeRoad
             </p>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               Featured Cotton Drops
             </h2>
           </div>
@@ -264,7 +264,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
           {productsLoading
             ? new Array(8).fill(null).map((_, idx) => (
                 <div
@@ -289,7 +289,7 @@ export default function Home() {
           <h3 className="text-xl font-bold text-gray-900">
             Craft from Tirupur
           </h3>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Every TN16 weave passes through breathable cotton checks, azo-free
             dyes and festival-ready finishing inspired by South-Indian verandas.
           </p>
@@ -301,12 +301,12 @@ export default function Home() {
         </div>
         <div className="bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl text-white p-6 shadow-lg">
           <h3 className="text-xl font-bold">TN16 Tirupur Cotton</h3>
-          <p className="text-white/90 mt-2">
+          <p className="text-white/90 mt-2 text-sm sm:text-base">
             New arrivals drop every Thursday. Get early access as an insider.
           </p>
           <button
             onClick={() => navigate("/register")}
-            className="mt-6 bg-white hover:bg-gray-50 text-pink-600 font-semibold px-6 py-3 rounded-full shadow-lg transition"
+            className="mt-6 bg-white hover:bg-gray-50 text-pink-600 font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg transition"
           >
             Join Insider Club
           </button>
@@ -317,39 +317,40 @@ export default function Home() {
 }
 
 function SegmentBand({ segment, flip }) {
+  const navigate = useNavigate();
   return (
     <section className="max-w-7xl mx-auto px-4 py-6">
       <div
-        className={`rounded-3xl bg-white shadow grid md:grid-cols-2 gap-8 overflow-hidden ${
+        className={`rounded-3xl bg-white shadow flex flex-col md:flex-row gap-4 md:gap-8 overflow-hidden ${
           flip ? "md:flex-row-reverse" : ""
         }`}
       >
         <div
-          className="p-8 flex flex-col justify-center"
+          className="p-6 md:p-8 flex flex-col justify-center flex-1"
           style={{ background: `${segment.primary}08` }}
         >
           <p className="text-xs uppercase tracking-[0.4em] text-gray-500 font-semibold">
             {segment.label} Edit
           </p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-2">
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">
             {segment.description}
           </h3>
-          <div className="mt-6 flex gap-3">
+          <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={() => navigate(`/catalog?segment=${segment.key}`)}
-              className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2 rounded-full text-sm text-center transition"
+              className="bg-gray-900 hover:bg-gray-800 text-white px-4 sm:px-5 py-2 rounded-full text-sm transition"
             >
               Shop {segment.label}
             </button>
             <button
               onClick={() => navigate(`/catalog?segment=${segment.key}&view=studio`)}
-              className="border border-gray-300 hover:border-gray-400 px-5 py-2 rounded-full text-sm text-center transition"
+              className="border border-gray-300 hover:border-gray-400 px-4 sm:px-5 py-2 rounded-full text-sm transition"
             >
               Explore Looks
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 p-4">
+        <div className="grid grid-cols-2 gap-2 p-2 md:p-4 flex-1">
           {segment.tiles?.map((tile) => (
             <div
               key={tile}
@@ -358,7 +359,7 @@ function SegmentBand({ segment, flip }) {
               <img
                 src={tile}
                 alt={segment.label}
-                className="w-full h-40 object-cover"
+                className="w-full h-40 sm:h-48 object-cover"
                 loading="lazy"
               />
             </div>
