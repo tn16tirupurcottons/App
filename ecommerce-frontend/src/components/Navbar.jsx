@@ -237,15 +237,41 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
   const [touchEnd, setTouchEnd] = useState(null);
   const navigate = useNavigate();
 
-  // Prevent body scroll when menu is open
+  // Hide scrollbars but allow scrolling when menu is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      // Add class to body to hide scrollbars but allow scrolling
+      document.body.classList.add("menu-open");
+      // Hide scrollbar for webkit browsers
+      const style = document.createElement("style");
+      style.id = "menu-scrollbar-hide";
+      style.textContent = `
+        body.menu-open {
+          overflow-y: scroll !important;
+          overflow-x: hidden !important;
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        body.menu-open::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `;
+      document.head.appendChild(style);
     } else {
-      document.body.style.overflow = "";
+      document.body.classList.remove("menu-open");
+      const style = document.getElementById("menu-scrollbar-hide");
+      if (style) {
+        style.remove();
+      }
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.classList.remove("menu-open");
+      const style = document.getElementById("menu-scrollbar-hide");
+      if (style) {
+        style.remove();
+      }
     };
   }, [isOpen]);
 
@@ -293,14 +319,14 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
         }
       }}
     >
-      {/* Backdrop */}
+      {/* Backdrop - allows page scrolling behind */}
       <div
         className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
       />
       
-      {/* Drawer */}
+      {/* Drawer - Clean white background */}
       <div
         ref={drawerRef}
         onTouchStart={onTouchStart}
@@ -310,21 +336,29 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}
+        style={{ backgroundColor: "#ffffff" }}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between z-10">
+        {/* Header - Clean white */}
+        <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between z-10" style={{ backgroundColor: "#ffffff" }}>
           <h3 className="text-xl font-bold text-dark">Collections</h3>
           <button
             aria-label="Close navigation"
-            className="p-2 rounded-full hover:bg-light text-dark transition"
+            className="p-2 rounded-full hover:bg-light active:bg-light text-dark transition"
             onClick={onClose}
           >
             <FaTimes size={20} />
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto h-[calc(100vh-73px)] pb-24">
+        {/* Scrollable Content - hide scrollbar, clean white */}
+        <div 
+          className="overflow-y-auto h-[calc(100vh-73px)] pb-24 scrollbar-hide"
+          style={{ 
+            backgroundColor: "#ffffff",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
           <div className="px-6 py-4">
             {/* Home Link */}
             <NavLink
