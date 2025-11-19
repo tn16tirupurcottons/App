@@ -16,18 +16,8 @@ export default function BrandSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["brandSettings"],
     queryFn: async () => {
-      try {
-        const res = await axiosClient.get("/admin/settings/brand");
-        return res.data;
-      } catch (err) {
-        // If endpoint doesn't exist, return defaults
-        return {
-          logo: "",
-          favicon: "",
-          footerLogo: "",
-          heroBackground: "",
-        };
-      }
+      const res = await axiosClient.get("/admin/settings/brand");
+      return res.data.settings || {};
     },
   });
 
@@ -41,19 +31,11 @@ export default function BrandSettings() {
   }, [settings]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload) => {
-      try {
-        return await axiosClient.post("/admin/settings/brand", payload);
-      } catch (err) {
-        // If endpoint doesn't exist, save to localStorage as fallback
-        localStorage.setItem("tn16_brand_settings", JSON.stringify(payload));
-        return { data: payload };
-      }
-    },
+    mutationFn: async (payload) =>
+      axiosClient.post("/admin/settings/brand", payload),
     onSuccess: () => {
       toast.success("Brand settings saved successfully!");
-      qc.invalidateQueries(["brandSettings"]);
-      // Trigger a custom event to update frontend
+      qc.invalidateQueries({ queryKey: ["brandSettings"] });
       window.dispatchEvent(new Event("brand-settings-updated"));
     },
     onError: (err) => {
@@ -85,17 +67,17 @@ export default function BrandSettings() {
 
   return (
     <AdminLayout title="Brand Settings">
-      <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6 space-y-6 md:space-y-8">
-        <div className="border-b border-gray-200 pb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Brand Assets</h2>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4 md:p-6 space-y-6 md:space-y-8 text-white">
+        <div className="border-b border-white/10 pb-4">
+          <h2 className="text-lg font-semibold">Brand Assets</h2>
+          <p className="text-sm text-white/60 mt-1">
             Upload and manage your brand logos, favicon, and hero images. Changes are reflected immediately.
           </p>
         </div>
 
         {/* Logo */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-white/70 mb-3">
             Main Logo *
           </label>
           <ImageUploader
@@ -105,8 +87,8 @@ export default function BrandSettings() {
             maxSizeMB={2}
           />
           {logo && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 mb-2">Preview:</p>
+            <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-xs text-white/50 mb-2">Preview:</p>
               <img src={logo} alt="Logo preview" className="h-16 object-contain" />
             </div>
           )}
@@ -114,7 +96,7 @@ export default function BrandSettings() {
 
         {/* Favicon */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-white/70 mb-3">
             Favicon (16x16 or 32x32 recommended)
           </label>
           <ImageUploader
@@ -124,8 +106,8 @@ export default function BrandSettings() {
             maxSizeMB={1}
           />
           {favicon && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 mb-2">Preview:</p>
+            <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-xs text-white/50 mb-2">Preview:</p>
               <img src={favicon} alt="Favicon preview" className="h-8 w-8 object-contain" />
             </div>
           )}
@@ -133,7 +115,7 @@ export default function BrandSettings() {
 
         {/* Footer Logo */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-white/70 mb-3">
             Footer Logo
           </label>
           <ImageUploader
@@ -143,8 +125,8 @@ export default function BrandSettings() {
             maxSizeMB={2}
           />
           {footerLogo && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 mb-2">Preview:</p>
+            <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-xs text-white/50 mb-2">Preview:</p>
               <img src={footerLogo} alt="Footer logo preview" className="h-12 object-contain" />
             </div>
           )}
@@ -152,7 +134,7 @@ export default function BrandSettings() {
 
         {/* Hero Background */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-white/70 mb-3">
             Hero Background Image
           </label>
           <ImageUploader
@@ -162,19 +144,19 @@ export default function BrandSettings() {
             maxSizeMB={5}
           />
           {heroBackground && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 mb-2">Preview:</p>
+            <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-xs text-white/50 mb-2">Preview:</p>
               <img src={heroBackground} alt="Hero background preview" className="h-32 w-full object-cover rounded-lg" />
             </div>
           )}
         </div>
 
         {/* Save Button */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex gap-3 pt-4 border-t border-white/10">
           <button
             onClick={handleSave}
             disabled={saveMutation.isLoading || !logo}
-            className="flex-1 bg-pink-600 hover:bg-pink-700 text-white rounded-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+            className="flex-1 bg-white text-ink rounded-full py-3 font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {saveMutation.isLoading ? "Saving..." : "Save Brand Settings"}
           </button>

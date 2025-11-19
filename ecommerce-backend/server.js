@@ -25,6 +25,9 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
 import adminProductRoutes from "./routes/admin/adminProductRoutes.js";
 import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
+import adminBannerRoutes from "./routes/admin/adminBannerRoutes.js";
+import adminSettingsRoutes from "./routes/admin/adminSettingsRoutes.js";
+import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
 
 // Utils
 import { bootstrapCatalog } from "./utils/bootstrapCatalog.js";
@@ -110,6 +113,9 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/admin/banners", adminBannerRoutes);
+app.use("/api/admin/settings", adminSettingsRoutes);
+app.use("/api/admin/users", adminUserRoutes);
 
 // ---------------------------
 // ERROR HANDLER (LAST)

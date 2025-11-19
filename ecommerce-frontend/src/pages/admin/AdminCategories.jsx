@@ -24,7 +24,7 @@ export default function AdminCategories() {
   const createMutation = useMutation({
     mutationFn: (payload) => axiosClient.post("/categories", payload),
     onSuccess: () => {
-      qc.invalidateQueries(["adminCategories"]);
+      qc.invalidateQueries({ queryKey: ["adminCategories"] });
       setForm({
         name: "",
         slug: "",
@@ -37,7 +37,8 @@ export default function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => axiosClient.delete(`/categories/${id}`),
-    onSuccess: () => qc.invalidateQueries(["adminCategories"]),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["adminCategories"] }),
   });
 
   return (

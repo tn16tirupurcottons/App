@@ -5,8 +5,8 @@ import {
   FaBars,
   FaShoppingCart,
   FaSearch,
-  FaCrown,
   FaTimes,
+  FaArrowRight,
 } from "react-icons/fa";
 import MegaMenu from "./MegaMenu";
 import { segmentThemes } from "../data/segments";
@@ -23,6 +23,7 @@ export default function Navbar() {
   const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
   const [activeMenu, setActiveMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const segments = Object.values(segmentThemes);
 
   const handleSegmentNavigate = (segmentKey) => {
@@ -32,14 +33,15 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <div className="border-b border-pink-100 bg-gradient-to-r from-pink-50 via-white to-orange-50 text-xs text-pink-600 tracking-[0.4em] text-center py-1 font-semibold">
-        PREMIUM COTTON FWD HAUL
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-3xl border-b border-border shadow-soft">
+      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-muted uppercase border-b border-border bg-light">
+        <span>TN16 · Luxury Cotton Studio</span>
+        <span>Worldwide shipping · curated edits</span>
       </div>
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 py-3">
+        <div className="flex items-center gap-4 py-4">
           <button
-            className="md:hidden text-gray-700"
+            className="md:hidden text-dark/80 hover:text-dark"
             aria-label="Open navigation menu"
             onClick={() => setMobileMenuOpen(true)}
           >
@@ -47,27 +49,27 @@ export default function Navbar() {
           </button>
           <Link
             to="/"
-            className="flex items-center gap-3 flex-1 justify-center md:flex-none md:justify-start"
+            className="flex items-center gap-3 flex-1 md:flex-none md:gap-4"
           >
-            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-black grid place-items-center">
-              TN16
+            <div className="h-12 w-12 rounded-full border-2 border-primary text-primary font-display text-lg tracking-[0.3em] grid place-items-center bg-primary/5">
+              TN
             </div>
-            <div className="text-center md:text-left">
-              <p className="font-bold text-lg text-gray-900 leading-tight">
+            <div className="text-left">
+              <p className="text-dark font-semibold text-lg leading-tight">
                 {brand}
               </p>
-              <p className="text-xs uppercase tracking-[0.2em] text-pink-500">
-                Tirupur Cotton Studio
+              <p className="pill text-[10px] text-muted">
+                Tirupur · Established MMXXV
               </p>
             </div>
           </Link>
 
-          <div className="flex-1 min-w-[220px] max-w-lg hidden md:flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 border border-gray-200">
-            <FaSearch className="text-gray-500" />
+          <div className="hidden md:flex flex-1 items-center gap-2 max-w-xl bg-light border border-border rounded-full px-5 py-2">
+            <FaSearch className="text-muted" />
             <input
               type="text"
-              placeholder="Search for products, brands and more"
-              className="flex-1 bg-transparent text-sm focus:outline-none"
+              placeholder="Search pieces, collections, artisans"
+              className="flex-1 bg-transparent text-sm text-dark focus:outline-none placeholder:text-muted"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.target.value.trim()) {
                   navigate(
@@ -78,52 +80,63 @@ export default function Navbar() {
             />
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold text-gray-800 ml-auto">
+          <div className="ml-auto flex items-center gap-3 text-sm font-medium text-dark/80">
             <Link
               to="/cart"
               aria-label="View cart"
-              className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-pink-600 transition"
+              className="hidden sm:flex items-center gap-2 hover:text-primary"
             >
-              <FaShoppingCart /> Cart
+              <FaShoppingCart size={16} /> Cart
             </Link>
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="hidden sm:block text-sm text-gray-600">
-                  Hi, {user.name.split(" ")[0]}
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:block text-muted">
+                  {user.name.split(" ")[0]}
                 </span>
                 <button
                   onClick={logout}
-                  className="text-sm font-semibold text-pink-600 hover:text-pink-700"
+                  className="px-4 py-2 rounded-full border border-border hover:border-primary hover:text-primary transition"
                 >
                   Logout
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="hover:text-pink-600">
+                <Link to="/login" className="hover:text-primary">
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="text-white bg-pink-600 px-4 py-2 rounded-full hover:bg-pink-700 transition"
+                  className="px-4 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition"
                 >
-                  Join Free
+                  Join
                 </Link>
               </div>
             )}
+            <button
+              className="md:hidden text-dark/80 hover:text-dark"
+              aria-label="Open search panel"
+              onClick={() => setMobileSearchOpen(true)}
+            >
+              <FaSearch size={18} />
+            </button>
           </div>
         </div>
       </div>
 
       <div
-        className="border-t border-gray-100 bg-white relative hidden md:block"
+        className="border-t border-border bg-light hidden md:block"
         onMouseLeave={() => setActiveMenu(null)}
       >
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-6 py-2 text-sm font-semibold text-gray-700 relative">
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold text-dark/70">
           <NavLink
             to="/"
             className={({ isActive }) =>
-              isActive ? "text-pink-600" : "hover:text-pink-600"
+              `pb-2 border-b-2 ${
+                isActive
+                  ? "border-primary text-primary"
+                  : "border-transparent hover:border-primary/40 hover:text-primary"
+              }`
             }
           >
             Home
@@ -134,16 +147,13 @@ export default function Navbar() {
               onMouseEnter={() => setActiveMenu(segment.key)}
               onFocus={() => setActiveMenu(segment.key)}
               onClick={() => handleSegmentNavigate(segment.key)}
-              className={`relative pb-2 transition ${
-                activeMenu === segment.key ? "text-pink-600" : "hover:text-pink-600"
+              className={`relative pb-2 border-b-2 transition ${
+                activeMenu === segment.key
+                  ? "text-primary border-primary"
+                  : "border-transparent hover:border-primary/40 hover:text-primary"
               }`}
             >
               {segment.label}
-              <span
-                className={`absolute left-0 right-0 -bottom-0.5 h-0.5 transition-all ${
-                  activeMenu === segment.key ? "bg-pink-500" : "bg-transparent"
-                }`}
-              />
             </button>
           ))}
           {extraLinks.map((link) => (
@@ -151,68 +161,48 @@ export default function Navbar() {
               key={link.slug}
               to={`/catalog?category=${link.slug}`}
               className={({ isActive }) =>
-                isActive ? "text-pink-600" : "hover:text-pink-600 transition"
+                `pb-2 border-b-2 ${
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent hover:border-primary/40 hover:text-primary"
+                }`
               }
             >
               {link.label}
-              {link.label === "Studio" && (
-                <span className="text-[10px] text-pink-500 ml-1">NEW</span>
-              )}
             </NavLink>
           ))}
-          <nav className="ml-auto flex gap-4 text-xs uppercase tracking-[0.4em] text-pink-500">
-            <span className="flex items-center gap-1">
-              <FaCrown /> Premium
+          <div className="ml-auto flex items-center gap-3 text-[11px] tracking-[0.35em] uppercase text-muted">
+            <span className="flex items-center gap-2">
+              Editions <FaArrowRight size={10} />
             </span>
-          </nav>
+          </div>
         </div>
         <MegaMenu segment={segmentThemes[activeMenu]} />
       </div>
 
       {/* Mobile drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-50">
-          <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl p-5 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Browse</h3>
+        <div className="md:hidden fixed inset-0 bg-black/50 backdrop-blur z-50">
+          <div className="absolute inset-y-0 left-0 w-72 bg-white border-r border-border p-6 overflow-y-auto shadow-large">
+            <div className="flex items-center justify-between mb-8 text-dark">
+              <h3 className="text-lg font-semibold">Collections</h3>
               <button
                 aria-label="Close navigation"
+                className="text-muted hover:text-dark"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <FaTimes />
               </button>
             </div>
-            <div className="mb-6">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-2">
-                <FaSearch className="text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search TN16"
-                  className="bg-transparent flex-1 text-sm focus:outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target.value.trim()) {
-                      navigate(
-                        `/catalog?query=${encodeURIComponent(e.target.value)}`
-                      );
-                      setMobileMenuOpen(false);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-            <ul className="space-y-5">
+            <ul className="space-y-5 text-dark">
               {segments.map((segment) => (
                 <li key={segment.key}>
                   <button
                     className="text-left w-full"
                     onClick={() => handleSegmentNavigate(segment.key)}
                   >
-                    <p className="text-base font-semibold text-gray-900">
-                      {segment.label}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {segment.description}
-                    </p>
+                    <p className="text-base font-semibold">{segment.label}</p>
+                    <p className="text-xs text-muted">{segment.description}</p>
                   </button>
                 </li>
               ))}
@@ -221,7 +211,7 @@ export default function Navbar() {
                   <NavLink
                     to={`/catalog?category=${link.slug}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm font-semibold text-gray-900 hover:text-pink-600"
+                    className="text-sm font-semibold text-dark/80 hover:text-primary"
                   >
                     {link.label}
                   </NavLink>
@@ -233,12 +223,45 @@ export default function Navbar() {
                     navigate("/admin");
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm font-semibold text-gray-900"
+                  className="text-sm font-semibold text-dark/80 hover:text-primary"
                 >
                   Admin
                 </button>
               </li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile search overlay */}
+      {mobileSearchOpen && (
+        <div className="md:hidden fixed inset-0 bg-white z-50 px-6 py-7">
+          <div className="flex items-center justify-between mb-6 text-dark">
+            <p className="text-sm uppercase tracking-[0.4em] text-muted">
+              Search
+            </p>
+            <button
+              aria-label="Close search"
+              className="text-muted hover:text-dark"
+              onClick={() => setMobileSearchOpen(false)}
+            >
+              <FaTimes size={18} />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 border-2 border-border rounded-full px-5 py-3 focus-within:border-primary">
+            <FaSearch className="text-muted" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search TN16 studio"
+              className="flex-1 bg-transparent text-dark focus:outline-none placeholder:text-muted"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                  navigate(`/catalog?query=${encodeURIComponent(e.target.value)}`);
+                  setMobileSearchOpen(false);
+                }
+              }}
+            />
           </div>
         </div>
       )}

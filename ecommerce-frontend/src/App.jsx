@@ -19,6 +19,8 @@ import CreateProduct from "./pages/admin/CreateProduct";
 import EditProduct from "./pages/admin/EditProduct";
 import BannerManagement from "./pages/admin/BannerManagement";
 import BrandSettings from "./pages/admin/BrandSettings";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminUsers from "./pages/admin/AdminUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -106,6 +108,22 @@ export default function App() {
                 element={
                   <ProtectedRoute adminOnly={true}>
                     <BannerManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/customers"
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminCustomers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminUsers />
                   </ProtectedRoute>
                 }
               />

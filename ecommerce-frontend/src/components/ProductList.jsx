@@ -56,20 +56,20 @@ export default function ProductList({ initialQuery = {} }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 text-dark">
       <div className="flex flex-wrap gap-3">
         <input
-          placeholder="Search TN16 cotton looks..."
+          placeholder="Search silhouettes, fabrics, artisans"
           value={query.search}
           onChange={(e) => handleChange("search", e.target.value)}
-          className="flex-1 min-w-[180px] rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+          className="flex-1 min-w-[180px] rounded-full border border-border bg-light px-5 py-2 text-sm text-dark placeholder:text-muted focus:outline-none focus:border-primary"
         />
         <select
           value={query.categorySlug}
           onChange={(e) => handleChange("categorySlug", e.target.value)}
-          className="rounded-full border border-gray-200 px-4 py-2 text-sm"
+          className="rounded-full border border-border bg-light px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
         >
-          <option value="">All Categories</option>
+          <option value="">All categories</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.slug}>
               {cat.name}
@@ -79,7 +79,7 @@ export default function ProductList({ initialQuery = {} }) {
         <select
           value={query.sort}
           onChange={(e) => handleChange("sort", e.target.value)}
-          className="rounded-full border border-gray-200 px-4 py-2 text-sm"
+          className="rounded-full border border-border bg-light px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
         >
           <option value="newest">Newest</option>
           <option value="price_asc">Price: Low → High</option>
@@ -87,13 +87,10 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
         {isLoading
           ? new Array(8).fill(null).map((_, idx) => (
-              <div
-                key={idx}
-                className="h-80 bg-white rounded-2xl animate-pulse"
-              />
+              <div key={idx} className="h-80 rounded-[32px] bg-light animate-pulse" />
             ))
           : products.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -101,21 +98,21 @@ export default function ProductList({ initialQuery = {} }) {
       </div>
 
       {data?.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-3">
+        <div className="flex justify-center items-center gap-3 text-dark/70">
           <button
             disabled={query.page <= 1}
             onClick={() => handleChange("page", query.page - 1)}
-            className="px-4 py-2 rounded-full border text-sm disabled:opacity-40"
+            className="px-4 py-2 rounded-full border border-border disabled:opacity-30 hover:border-primary hover:text-primary"
           >
             Prev
           </button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm">
             Page {data.page || 1} of {data.totalPages || 1}
           </span>
           <button
             disabled={(data.page || 1) >= (data.totalPages || 1)}
             onClick={() => handleChange("page", query.page + 1)}
-            className="px-4 py-2 rounded-full border text-sm disabled:opacity-40"
+            className="px-4 py-2 rounded-full border border-border disabled:opacity-30 hover:border-primary hover:text-primary"
           >
             Next
           </button>

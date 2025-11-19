@@ -29,7 +29,7 @@ export default function BannerManagement() {
     mutationFn: (id) => axiosClient.delete(`/admin/banners/${id}`),
     onSuccess: () => {
       toast.success("Banner deleted");
-      qc.invalidateQueries(["banners"]);
+      qc.invalidateQueries({ queryKey: ["banners"] });
     },
     onError: () => toast.error("Failed to delete banner"),
   });
@@ -42,7 +42,7 @@ export default function BannerManagement() {
       ctaLabel: banner?.ctaLabel || "Shop Now",
       ctaLink: banner?.ctaLink || "/catalog",
       segment: banner?.segment || "default",
-      order: banner?.order || 0,
+      displayOrder: banner?.displayOrder || 0,
       isActive: banner?.isActive !== undefined ? banner.isActive : true,
     });
 
@@ -56,7 +56,7 @@ export default function BannerManagement() {
       },
       onSuccess: () => {
         toast.success(banner ? "Banner updated" : "Banner created");
-        qc.invalidateQueries(["banners"]);
+        qc.invalidateQueries({ queryKey: ["banners"] });
         onClose();
       },
       onError: (err) => {
@@ -155,8 +155,10 @@ export default function BannerManagement() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Order</label>
               <input
                 type="number"
-                value={form.order}
-                onChange={(e) => setForm({ ...form, order: Number(e.target.value) })}
+                value={form.displayOrder}
+                onChange={(e) =>
+                  setForm({ ...form, displayOrder: Number(e.target.value) })
+                }
                 className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500"
               />
             </div>
@@ -195,10 +197,10 @@ export default function BannerManagement() {
   if (isLoading) {
     return (
       <AdminLayout title="Banner Management">
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6">
+        <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+              <div key={i} className="h-32 bg-white/10 rounded-xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -222,7 +224,7 @@ export default function BannerManagement() {
         </button>
       }
     >
-      <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6 space-y-4">
+      <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4 md:p-6 space-y-4 text-white">
         {showForm && (
           <BannerForm
             banner={editing}

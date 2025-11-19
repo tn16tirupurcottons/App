@@ -27,34 +27,37 @@ export default function Catalog() {
   const segmentTheme = segment ? segmentThemes[segment] : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 md:py-12 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 md:py-14 space-y-8 text-dark">
       {segmentTheme && (
         <div
-          className="rounded-3xl p-8 md:p-12 text-white mb-8"
-          style={{ background: `linear-gradient(135deg, ${segmentTheme.primary} 0%, ${segmentTheme.accent} 100%)` }}
+          className="rounded-[40px] p-8 md:p-12 text-white border border-border shadow-medium"
+          style={{
+            background: `linear-gradient(135deg, ${segmentTheme.primary} 0%, ${segmentTheme.accent} 100%)`,
+          }}
         >
-          <p className="text-xs uppercase tracking-[0.4em] text-white/80 font-semibold mb-2">
+          <p className="pill text-white/90 mb-3">
             {segmentTheme.label} Collection
           </p>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-3xl md:text-4xl font-display mb-4">
             {segmentTheme.description}
           </h1>
-          <p className="text-white/90 text-lg">
-            Discover curated {segmentTheme.label.toLowerCase()} styles from TN16 Tirupur Cotton.
+          <p className="text-white/90 text-lg max-w-2xl">
+            Discover curated {segmentTheme.label.toLowerCase()} styles from TN16
+            Tirupur Cotton.
           </p>
         </div>
       )}
 
       <div>
-        <p className="text-xs uppercase tracking-[0.4em] text-pink-500 font-semibold">
+        <p className="pill text-muted">
           {segmentTheme ? `${segmentTheme.label} Edit` : "TN16 Cotton Edit"}
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          {segmentTheme 
-            ? `Browse ${segmentTheme.label} Collection` 
+        <h1 className="text-2xl md:text-3xl font-display mt-1 text-dark">
+          {segmentTheme
+            ? `Browse ${segmentTheme.label} collection`
             : "Browse the complete TN16 Tirupur Cotton catalog"}
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-muted mt-3 max-w-2xl">
           Filter by category, sort by price and discover curated cotton looks
           from Tirupur's ateliers.
         </p>

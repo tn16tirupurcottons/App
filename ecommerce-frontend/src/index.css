@@ -1,36 +1,64 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scroll & smooth transitions */
-html {
-  scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: theme("fontFamily.sans");
+    background: #ffffff;
+  }
+
+  body {
+    @apply bg-white text-dark antialiased;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  a,
+  button {
+    transition: color 200ms ease, background-color 200ms ease,
+      border-color 200ms ease, transform 200ms ease;
+  }
 }
 
-/* Small custom */
-body {
-  @apply bg-gray-50 text-gray-900;
-}
+@layer components {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-/* Hide scrollbar on mobile */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-thumb {
-  background-color: #ddd;
-  border-radius: 10px;
-}
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
-/* Example input styling */
-.input {
-  @apply w-full p-2 border rounded;
-}
+  .card {
+    @apply bg-white border border-border rounded-2xl shadow-soft;
+  }
 
-/* Hide scrollbar utility */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+  .pill {
+    @apply uppercase tracking-wide text-xs text-muted;
+  }
+
+  .link {
+    @apply text-primary hover:text-secondary;
+  }
 }

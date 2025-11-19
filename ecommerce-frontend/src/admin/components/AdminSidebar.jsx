@@ -8,6 +8,8 @@ import {
   LogOut,
   Image,
   Settings,
+  Users,
+  Shield,
 } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
@@ -22,8 +24,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { name: "Products", icon: ShoppingBag, path: "/admin/products" },
     { name: "Orders", icon: ListOrdered, path: "/admin/orders" },
     { name: "Categories", icon: Tags, path: "/admin/categories" },
+    { name: "Customers", icon: Users, path: "/admin/customers" },
+    { name: "Team & Roles", icon: Shield, path: "/admin/users" },
     { name: "Banners", icon: Image, path: "/admin/banners" },
-    { name: "Brand Settings", icon: Settings, path: "/admin/brand-settings" },
+    { name: "Settings", icon: Settings, path: "/admin/brand-settings" },
   ];
 
   const handleLogout = () => {
@@ -34,20 +38,20 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full bg-gray-900 text-white w-64 transform
+      className={`fixed top-0 left-0 h-full bg-ink text-white w-64 transform
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         transition-transform duration-300 ease-in-out md:translate-x-0 z-40
-        flex flex-col`}
+        flex flex-col border-r border-white/10`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Admin Panel</h2>
-          <p className="text-xs text-gray-400 mt-1">TN16 Studio</p>
+          <p className="text-xs text-white/50 mt-1">TN16 Studio</p>
         </div>
         <button
           onClick={onClose}
-          className="md:hidden p-1 rounded hover:bg-gray-800"
+          className="md:hidden p-1 rounded hover:bg-white/10"
           aria-label="Close menu"
         >
           <X size={20} />
@@ -74,8 +78,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
                   }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                     ${isActive 
-                      ? "bg-pink-600 text-white" 
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      ? "bg-white text-ink" 
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
                     }`}
                 >
                   <Icon size={20} />
@@ -88,10 +92,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors"
         >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>

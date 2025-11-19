@@ -4,11 +4,13 @@ import * as Yup from "yup";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Login() {
   const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -82,23 +84,21 @@ export default function Login() {
   });
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8 md:p-10">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Login</h2>
-          <p className="text-gray-600">
-            {isAdminLogin ? "Admin Access" : "Welcome back to TN16"}
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 text-dark">
+      <div className="max-w-md w-full card p-8 md:p-10 space-y-6">
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted">
+            {isAdminLogin ? "Admin Access" : "Welcome back"}
           </p>
+          <h2 className="text-3xl font-display mt-2 text-dark">Login</h2>
         </div>
 
-        <div className="mb-6 flex gap-2 bg-gray-100 rounded-full p-1">
+        <div className="flex gap-2 bg-light rounded-full p-1">
           <button
             type="button"
             onClick={() => setIsAdminLogin(false)}
-            className={`flex-1 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              !isAdminLogin
-                ? "bg-pink-600 text-white"
-                : "text-gray-600 hover:text-gray-900"
+            className={`flex-1 py-2 rounded-full text-xs uppercase tracking-[0.3em] transition ${
+              !isAdminLogin ? "bg-primary text-white" : "text-muted hover:text-dark"
             }`}
           >
             Customer
@@ -106,10 +106,8 @@ export default function Login() {
           <button
             type="button"
             onClick={() => setIsAdminLogin(true)}
-            className={`flex-1 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              isAdminLogin
-                ? "bg-pink-600 text-white"
-                : "text-gray-600 hover:text-gray-900"
+            className={`flex-1 py-2 rounded-full text-xs uppercase tracking-[0.3em] transition ${
+              isAdminLogin ? "bg-primary text-white" : "text-muted hover:text-dark"
             }`}
           >
             Admin
@@ -118,7 +116,7 @@ export default function Login() {
 
         <form onSubmit={formik.handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-dark/70 mb-2">
               Email
             </label>
             <input
@@ -128,7 +126,7 @@ export default function Login() {
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className="w-full border-2 border-gray-200 rounded-full px-4 py-3 focus:outline-none focus:border-pink-500 transition"
+              className="w-full border border-border bg-white rounded-full px-4 py-3 text-dark focus:outline-none focus:border-primary"
             />
             {formik.touched.email && formik.errors.email && (
               <p className="text-red-600 text-sm mt-1">{formik.errors.email}</p>
@@ -136,18 +134,28 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-dark/70 mb-2">
               Password
             </label>
-            <input
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="w-full border-2 border-gray-200 rounded-full px-4 py-3 focus:outline-none focus:border-pink-500 transition"
-            />
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full border border-border bg-white rounded-full px-4 py-3 pr-12 text-dark focus:outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-4 flex items-center text-muted hover:text-dark"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {formik.touched.password && formik.errors.password && (
               <p className="text-red-600 text-sm mt-1">{formik.errors.password}</p>
             )}
@@ -155,22 +163,22 @@ export default function Login() {
 
           {formik.errors.general && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm font-medium">{formik.errors.general}</p>
+              <p className="text-red-700 text-sm font-medium">{formik.errors.general}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={formik.isSubmitting}
-            className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+            className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
           >
             {formik.isSubmitting ? "Logging in..." : "Login"}
           </button>
 
           {!isAdminLogin && (
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted">
               Don't have an account?{" "}
-              <Link to="/register" className="text-pink-600 font-semibold hover:text-pink-700">
+              <Link to="/register" className="text-primary hover:underline">
                 Register here
               </Link>
             </p>

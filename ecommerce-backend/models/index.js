@@ -11,6 +11,8 @@ import OrderItem from "./OrderItem.js";
 import Wishlist from "./Wishlist.js";
 import Category from "./Category.js";
 import RefreshToken from "./RefreshToken.js";
+import Banner from "./Banner.js";
+import BrandSetting from "./BrandSetting.js";
 
 // =============================
 //      MODEL ASSOCIATIONS
@@ -70,4 +72,6 @@ export {
   Wishlist,
   Category,
   RefreshToken,
+  Banner,
+  BrandSetting,
 };

@@ -9,20 +9,23 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
+const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || "";
+const stripePromise = publicKey ? loadStripe(publicKey) : null;
 
 export default function Checkout() {
   const [clientSecret, setClientSecret] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       try {
         const res = await axiosClient.post("/orders/checkout");
-        setClientSecret(res.data.clientSecret);
+        setClientSecret(res.data.clientSecret || "");
         setOrderData(res.data);
+        setDemoMode(Boolean(res.data.demoMode));
       } catch (err) {
         setError(err.response?.data?.message || "Unable to start checkout");
       } finally {
@@ -32,7 +35,7 @@ export default function Checkout() {
     init();
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Preparing checkout…</div>;
+  if (loading) return <div className="p-8 text-center text-dark">Preparing checkout…</div>;
   if (error)
     return (
       <div className="p-8 text-center text-red-600">
@@ -40,9 +43,9 @@ export default function Checkout() {
       </div>
     );
 
-  if (!clientSecret || !stripePromise) {
+  if (!demoMode && (!clientSecret || !stripePromise)) {
     return (
-      <div className="p-8 text-center text-gray-500">
+      <div className="p-8 text-center text-muted">
         Checkout temporarily unavailable. Please try again later.
       </div>
     );
@@ -51,9 +54,13 @@ export default function Checkout() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid lg:grid-cols-2 gap-8">
       <OrderSummary orderData={orderData} />
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <CheckoutForm orderData={orderData} />
-      </Elements>
+      {demoMode ? (
+        <CheckoutForm orderData={orderData} isDemoMode />
+      ) : (
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <CheckoutForm orderData={orderData} />
+        </Elements>
+      )}
     </div>
   );
 }
@@ -63,37 +70,37 @@ function OrderSummary({ orderData }) {
   const totals = orderData?.totals || {};
 
   return (
-    <div className="bg-white rounded-3xl shadow p-6">
-      <h2 className="text-xl font-bold mb-4">Order summary</h2>
-      <div className="space-y-3 max-h-80 overflow-auto pr-2">
+    <div className="card p-6">
+      <h2 className="text-xl font-semibold mb-4 text-dark">Order summary</h2>
+      <div className="space-y-3 max-h-80 overflow-auto pr-2 text-dark/70">
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
             <div>
-              <p className="font-semibold text-gray-800">{item.Product?.name}</p>
-              <p className="text-gray-500 text-xs">
+              <p className="font-semibold text-dark">{item.Product?.name}</p>
+              <p className="text-muted text-xs">
                 Qty {item.quantity} · ₹{item.unitPrice?.toFixed(0)}
               </p>
             </div>
-            <p className="font-semibold text-gray-700">
+            <p className="font-semibold text-dark">
               ₹{(item.quantity * (item.unitPrice || 0)).toFixed(0)}
             </p>
           </div>
         ))}
       </div>
-      <div className="border-t mt-4 pt-4 space-y-2 text-sm text-gray-600">
+      <div className="border-t border-border mt-4 pt-4 space-y-2 text-sm text-dark/70">
         <SummaryRow label="Subtotal" value={totals.subtotal} />
         <SummaryRow label="Tax (5%)" value={totals.taxTotal} />
         <SummaryRow label="Shipping" value={totals.shippingFee} />
       </div>
-      <div className="flex justify-between text-lg font-bold mt-4">
+      <div className="flex justify-between text-lg font-semibold mt-4 text-dark">
         <span>Total</span>
-        <span>₹{Number(totals.total || 0).toFixed(0)}</span>
+        <span className="text-primary">₹{Number(totals.total || 0).toFixed(0)}</span>
       </div>
     </div>
   );
 }
 
-function CheckoutForm({ orderData }) {
+function CheckoutForm({ orderData, isDemoMode = false }) {
   const qc = useQueryClient();
   const stripe = useStripe();
   const elements = useElements();
@@ -104,6 +111,7 @@ function CheckoutForm({ orderData }) {
     name: "",
     phone: "",
     address: "",
+    address2: "",
     city: "",
     state: "",
     zip: "",
@@ -113,51 +121,73 @@ function CheckoutForm({ orderData }) {
   const handleChange = (field, value) =>
     setShipping((prev) => ({ ...prev, [field]: value }));
 
-  const canSubmit = useMemo(() => {
-    return (
-      Object.values({
-        name: shipping.name,
-        phone: shipping.phone,
-        address: shipping.address,
-        city: shipping.city,
-        state: shipping.state,
-        zip: shipping.zip,
-      }).every(Boolean) && stripe && elements
-    );
-  }, [shipping, stripe, elements]);
+  const shippingValid = useMemo(() => {
+    const required = {
+      name: shipping.name.trim(),
+      phone: shipping.phone.trim(),
+      address: shipping.address.trim(),
+      city: shipping.city.trim(),
+      state: shipping.state.trim(),
+      zip: shipping.zip.trim(),
+    };
+    return Object.values(required).every(Boolean);
+  }, [shipping]);
+
+  const canSubmit = isDemoMode
+    ? shippingValid
+    : shippingValid && stripe && elements;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
-    setSubmitting(true);
-    setError("");
-
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-      confirmParams: {
-        payment_method_data: {
-          billing_details: {
-            name: shipping.name,
-            phone: shipping.phone,
-          },
-        },
-      },
-    });
-
-    if (stripeError) {
-      setError(stripeError.message || "Payment failed");
+    if (!isDemoMode && (!stripe || !elements)) {
+      setError("Payment session unavailable. Please refresh.");
       setSubmitting(false);
       return;
     }
+    setSubmitting(true);
+    setError("");
 
     try {
+      let paymentIntentId = orderData.paymentIntentId;
+
+      if (!isDemoMode) {
+        const { error: stripeError, paymentIntent } =
+          await stripe.confirmPayment({
+            elements,
+            redirect: "if_required",
+            confirmParams: {
+              payment_method_data: {
+                billing_details: {
+                  name: shipping.name,
+                  phone: shipping.phone,
+                },
+              },
+            },
+          });
+
+        if (stripeError) {
+          setError(stripeError.message || "Payment failed");
+          setSubmitting(false);
+          return;
+        }
+
+        paymentIntentId = paymentIntent?.id || orderData.paymentIntentId;
+      }
+
+      const shippingPayload = {
+        ...shipping,
+        address: shipping.address2
+          ? `${shipping.address}\n${shipping.address2}`
+          : shipping.address,
+      };
+      delete shippingPayload.address2;
+
       await axiosClient.post("/orders", {
-        paymentIntentId: paymentIntent?.id || orderData.paymentIntentId,
-        shipping,
+        paymentIntentId,
+        shipping: shippingPayload,
       });
-      qc.invalidateQueries(["cart"]);
-      qc.invalidateQueries(["orders"]);
+      qc.invalidateQueries({ queryKey: ["cart"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -168,16 +198,16 @@ function CheckoutForm({ orderData }) {
 
   if (success) {
     return (
-      <div className="bg-white rounded-3xl shadow p-6 text-center">
-        <h2 className="text-xl font-bold text-gray-900">
+      <div className="card p-6 text-center">
+        <h2 className="text-xl font-semibold text-dark">
           Order placed successfully 🎉
         </h2>
-        <p className="text-gray-600 mt-2">
-          We’ll keep you posted once your Tirupur cotton fit ships.
+        <p className="text-muted mt-2">
+          We'll keep you posted once your Tirupur cotton fit ships.
         </p>
         <button
           onClick={() => (window.location.href = "/")}
-          className="mt-6 bg-pink-600 text-white px-6 py-3 rounded-full font-semibold"
+          className="mt-6 bg-primary text-white px-6 py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs hover:bg-primary/90"
         >
           Continue shopping
         </button>
@@ -188,9 +218,9 @@ function CheckoutForm({ orderData }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-3xl shadow p-6 space-y-4"
+      className="card p-6 space-y-4"
     >
-      <h2 className="text-xl font-bold mb-2">Shipping & Payment</h2>
+      <h2 className="text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
       <div className="grid grid-cols-2 gap-3">
         <Input
           label="Full name"
@@ -200,12 +230,20 @@ function CheckoutForm({ orderData }) {
         <Input
           label="Phone"
           value={shipping.phone}
+          inputMode="tel"
+          maxLength={12}
           onChange={(e) => handleChange("phone", e.target.value)}
         />
         <Input
           label="Address"
           value={shipping.address}
           onChange={(e) => handleChange("address", e.target.value)}
+          className="col-span-2"
+        />
+        <Input
+          label="Apartment / Suite (optional)"
+          value={shipping.address2}
+          onChange={(e) => handleChange("address2", e.target.value)}
           className="col-span-2"
         />
         <Input
@@ -230,18 +268,24 @@ function CheckoutForm({ orderData }) {
         />
       </div>
 
-      <div className="border rounded-2xl p-4">
-        <PaymentElement />
-      </div>
+      {!isDemoMode && (
+        <div className="border border-border rounded-2xl p-4 bg-light">
+          <PaymentElement />
+        </div>
+      )}
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <button
           type="submit"
           disabled={!canSubmit || submitting}
-          className="w-full bg-pink-600 text-white py-3 rounded-full font-semibold disabled:opacity-40"
+          className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
         >
-          {submitting ? "Processing..." : "Confirm & Pay"}
+          {submitting
+            ? "Processing..."
+            : isDemoMode
+            ? "Place Order"
+            : "Confirm & Pay"}
         </button>
     </form>
   );
@@ -249,11 +293,11 @@ function CheckoutForm({ orderData }) {
 
 function Input({ label, className = "", ...props }) {
   return (
-    <label className={`text-sm font-semibold text-gray-700 ${className}`}>
+    <label className={`text-sm font-semibold text-dark/70 ${className}`}>
       <span className="block mb-1">{label}</span>
       <input
         {...props}
-        className="w-full border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+        className="w-full border border-border bg-white rounded-full px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
       />
     </label>
   );
@@ -261,7 +305,7 @@ function Input({ label, className = "", ...props }) {
 
 function SummaryRow({ label, value }) {
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between text-dark/70">
       <span>{label}</span>
       <span>₹{Number(value || 0).toFixed(0)}</span>
     </div>

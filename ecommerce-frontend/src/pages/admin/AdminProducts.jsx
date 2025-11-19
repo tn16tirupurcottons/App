@@ -21,7 +21,7 @@ export default function AdminProducts() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => axiosClient.delete(`/admin/products/${id}`),
-    onSuccess: () => qc.invalidateQueries(["adminProducts"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["adminProducts"] }),
   });
 
   const products = data?.items || [];

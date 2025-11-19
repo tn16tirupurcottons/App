@@ -19,7 +19,7 @@ export default function AdminOrders() {
   const updateStatus = useMutation({
     mutationFn: ({ id, payload }) =>
       axiosClient.patch(`/orders/${id}/status`, payload),
-    onSuccess: () => qc.invalidateQueries(["adminOrders"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["adminOrders"] }),
   });
 
   return (

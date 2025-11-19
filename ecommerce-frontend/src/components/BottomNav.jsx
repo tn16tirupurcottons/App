@@ -16,16 +16,16 @@ const items = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] md:hidden z-40">
-      <div className="flex justify-around">
+    <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-border shadow-medium md:hidden z-40">
+      <div className="flex justify-around text-muted">
         {items.map(({ to, label, Icon }) => (
           <NavLink
             key={label}
             to={to}
             aria-label={label}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 py-2 text-xs font-semibold ${
-                isActive ? "text-pink-600" : "text-gray-500"
+              `flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium transition ${
+                isActive ? "text-primary" : "text-muted hover:text-dark"
               }`
             }
           >

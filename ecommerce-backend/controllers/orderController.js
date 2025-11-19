@@ -5,6 +5,17 @@ const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret
   ? new Stripe(stripeSecret, { apiVersion: "2024-06-20" })
   : null;
+const isDemoPayments = !stripe;
+
+const buildDemoPaymentIntent = (userId) => {
+  const stamp = Date.now();
+  return {
+    id: `demo_pi_${stamp}`,
+    client_secret: `demo_secret_${userId}_${stamp}`,
+    status: "succeeded",
+    payment_method_types: ["demo"],
+  };
+};
 
 const calculateTotals = (cartItems) => {
   const subtotal = cartItems.reduce(
@@ -25,12 +36,6 @@ const calculateTotals = (cartItems) => {
 
 export const createCheckoutIntent = async (req, res) => {
   try {
-    if (!stripe) {
-      return res
-        .status(500)
-        .json({ message: "Stripe key missing on server configuration" });
-    }
-
     const cartItems = await Cart.findAll({
       where: { userId: req.user.id },
       include: [{ model: Product }],
@@ -42,14 +47,23 @@ export const createCheckoutIntent = async (req, res) => {
 
     const totals = calculateTotals(cartItems);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totals.total * 100),
-      currency: "inr",
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        userId: req.user.id,
-      },
-    });
+    let paymentIntent;
+
+    if (stripe) {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(totals.total * 100),
+        currency: "inr",
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          userId: req.user.id,
+        },
+      });
+    } else {
+      console.warn(
+        "[payments] Stripe key missing. Falling back to demo payment intent."
+      );
+      paymentIntent = buildDemoPaymentIntent(req.user.id);
+    }
 
     res.json({
       success: true,
@@ -57,6 +71,7 @@ export const createCheckoutIntent = async (req, res) => {
       paymentIntentId: paymentIntent.id,
       totals,
       items: cartItems.map((item) => item.toJSON()),
+      demoMode: isDemoPayments,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -65,12 +80,6 @@ export const createCheckoutIntent = async (req, res) => {
 
 export const placeOrder = async (req, res) => {
   try {
-    if (!stripe) {
-      return res
-        .status(500)
-        .json({ message: "Stripe key missing on server configuration" });
-    }
-
     const { paymentIntentId, shipping } = req.body;
     if (!paymentIntentId || !shipping) {
       return res
@@ -93,18 +102,29 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      paymentIntentId
-    );
+    let paymentIntent;
 
-    if (
-      !["succeeded", "processing", "requires_capture"].includes(
-        paymentIntent.status
-      )
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Payment not completed yet. Please retry." });
+    if (stripe) {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (
+        !["succeeded", "processing", "requires_capture"].includes(
+          paymentIntent.status
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Payment not completed yet. Please retry." });
+      }
+    } else {
+      console.warn(
+        "[payments] Completing order in demo mode. No payment confirmation performed."
+      );
+      paymentIntent = {
+        id: paymentIntentId,
+        status: "succeeded",
+        payment_method_types: ["demo"],
+      };
     }
 
     const cartItems = await Cart.findAll({

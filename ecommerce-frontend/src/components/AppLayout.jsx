@@ -10,7 +10,7 @@ export default function AppLayout() {
 
   if (isAdminRoute) {
     return (
-      <div className="w-full min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+      <div className="min-h-screen w-full bg-[#0c0c0d] text-white flex flex-col">
         <main className="flex-1 w-full">
           <Outlet />
         </main>
@@ -19,13 +19,11 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+    <div className="w-full min-h-screen flex flex-col bg-white text-dark overflow-x-hidden">
       <Navbar />
-
       <main className="flex-1 w-full pb-24 md:pb-0">
         <Outlet />
       </main>
-
       <Footer />
       <BottomNav />
     </div>
