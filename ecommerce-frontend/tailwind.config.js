@@ -4,12 +4,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#2563eb",
+        primary: "#36c1f8ff",
         secondary: "#7c3aed",
         accent: "#f59e0b",
         dark: "#1f2937",
         light: "#f9fafb",
-        muted: "#6b7280",
+        muted: "#3a3439ff",
         border: "#e5e7eb",
       },
       fontFamily: {
@@ -23,6 +23,19 @@ module.exports = {
       },
       letterSpacing: {
         wide: "0.1em",
+      },
+
+      // ADD THIS ↓↓↓
+      container: {
+        center: false,
+        padding: "0rem",
+        screens: {
+          sm: "100%",
+          md: "100%",
+          lg: "100%",
+          xl: "100%",
+          "2xl": "100%",
+        },
       },
     },
   },
