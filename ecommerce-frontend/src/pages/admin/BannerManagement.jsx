@@ -39,9 +39,12 @@ export default function BannerManagement() {
       title: banner?.title || "",
       subtitle: banner?.subtitle || "",
       image: banner?.image || "",
+      images: banner?.images || (banner?.image ? [banner.image] : []),
       ctaLabel: banner?.ctaLabel || "Shop Now",
       ctaLink: banner?.ctaLink || "/catalog",
       segment: banner?.segment || "default",
+      page: banner?.page || "home",
+      position: banner?.position || "hero",
       displayOrder: banner?.displayOrder || 0,
       isActive: banner?.isActive !== undefined ? banner.isActive : true,
     });
@@ -66,7 +69,13 @@ export default function BannerManagement() {
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      saveMutation.mutate(form);
+      // Ensure images array is properly formatted
+      const payload = {
+        ...form,
+        images: form.images && form.images.length > 0 ? form.images : (form.image ? [form.image] : []),
+        image: form.images && form.images.length > 0 ? form.images[0] : form.image,
+      };
+      saveMutation.mutate(payload);
     };
 
     return (
@@ -104,13 +113,25 @@ export default function BannerManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Banner Image *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Banner Images * (Max 5, auto-rotates every 3s)
+            </label>
             <ImageUploader
-              images={form.image ? [form.image] : []}
-              onChange={(images) => setForm({ ...form, image: images[0] || "" })}
-              maxImages={1}
+              images={form.images || []}
+              onChange={(images) => {
+                const limited = images.slice(0, 5);
+                setForm({ 
+                  ...form, 
+                  images: limited,
+                  image: limited[0] || "" // Keep backward compat
+                });
+              }}
+              maxImages={5}
               maxSizeMB={5}
             />
+            <p className="text-xs text-gray-500 mt-2">
+              Upload 1-5 images. They will rotate automatically in a carousel.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -136,7 +157,36 @@ export default function BannerManagement() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Page</label>
+              <select
+                value={form.page}
+                onChange={(e) => setForm({ ...form, page: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500"
+              >
+                <option value="home">Home</option>
+                <option value="catalog">Catalog</option>
+                <option value="product">Product</option>
+                <option value="cart">Cart</option>
+                <option value="checkout">Checkout</option>
+                <option value="all">All Pages</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Position</label>
+              <select
+                value={form.position}
+                onChange={(e) => setForm({ ...form, position: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500"
+              >
+                <option value="hero">Hero (Top)</option>
+                <option value="top">Top Section</option>
+                <option value="middle">Middle Section</option>
+                <option value="bottom">Bottom Section</option>
+                <option value="sidebar">Sidebar</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Segment</label>
               <select
@@ -183,7 +233,7 @@ export default function BannerManagement() {
             </button>
             <button
               type="submit"
-              disabled={saveMutation.isLoading || !form.title || !form.image}
+              disabled={saveMutation.isLoading || !form.title || !form.images?.length}
               className="flex-1 bg-pink-600 hover:bg-pink-700 text-white rounded-lg py-2 font-semibold disabled:opacity-50"
             >
               {saveMutation.isLoading ? "Saving..." : banner ? "Update" : "Create"}

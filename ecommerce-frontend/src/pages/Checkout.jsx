@@ -8,6 +8,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
+import LocationSelect from "../components/LocationSelect";
 
 const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || "";
 const stripePromise = publicKey ? loadStripe(publicKey) : null;
@@ -233,25 +234,18 @@ function CheckoutFormDemo({ orderData }) {
           onChange={(e) => handleChange("address2", e.target.value)}
           className="col-span-2"
         />
-        <Input
-          label="City"
-          value={shipping.city}
-          onChange={(e) => handleChange("city", e.target.value)}
-        />
-        <Input
-          label="State"
-          value={shipping.state}
-          onChange={(e) => handleChange("state", e.target.value)}
+        <LocationSelect
+          country={shipping.country}
+          state={shipping.state}
+          city={shipping.city}
+          onStateChange={(val) => handleChange("state", val)}
+          onCityChange={(val) => handleChange("city", val)}
+          required
         />
         <Input
           label="Postal code"
           value={shipping.zip}
           onChange={(e) => handleChange("zip", e.target.value)}
-        />
-        <Input
-          label="Country"
-          value={shipping.country}
-          onChange={(e) => handleChange("country", e.target.value)}
         />
       </div>
 
@@ -466,25 +460,18 @@ function CheckoutForm({ orderData }) {
           onChange={(e) => handleChange("address2", e.target.value)}
           className="col-span-2"
         />
-        <Input
-          label="City"
-          value={shipping.city}
-          onChange={(e) => handleChange("city", e.target.value)}
-        />
-        <Input
-          label="State"
-          value={shipping.state}
-          onChange={(e) => handleChange("state", e.target.value)}
+        <LocationSelect
+          country={shipping.country}
+          state={shipping.state}
+          city={shipping.city}
+          onStateChange={(val) => handleChange("state", val)}
+          onCityChange={(val) => handleChange("city", val)}
+          required
         />
         <Input
           label="Postal code"
           value={shipping.zip}
           onChange={(e) => handleChange("zip", e.target.value)}
-        />
-        <Input
-          label="Country"
-          value={shipping.country}
-          onChange={(e) => handleChange("country", e.target.value)}
         />
       </div>
 

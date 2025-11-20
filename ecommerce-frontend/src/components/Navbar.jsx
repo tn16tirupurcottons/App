@@ -47,6 +47,18 @@ export default function Navbar() {
       </div>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-4 py-4">
+          {/* Home Button - Left Side */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 hover:text-primary transition"
+            aria-label="Home"
+          >
+            <span className="hidden sm:inline font-semibold text-dark">Home</span>
+            <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </Link>
+          
           <button
             className="md:hidden text-dark/80 hover:text-dark"
             aria-label="Open navigation menu"
@@ -108,6 +120,14 @@ export default function Navbar() {
             </Link>
             {user ? (
               <div className="flex items-center gap-2">
+                {user.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition font-semibold text-xs"
+                  >
+                    Admin
+                  </Link>
+                )}
                 <span className="hidden sm:block text-muted">
                   {user.name.split(" ")[0]}
                 </span>

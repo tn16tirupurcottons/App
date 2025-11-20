@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { Order, Cart, Product, OrderItem, User } from "../models/index.js";
-import { notifyOrderPlaced } from "../services/notificationService.js";
+import { notifyOrderPlaced, sendSMS } from "../services/notificationService.js";
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret
@@ -232,14 +232,32 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status, paymentStatus } = req.body;
-    const order = await Order.findByPk(req.params.id);
+    const order = await Order.findByPk(req.params.id, {
+      include: [{ model: User }, { model: OrderItem, include: [{ model: Product }] }],
+    });
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    const oldStatus = order.status;
+    const oldPaymentStatus = order.paymentStatus;
+
     if (status) order.status = status;
     if (paymentStatus) order.paymentStatus = paymentStatus;
     await order.save();
+
+    // Send notifications if status changed
+    if ((status && status !== oldStatus) || (paymentStatus && paymentStatus !== oldPaymentStatus)) {
+      const { notifyOrderStatusUpdate } = await import("../services/notificationService.js");
+      notifyOrderStatusUpdate({
+        order,
+        user: order.User,
+        oldStatus,
+        newStatus: status || order.status,
+        oldPaymentStatus,
+        newPaymentStatus: paymentStatus || order.paymentStatus,
+      }).catch((err) => console.error("[notifications] order status update failed", err));
+    }
 
     res.json({ success: true, order });
   } catch (error) {

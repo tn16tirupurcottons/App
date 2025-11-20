@@ -87,7 +87,8 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-6">
+      {/* Desktop: 6-8 products per row, Mobile: 4 visible with swipe */}
+      <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4 lg:gap-6">
         {isLoading
           ? new Array(8).fill(null).map((_, idx) => (
               <div key={idx} className="h-80 rounded-[32px] bg-light animate-pulse" />
@@ -95,6 +96,23 @@ export default function ProductList({ initialQuery = {} }) {
           : products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+      </div>
+
+      {/* Mobile: Swipeable carousel with 4 visible */}
+      <div className="md:hidden overflow-hidden">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4" style={{ scrollSnapType: "x mandatory" }}>
+          {isLoading
+            ? new Array(8).fill(null).map((_, idx) => (
+                <div key={idx} className="flex-shrink-0 w-[calc(50%-0.5rem)] snap-start">
+                  <div className="h-80 rounded-[32px] bg-light animate-pulse" />
+                </div>
+              ))
+            : products.map((product) => (
+                <div key={product.id} className="flex-shrink-0 w-[calc(50%-0.5rem)] snap-start">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+        </div>
       </div>
 
       {data?.totalPages > 1 && (

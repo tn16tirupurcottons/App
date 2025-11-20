@@ -12,6 +12,7 @@ import Wishlist from "./Wishlist.js";
 import Category from "./Category.js";
 import RefreshToken from "./RefreshToken.js";
 import PasswordResetToken from "./PasswordResetToken.js";
+import OtpToken from "./OtpToken.js";
 import Banner from "./Banner.js";
 import BrandSetting from "./BrandSetting.js";
 
@@ -81,4 +82,5 @@ export {
   Banner,
   BrandSetting,
   PasswordResetToken,
+  OtpToken,
 };

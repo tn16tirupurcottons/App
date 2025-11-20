@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
+import BannerCarousel from "../components/BannerCarousel";
 import axiosClient from "../api/axiosClient";
 import { heroSlides, segmentThemes } from "../data/segments";
 
@@ -136,62 +137,9 @@ export default function Home() {
   return (
     <div className="bg-white text-dark">
       {/* Hero carousel */}
-      <section
-        className={`relative overflow-hidden rounded-[40px] border border-border mx-4 lg:mx-auto max-w-7xl mt-8 bg-gradient-to-br ${currentSlide.gradient} shadow-medium`}
-      >
-        <div className="grid lg:grid-cols-2 gap-10 items-center px-6 lg:px-12 py-12">
-          <div className="space-y-5">
-            <p className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-border bg-light text-muted text-[10px] uppercase tracking-[0.35em]">
-              {currentSlide.badge}
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-display leading-tight text-dark">
-              {currentSlide.title}
-            </h1>
-            <p className="text-dark/70 text-base sm:text-lg leading-relaxed">
-              {currentSlide.subtitle}
-            </p>
-            <div className="flex flex-wrap gap-3 mt-4">
-              <button
-                onClick={() => {
-                  const segment = currentSlide.segment || "women";
-                  navigate(`/catalog?segment=${segment}`);
-                }}
-                className="px-6 py-3 rounded-full bg-primary text-white font-semibold tracking-[0.3em] hover:bg-primary/90"
-              >
-                {currentSlide.ctaPrimary}
-              </button>
-              <button
-                onClick={() => {
-                  const segment = currentSlide.segment || "genz";
-                  navigate(`/catalog?segment=${segment}&view=studio`);
-                }}
-                className="px-6 py-3 rounded-full border border-border text-dark/80 hover:text-primary hover:border-primary"
-              >
-                {currentSlide.ctaSecondary}
-              </button>
-            </div>
-          </div>
-          <div className="rounded-[32px] overflow-hidden border border-border shadow-medium">
-            <img
-              src={currentSlide.image}
-              alt={currentSlide.title}
-              className="w-full aspect-[16/9] object-cover"
-              loading="lazy"
-            />
-          </div>
-        </div>
-        <div className="flex gap-2 justify-center pb-6">
-          {heroSlides.map((slide, idx) => (
-            <button
-              key={slide.id}
-              onClick={() => setActiveSlide(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-              className={`h-2 w-8 rounded-full ${
-                idx === activeSlide ? "bg-primary" : "bg-border"
-              }`}
-            />
-          ))}
-        </div>
+      {/* Banner Carousel - Hero Position */}
+      <section className="max-w-7xl mx-auto px-4 mt-8">
+        <BannerCarousel page="home" position="hero" />
       </section>
 
       {/* Offer slab */}

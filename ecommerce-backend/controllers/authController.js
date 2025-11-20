@@ -5,7 +5,8 @@ import ms from "ms";
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import PasswordResetToken from "../models/PasswordResetToken.js";
-import { sendPasswordResetNotice } from "../services/notificationService.js";
+import OtpToken from "../models/OtpToken.js";
+import { sendPasswordResetNotice, sendEmail, sendSMS } from "../services/notificationService.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
@@ -240,6 +241,127 @@ export const resetPassword = async (req, res, next) => {
     await resetRecord.save();
     res.json({ success: true, message: "Password reset successful" });
   } catch (err) {
+    next(err);
+  }
+};
+
+// OTP Verification for Registration
+export const sendOtp = async (req, res, next) => {
+  try {
+    const { identifier, method } = req.body;
+    if (!identifier || !method) {
+      return res.status(400).json({ message: "identifier and method are required" });
+    }
+    if (!["email", "mobile"].includes(method)) {
+      return res.status(400).json({ message: "method must be 'email' or 'mobile'" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Delete old OTPs for this identifier
+    await OtpToken.destroy({
+      where: { identifier, verified: false },
+    });
+
+    // Create new OTP
+    await OtpToken.create({
+      otp,
+      identifier,
+      method,
+      expiresAt,
+    });
+
+    // Send OTP
+    try {
+      if (method === "email") {
+        await sendEmail({
+          to: identifier,
+          subject: "Your TN16 Registration OTP",
+          html: `
+            <h2>Your OTP for TN16 Registration</h2>
+            <p>Your OTP is: <strong style="font-size:24px;letter-spacing:4px">${otp}</strong></p>
+            <p>This OTP will expire in 10 minutes.</p>
+            <p>If you didn't request this, please ignore this email.</p>
+          `,
+        });
+        console.log(`[OTP] Email OTP sent to ${identifier}`);
+      } else {
+        await sendSMS({
+          to: identifier,
+          body: `Your TN16 registration OTP is ${otp}. Valid for 10 minutes.`,
+        });
+        console.log(`[OTP] SMS OTP sent to ${identifier}`);
+      }
+      res.json({ success: true, message: "OTP sent successfully" });
+    } catch (sendError) {
+      console.error("[OTP] Failed to send OTP:", sendError);
+      // Still return success to prevent enumeration, but log the error
+      res.json({ success: true, message: "OTP sent successfully" });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyOtpAndRegister = async (req, res, next) => {
+  try {
+    const { name, email, mobileNumber, password, otp, identifier } = req.body;
+    if (!name || !email || !password || !otp || !identifier) {
+      return res.status(400).json({ message: "name, email, password, otp, and identifier are required" });
+    }
+
+    // Verify OTP
+    const otpRecord = await OtpToken.findOne({
+      where: { identifier, otp, verified: false },
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!otpRecord || otpRecord.expiresAt < new Date()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Check if email already exists (enforce one account per email)
+    const emailExists = await User.findOne({ where: { email } });
+    if (emailExists) {
+      return res.status(400).json({ message: "An account with this email already exists. Please use a different email." });
+    }
+
+    // Check mobile number only if provided
+    if (mobileNumber) {
+      const mobileExists = await User.findOne({ where: { mobileNumber } });
+      if (mobileExists) {
+        return res.status(400).json({ message: "Mobile number already exists" });
+      }
+    }
+
+    // Create user (mobileNumber is optional)
+    const user = await User.create({ 
+      name, 
+      email, 
+      password, 
+      mobileNumber: mobileNumber || null 
+    });
+
+    // Mark OTP as verified
+    otpRecord.verified = true;
+    await otpRecord.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      user: toPublicUser(user),
+    });
+  } catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError") {
+      if (err.errors?.some(e => e.path === "email")) {
+        return res.status(400).json({ message: "An account with this email already exists" });
+      }
+      if (err.errors?.some(e => e.path === "mobileNumber")) {
+        return res.status(400).json({ message: "Mobile number already exists" });
+      }
+    }
     next(err);
   }
 };

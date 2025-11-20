@@ -2,7 +2,13 @@ import Banner from "../../models/Banner.js";
 
 export const listBanners = async (req, res, next) => {
   try {
+    const { page, position } = req.query;
+    const where = {};
+    if (page && page !== "all") where.page = page;
+    if (position) where.position = position;
+    
     const banners = await Banner.findAll({
+      where,
       order: [
         ["displayOrder", "ASC"],
         ["createdAt", "DESC"],
@@ -17,10 +23,22 @@ export const listBanners = async (req, res, next) => {
 export const createBanner = async (req, res, next) => {
   try {
     const payload = req.body;
-    if (!payload.title || !payload.image) {
+    if (!payload.title || (!payload.image && !payload.images?.length)) {
       return res
         .status(400)
-        .json({ message: "Title and image are required for banners" });
+        .json({ message: "Title and at least one image are required" });
+    }
+    // Ensure images array exists, use image as fallback
+    if (!payload.images && payload.image) {
+      payload.images = [payload.image];
+    }
+    // Ensure image field exists for backward compat
+    if (!payload.image && payload.images?.length) {
+      payload.image = payload.images[0];
+    }
+    // Limit to 5 images
+    if (payload.images?.length > 5) {
+      payload.images = payload.images.slice(0, 5);
     }
     const banner = await Banner.create(payload);
     res.status(201).json({ success: true, item: banner });
@@ -35,7 +53,18 @@ export const updateBanner = async (req, res, next) => {
     if (!banner) {
       return res.status(404).json({ message: "Banner not found" });
     }
-    await banner.update(req.body);
+    const payload = req.body;
+    // Ensure images array exists
+    if (!payload.images && payload.image) {
+      payload.images = [payload.image];
+    }
+    if (!payload.image && payload.images?.length) {
+      payload.image = payload.images[0];
+    }
+    if (payload.images?.length > 5) {
+      payload.images = payload.images.slice(0, 5);
+    }
+    await banner.update(payload);
     res.json({ success: true, item: banner });
   } catch (error) {
     next(error);

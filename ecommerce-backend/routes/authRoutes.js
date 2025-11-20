@@ -7,12 +7,16 @@ import {
   logout,
   requestPasswordReset,
   resetPassword,
+  sendOtp,
+  verifyOtpAndRegister,
 } from "../controllers/authController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", register);
+router.post("/send-otp", sendOtp);
+router.post("/verify-otp-register", verifyOtpAndRegister);
 router.post("/login", login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);

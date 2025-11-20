@@ -10,6 +10,7 @@ import {
   Settings,
   Users,
   Shield,
+  Home,
 } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
@@ -61,6 +62,19 @@ export default function AdminSidebar({ isOpen, onClose }) {
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto bg-white">
         <ul className="space-y-2">
+          {/* Home Link */}
+          <li>
+            <Link
+              to="/"
+              onClick={() => {
+                if (window.innerWidth < 768) onClose();
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-dark/70 hover:bg-gray-100 hover:text-primary transition-colors"
+            >
+              <Home size={20} />
+              <span className="font-medium">Home</span>
+            </Link>
+          </li>
           {menu.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path || 

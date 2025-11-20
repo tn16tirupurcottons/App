@@ -38,6 +38,21 @@ const Banner = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    page: {
+      type: DataTypes.STRING,
+      defaultValue: "home",
+      comment: "Page where banner appears: home, catalog, product, etc.",
+    },
+    position: {
+      type: DataTypes.STRING,
+      defaultValue: "hero",
+      comment: "Position on page: hero, top, middle, bottom, sidebar",
+    },
+    images: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      defaultValue: [],
+      comment: "Multiple images for carousel (max 5)",
+    },
   },
   { timestamps: true }
 );

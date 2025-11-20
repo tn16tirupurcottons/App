@@ -9,7 +9,8 @@ import { adminOnly } from "../../middlewares/adminMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", adminOnly, listBanners);
+// Public endpoint for fetching active banners
+router.get("/", listBanners);
 router.post("/", adminOnly, createBanner);
 router.put("/:id", adminOnly, updateBanner);
 router.delete("/:id", adminOnly, deleteBanner);
