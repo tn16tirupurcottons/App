@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import ms from "ms";
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
+import PasswordResetToken from "../models/PasswordResetToken.js";
+import { sendPasswordResetNotice } from "../services/notificationService.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
@@ -12,6 +15,7 @@ export const toPublicUser = (user) => ({
   id: user.id,
   name: user.name,
   email: user.email,
+  mobileNumber: user.mobileNumber,
   role: user.role,
 });
 
@@ -56,14 +60,23 @@ export const issueTokensForUser = async (user, res) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, mobileNumber } = req.body;
+    if (!mobileNumber) {
+      return res.status(400).json({ message: "mobileNumber is required" });
+    }
 
     const exist = await User.findOne({ where: { email } });
     if (exist) {
       return res.status(400).json({ message: "Email already exists" });
     }
+    if (mobileNumber) {
+      const mobileExists = await User.findOne({ where: { mobileNumber } });
+      if (mobileExists) {
+        return res.status(400).json({ message: "Mobile number already exists" });
+      }
+    }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, mobileNumber });
     const tokens = await issueTokensForUser(user, res);
 
     res.status(201).json({
@@ -78,9 +91,16 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ where: { email } });
+    const { identifier, password } = req.body;
+    if (!identifier || !password) {
+      return res
+        .status(400)
+        .json({ message: "identifier and password are required" });
+    }
+    const whereClause = identifier?.includes("@")
+      ? { email: identifier }
+      : { mobileNumber: identifier };
+    const user = await User.findOne({ where: whereClause });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const match = await bcrypt.compare(password, user.password);
@@ -147,6 +167,78 @@ export const logout = async (req, res, next) => {
     }
     res.clearCookie(REFRESH_COOKIE, refreshCookieOptions);
     res.json({ success: true, message: "Logged out" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier) {
+      return res
+        .status(400)
+        .json({ message: "identifier (email or mobile) required" });
+    }
+    const whereClause = identifier.includes("@")
+      ? { email: identifier }
+      : { mobileNumber: identifier };
+    const user = await User.findOne({ where: whereClause });
+    if (!user) {
+      return res.json({
+        success: true,
+        message:
+          "If the account exists, password reset instructions have been sent.",
+      });
+    }
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+    await PasswordResetToken.create({
+      token,
+      userId: user.id,
+      expiresAt,
+      deliveryChannel: identifier.includes("@") ? "email" : "whatsapp",
+    });
+    const clientUrl =
+      process.env.CLIENT_URL?.split(",")[0] || "http://localhost:5173";
+    const resetUrl = `${clientUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+    await sendPasswordResetNotice({ user, resetUrl }).catch((err) =>
+      console.error("[notifications] password reset email failed", err)
+    );
+    res.json({
+      success: true,
+      message:
+        "If the account exists, password reset instructions have been sent.",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res
+        .status(400)
+        .json({ message: "token and password are required" });
+    }
+    const resetRecord = await PasswordResetToken.findOne({
+      where: { token },
+      include: [{ model: User }],
+    });
+    if (
+      !resetRecord ||
+      resetRecord.consumedAt ||
+      resetRecord.expiresAt < new Date()
+    ) {
+      return res.status(400).json({ message: "Reset token is invalid" });
+    }
+    resetRecord.User.password = password;
+    await resetRecord.User.save();
+    resetRecord.consumedAt = new Date();
+    await resetRecord.save();
+    res.json({ success: true, message: "Password reset successful" });
   } catch (err) {
     next(err);
   }

@@ -51,7 +51,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
         </div>
         <button
           onClick={onClose}
-          className="md:hidden p-1 rounded hover:bg-light"
+          className="md:hidden p-1 rounded hover:bg-gray-100"
           aria-label="Close menu"
         >
           <X size={20} className="text-dark" />
@@ -79,7 +79,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                     ${isActive 
                       ? "bg-primary text-white shadow-soft" 
-                      : "text-dark/70 hover:bg-light hover:text-primary"
+                      : "text-dark/70 hover:bg-gray-100 hover:text-primary"
                     }`}
                 >
                   <Icon size={20} />
@@ -95,7 +95,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       <div className="p-4 border-t border-border bg-white">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-dark/70 hover:bg-light hover:text-primary transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-dark/70 hover:bg-gray-100 hover:text-primary transition-colors"
         >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>

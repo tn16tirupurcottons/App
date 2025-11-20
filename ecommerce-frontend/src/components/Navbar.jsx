@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import MegaMenu from "./MegaMenu";
 import { segmentThemes } from "../data/segments";
+import { useBrandTheme } from "../context/BrandThemeContext";
 
 const extraLinks = [
   { label: "Home & Living", slug: "home" },
@@ -21,6 +22,7 @@ const extraLinks = [
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+  const { theme } = useBrandTheme();
   const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
   const [activeMenu, setActiveMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,8 +36,12 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-3xl border-b border-border shadow-soft">
-      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-muted uppercase border-b border-border bg-light">
+    <header
+      className="sticky top-0 z-50 backdrop-blur-xl border-b border-border shadow-soft"
+      style={{ background: theme.headerBackground }}
+    >
+      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-muted uppercase border-b border-border"
+        style={{ background: "var(--surface-color)" }}>
         <span>TN16 · Luxury Cotton Studio</span>
         <span>Worldwide shipping · curated edits</span>
       </div>
@@ -74,20 +80,22 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <div className="hidden md:flex flex-1 items-center gap-2 max-w-xl bg-light border border-border rounded-full px-5 py-2">
-            <FaSearch className="text-muted" />
-            <input
-              type="text"
-              placeholder="Search pieces, collections, artisans"
-              className="flex-1 bg-transparent text-sm text-dark focus:outline-none placeholder:text-muted"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.target.value.trim()) {
-                  navigate(
-                    `/catalog?query=${encodeURIComponent(e.target.value)}`
-                  );
-                }
-              }}
-            />
+          <div className="hidden md:flex flex-1 justify-center">
+            <div className="flex items-center gap-2 w-full max-w-2xl bg-white/70 border border-border rounded-full px-5 py-2 shadow-soft">
+              <FaSearch className="text-muted" />
+              <input
+                type="text"
+                placeholder="Search pieces, collections, artisans"
+                className="flex-1 bg-transparent text-sm text-dark focus:outline-none placeholder:text-muted"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.target.value.trim()) {
+                    navigate(
+                      `/catalog?query=${encodeURIComponent(e.target.value)}`
+                    );
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div className="ml-auto flex items-center gap-3 text-sm font-medium text-dark/80">
@@ -414,18 +422,6 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
                 <FaChevronRight className="text-muted" size={14} />
               </NavLink>
             ))}
-
-            {/* Admin Link */}
-            <button
-              onClick={() => {
-                navigate("/admin");
-                onLinkClick();
-              }}
-              className="w-full flex items-center justify-between py-4 border-b border-border text-left hover:bg-light transition active:bg-light text-dark"
-            >
-              <span className="font-semibold text-base">Admin</span>
-              <FaChevronRight className="text-muted" size={14} />
-            </button>
 
             {/* Account Section */}
             <div className="mt-6 pt-6 border-t-2 border-border">

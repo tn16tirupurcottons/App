@@ -3,13 +3,11 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import axiosClient from "../api/axiosClient";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Login() {
   const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // If already logged in, redirect
@@ -24,58 +22,27 @@ export default function Login() {
   }, [user, navigate]);
 
   const formik = useFormik({
-    initialValues: { email: "", password: "" },
+    initialValues: { identifier: "", password: "" },
     validationSchema: Yup.object({
-      email: Yup.string().email("Invalid email").required("Required"),
+      identifier: Yup.string()
+        .min(4, "Enter email or mobile number")
+        .required("Required"),
       password: Yup.string().min(6, "Min 6 characters").required("Required"),
     }),
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       try {
-        const email = values.email.trim();
-        const password = values.password.trim();
-
-        let response;
-        if (isAdminLogin) {
-          // Admin login via admin endpoint
-          response = await axiosClient.post("/admin/login", { email, password });
-          
-          // Admin endpoint returns both token and accessToken
-          const token = response.data.token || response.data.accessToken;
-          if (!token) {
-            throw new Error("No token received from server");
-          }
-          
-          localStorage.setItem("tn16_token", token);
-          
-          // Get user from response
-          const loggedInUser = response.data?.user;
-          if (loggedInUser && loggedInUser.role === "admin") {
-            // Trigger auth context update
-            window.dispatchEvent(new Event("auth-update"));
-            // Navigate to admin panel
-            navigate("/admin");
-            // Small delay then reload to ensure context updates
-            setTimeout(() => window.location.reload(), 500);
-            return;
-          } else {
-            throw new Error("Admin access denied");
-          }
-        } else {
-          // Regular user login
-          response = await login(email, password);
-        }
-
-        // Get user from response
-        const loggedInUser = response.data?.user || response?.user || user;
-
-        // Redirect based on role
+        const identifier = values.identifier.trim();
+        const response = await login(identifier, values.password.trim());
+        const loggedInUser = response.data?.user;
         if (loggedInUser?.role === "admin") {
           navigate("/admin");
         } else {
           navigate("/");
         }
       } catch (err) {
-        const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials.";
+        const errorMessage =
+          err.response?.data?.message ||
+          "Login failed. Please check your credentials.";
         setErrors({ general: errorMessage });
       } finally {
         setSubmitting(false);
@@ -88,48 +55,29 @@ export default function Login() {
       <div className="max-w-md w-full card p-8 md:p-10 space-y-6">
         <div className="text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted">
-            {isAdminLogin ? "Admin Access" : "Welcome back"}
+            Welcome back
           </p>
           <h2 className="text-3xl font-display mt-2 text-dark">Login</h2>
-        </div>
-
-        <div className="flex gap-2 bg-light rounded-full p-1">
-          <button
-            type="button"
-            onClick={() => setIsAdminLogin(false)}
-            className={`flex-1 py-2 rounded-full text-xs uppercase tracking-[0.3em] transition ${
-              !isAdminLogin ? "bg-primary text-white" : "text-muted hover:text-dark"
-            }`}
-          >
-            Customer
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsAdminLogin(true)}
-            className={`flex-1 py-2 rounded-full text-xs uppercase tracking-[0.3em] transition ${
-              isAdminLogin ? "bg-primary text-white" : "text-muted hover:text-dark"
-            }`}
-          >
-            Admin
-          </button>
         </div>
 
         <form onSubmit={formik.handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-semibold text-dark/70 mb-2">
-              Email
+              Email or Mobile
             </label>
             <input
-              name="email"
-              type="email"
-              placeholder={isAdminLogin ? "admin@example.com" : "your@email.com"}
-              value={formik.values.email}
+              name="identifier"
+              type="text"
+              placeholder="you@example.com or +919854xxxxxx"
+              value={formik.values.identifier}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="w-full border border-border bg-white rounded-full px-4 py-3 text-dark focus:outline-none focus:border-primary"
             />
-            {formik.touched.email && formik.errors.email && (
-              <p className="text-red-600 text-sm mt-1">{formik.errors.email}</p>
+            {formik.touched.identifier && formik.errors.identifier && (
+              <p className="text-red-600 text-sm mt-1">
+                {formik.errors.identifier}
+              </p>
             )}
           </div>
 
@@ -163,7 +111,9 @@ export default function Login() {
 
           {formik.errors.general && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-700 text-sm font-medium">{formik.errors.general}</p>
+              <p className="text-red-700 text-sm font-medium">
+                {formik.errors.general}
+              </p>
             </div>
           )}
 
@@ -175,14 +125,17 @@ export default function Login() {
             {formik.isSubmitting ? "Logging in..." : "Login"}
           </button>
 
-          {!isAdminLogin && (
-            <p className="text-center text-sm text-muted">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-muted">
+            <Link to="/forgot-password" className="text-primary hover:underline">
+              Forgot password?
+            </Link>
+            <p>
               Don't have an account?{" "}
               <Link to="/register" className="text-primary hover:underline">
-                Register here
+                Join TN16
               </Link>
             </p>
-          )}
+          </div>
         </form>
       </div>
     </div>

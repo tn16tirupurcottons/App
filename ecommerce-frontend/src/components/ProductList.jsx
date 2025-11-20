@@ -87,7 +87,7 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-6">
         {isLoading
           ? new Array(8).fill(null).map((_, idx) => (
               <div key={idx} className="h-80 rounded-[32px] bg-light animate-pulse" />

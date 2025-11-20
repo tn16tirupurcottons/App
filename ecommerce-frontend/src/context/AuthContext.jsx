@@ -49,8 +49,11 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUser]);
 
-  const login = async (email, password) => {
-    const res = await axiosClient.post("/auth/login", { email, password });
+  const login = async (identifier, password) => {
+    const res = await axiosClient.post("/auth/login", {
+      identifier,
+      password,
+    });
     // Handle both token and accessToken formats
     const token = res.data.accessToken || res.data.token;
     if (token) {

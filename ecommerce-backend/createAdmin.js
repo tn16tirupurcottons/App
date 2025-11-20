@@ -9,6 +9,7 @@ const createAdmin = async () => {
   try {
     const email = "admin@example.com";
     const password = "Ajith@123!";
+    const mobileNumber = process.env.ADMIN_BOOTSTRAP_MOBILE || "+919000000000";
     
     // Check if admin already exists
     let admin = await User.findOne({ where: { email, role: "admin" } });
@@ -29,6 +30,15 @@ const createAdmin = async () => {
       
       // Refresh the admin object
       await admin.reload();
+      if (!admin.mobileNumber) {
+        await User.sequelize.query(
+          `UPDATE "Users" SET "mobileNumber" = :mobile WHERE id = :id AND "mobileNumber" IS NULL`,
+          {
+            replacements: { mobile: mobileNumber, id: admin.id },
+            type: User.sequelize.QueryTypes.UPDATE,
+          }
+        );
+      }
       console.log("✅ Admin password updated:", email);
       console.log("   Password: Ajith@123!");
     } else {
@@ -40,11 +50,12 @@ const createAdmin = async () => {
         const hashedPassword = await bcrypt.hash(password, salt);
         
         await User.sequelize.query(
-          `UPDATE "Users" SET password = :password, role = :role, "updatedAt" = NOW() WHERE id = :id`,
+          `UPDATE "Users" SET password = :password, role = :role, "mobileNumber" = COALESCE("mobileNumber", :mobile), "updatedAt" = NOW() WHERE id = :id`,
           {
             replacements: { 
               password: hashedPassword, 
               role: "admin",
+              mobile: mobileNumber,
               id: existingUser.id 
             },
             type: User.sequelize.QueryTypes.UPDATE
@@ -58,6 +69,7 @@ const createAdmin = async () => {
         admin = await User.create({
           name: "Admin",
           email: email,
+          mobileNumber,
           password: password,
           role: "admin",
         });

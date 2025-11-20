@@ -5,7 +5,7 @@ export default function AdminLayout({ title, actions, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="bg-light min-h-screen text-dark">
+    <div className="bg-[#f7f8fb] min-h-screen text-dark">
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {/* Mobile overlay */}
@@ -22,7 +22,7 @@ export default function AdminLayout({ title, actions, children }) {
           <div className="md:hidden bg-white border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-soft">
           <button
             onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-light"
+              className="p-2 rounded-lg hover:bg-gray-100"
             aria-label="Open menu"
           >
             <svg className="w-6 h-6 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@ export default function AdminLayout({ title, actions, children }) {
         </div>
 
         {/* Content area */}
-          <div className="p-4 md:p-6 space-y-4 md:space-y-6 bg-light min-h-screen">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6 min-h-screen">
           {/* Desktop title and actions */}
           <div className="hidden md:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {title && <h1 className="text-2xl font-display text-dark">{title}</h1>}

@@ -11,6 +11,7 @@ import OrderItem from "./OrderItem.js";
 import Wishlist from "./Wishlist.js";
 import Category from "./Category.js";
 import RefreshToken from "./RefreshToken.js";
+import PasswordResetToken from "./PasswordResetToken.js";
 import Banner from "./Banner.js";
 import BrandSetting from "./BrandSetting.js";
 
@@ -43,6 +44,11 @@ Wishlist.belongsTo(Product, { foreignKey: "productId" });
 
 User.hasMany(RefreshToken, { foreignKey: "userId", onDelete: "CASCADE" });
 RefreshToken.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(PasswordResetToken, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+});
+PasswordResetToken.belongsTo(User, { foreignKey: "userId" });
 
 // =============================
 //      SYNC DB
@@ -74,4 +80,5 @@ export {
   RefreshToken,
   Banner,
   BrandSetting,
+  PasswordResetToken,
 };

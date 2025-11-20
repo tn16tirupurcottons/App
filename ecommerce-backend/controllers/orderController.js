@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { Order, Cart, Product, OrderItem, User } from "../models/index.js";
+import { notifyOrderPlaced } from "../services/notificationService.js";
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret
@@ -169,9 +170,20 @@ export const placeOrder = async (req, res) => {
         })
       )
     );
-
     await Cart.destroy({ where: { userId: req.user.id } });
-
+    const customer = await User.findByPk(req.user.id);
+    const orderItems = await OrderItem.findAll({
+      where: { orderId: order.id },
+      include: [{ model: Product }],
+    });
+    notifyOrderPlaced({
+      order,
+      items: orderItems,
+      user: customer,
+      shipping,
+    }).catch((err) =>
+      console.error("[notifications] order placement failed", err)
+    );
     res.status(201).json({ success: true, order });
   } catch (error) {
     res.status(500).json({ message: error.message });
