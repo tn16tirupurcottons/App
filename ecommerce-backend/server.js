@@ -80,15 +80,37 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // ---------------------------
+// INPUT SANITIZATION
+// ---------------------------
+app.use(sanitizeInput);
+
+// ---------------------------
 // RATE LIMITING
 // ---------------------------
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 200,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  message: "Too many requests from this IP, please try again later.",
 });
+
+// Stricter rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10, // Only 10 requests per 15 minutes
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: "Too many authentication attempts, please try again later.",
+  skipSuccessfulRequests: true,
+});
+
 app.use("/api", apiLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/send-otp", authLimiter);
+app.use("/api/auth/verify-otp-register", authLimiter);
+app.use("/api/auth/request-password-reset", authLimiter);
 
 // ---------------------------
 // HEALTH CHECK

@@ -58,7 +58,10 @@ export default function ImageUploader({
       onChange([...images, ...urls]);
       toast.success(`${urls.length} image(s) uploaded successfully`);
     } catch (err) {
-      console.error("Upload error:", err);
+      // Error already handled by toast in uploadFile
+      if (import.meta.env.DEV) {
+        console.error("Upload error:", err);
+      }
     } finally {
       setUploading(false);
     }

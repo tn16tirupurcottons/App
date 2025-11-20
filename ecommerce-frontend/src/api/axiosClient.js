@@ -29,11 +29,18 @@ axiosClient.interceptors.response.use(
     const message = error.response?.data?.message || error.message;
 
     if (status === 401) {
-      console.warn("Unauthorized! Redirect to login if needed.");
-      // window.location.href = "/login"; // optional auto-redirect
+      // Clear invalid token
+      localStorage.removeItem("tn16_token");
+      // Only log in development
+      if (import.meta.env.DEV) {
+        console.warn("Unauthorized! Token cleared.");
+      }
     }
 
-    console.error("API error:", message);
+    // Only log errors in development
+    if (import.meta.env.DEV && status >= 500) {
+      console.error("API error:", message);
+    }
     return Promise.reject(error);
   }
 );

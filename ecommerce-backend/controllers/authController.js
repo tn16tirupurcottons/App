@@ -62,22 +62,32 @@ export const issueTokensForUser = async (user, res) => {
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, mobileNumber } = req.body;
-    if (!mobileNumber) {
-      return res.status(400).json({ message: "mobileNumber is required" });
+    
+    // Email is required
+    if (!email || !name || !password) {
+      return res.status(400).json({ message: "name, email, and password are required" });
     }
 
+    // Check if email already exists (enforce one account per email)
     const exist = await User.findOne({ where: { email } });
     if (exist) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: "An account with this email already exists. Please use a different email or log in." });
     }
-    if (mobileNumber) {
+    
+    // Mobile number is optional, but if provided, must be unique
+    if (mobileNumber && mobileNumber.trim()) {
       const mobileExists = await User.findOne({ where: { mobileNumber } });
       if (mobileExists) {
         return res.status(400).json({ message: "Mobile number already exists" });
       }
     }
 
-    const user = await User.create({ name, email, password, mobileNumber });
+    const user = await User.create({ 
+      name, 
+      email, 
+      password, 
+      mobileNumber: mobileNumber && mobileNumber.trim() ? mobileNumber : null 
+    });
     const tokens = await issueTokensForUser(user, res);
 
     res.status(201).json({
@@ -86,6 +96,14 @@ export const register = async (req, res, next) => {
       ...tokens,
     });
   } catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError") {
+      if (err.errors?.some(e => e.path === "email")) {
+        return res.status(400).json({ message: "An account with this email already exists" });
+      }
+      if (err.errors?.some(e => e.path === "mobileNumber")) {
+        return res.status(400).json({ message: "Mobile number already exists" });
+      }
+    }
     next(err);
   }
 };

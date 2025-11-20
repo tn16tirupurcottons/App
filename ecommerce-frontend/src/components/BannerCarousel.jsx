@@ -72,25 +72,28 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
         
         {/* Text Overlay - Always visible with proper contrast */}
         <div className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-12 z-10">
-          <div className="text-center md:text-left text-white max-w-2xl">
-            {currentBanner.title && (
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 drop-shadow-2xl text-white">
-                {currentBanner.title}
-              </h2>
-            )}
-            {currentBanner.subtitle && (
-              <p className="text-lg md:text-xl mb-6 drop-shadow-xl text-white/95">
-                {currentBanner.subtitle}
-              </p>
-            )}
-            {currentBanner.ctaLabel && currentBanner.ctaLink && (
-              <Link
-                to={currentBanner.ctaLink}
-                className="inline-block bg-primary text-white px-8 py-4 rounded-full font-semibold tracking-[0.3em] uppercase text-xs hover:bg-primary/90 transition shadow-2xl"
-              >
-                {currentBanner.ctaLabel}
-              </Link>
-            )}
+          <div className="text-center md:text-left max-w-2xl">
+            {/* Text Container with Background for Readability */}
+            <div className="bg-black/60 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/20 shadow-2xl">
+              {currentBanner.title && (
+                <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 text-white leading-tight">
+                  {currentBanner.title}
+                </h2>
+              )}
+              {currentBanner.subtitle && (
+                <p className="text-lg md:text-xl mb-6 text-white/95 leading-relaxed">
+                  {currentBanner.subtitle}
+                </p>
+              )}
+              {currentBanner.ctaLabel && currentBanner.ctaLink && (
+                <Link
+                  to={currentBanner.ctaLink}
+                  className="inline-block bg-white text-gray-900 px-8 py-4 rounded-full font-bold tracking-[0.3em] uppercase text-xs hover:bg-gray-100 transition shadow-2xl"
+                >
+                  {currentBanner.ctaLabel}
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 

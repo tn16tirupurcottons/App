@@ -48,7 +48,10 @@ function BrandThemeProvider({ children }) {
       setTheme(merged);
       applyThemeToDocument(merged);
     } catch (err) {
-      console.warn("Failed to load brand theme", err);
+      // Only log in development
+      if (import.meta.env.DEV) {
+        console.warn("Failed to load brand theme", err);
+      }
       applyThemeToDocument(defaultTheme);
     } finally {
       setLoading(false);

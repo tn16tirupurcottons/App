@@ -37,30 +37,21 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur-xl border-b border-border shadow-soft"
-      style={{ background: theme.headerBackground }}
+      className="sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
+      style={{ 
+        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+        borderColor: "rgba(255, 255, 255, 0.1)"
+      }}
     >
-      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-muted uppercase border-b border-border"
-        style={{ background: "var(--surface-color)" }}>
+      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-white/70 uppercase border-b border-white/10"
+        style={{ background: "rgba(0, 0, 0, 0.2)" }}>
         <span>TN16 · Luxury Cotton Studio</span>
         <span>Worldwide shipping · curated edits</span>
       </div>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-4 py-4">
-          {/* Home Button - Left Side */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 hover:text-primary transition"
-            aria-label="Home"
-          >
-            <span className="hidden sm:inline font-semibold text-dark">Home</span>
-            <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </Link>
-          
           <button
-            className="md:hidden text-dark/80 hover:text-dark"
+            className="md:hidden text-white/80 hover:text-white"
             aria-label="Open navigation menu"
             onClick={() => setMobileMenuOpen(true)}
           >
@@ -70,14 +61,14 @@ export default function Navbar() {
             to="/"
             className="hidden md:flex items-center gap-4"
           >
-            <div className="h-12 w-12 rounded-full border-2 border-primary text-primary font-display text-lg tracking-[0.3em] grid place-items-center bg-primary/5">
+            <div className="h-12 w-12 rounded-full border-2 border-white/30 text-white font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm">
               TN
             </div>
             <div className="text-left">
-              <p className="text-dark font-semibold text-lg leading-tight">
+              <p className="text-white font-semibold text-lg leading-tight">
                 {brand}
               </p>
-              <p className="pill text-[10px] text-muted">
+              <p className="pill text-[10px] text-white/70">
                 Tirupur · Established MMXXV
               </p>
             </div>
@@ -87,18 +78,18 @@ export default function Navbar() {
             to="/"
             className="md:hidden"
           >
-            <div className="h-10 w-10 rounded-full border-2 border-primary text-primary font-display text-base tracking-[0.3em] grid place-items-center bg-primary/5">
+            <div className="h-10 w-10 rounded-full border-2 border-white/30 text-white font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm">
               TN
             </div>
           </Link>
 
           <div className="hidden md:flex flex-1 justify-center">
-            <div className="flex items-center gap-2 w-full max-w-2xl bg-white/70 border border-border rounded-full px-5 py-2 shadow-soft">
-              <FaSearch className="text-muted" />
+            <div className="flex items-center gap-2 w-full max-w-2xl bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 shadow-lg">
+              <FaSearch className="text-white/70" />
               <input
                 type="text"
                 placeholder="Search pieces, collections, artisans"
-                className="flex-1 bg-transparent text-sm text-dark focus:outline-none placeholder:text-muted"
+                className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-white/60"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.target.value.trim()) {
                     navigate(
@@ -110,11 +101,11 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-3 text-sm font-medium text-dark/80">
+          <div className="ml-auto flex items-center gap-3 text-sm font-medium text-white">
             <Link
               to="/cart"
               aria-label="View cart"
-              className="hidden sm:flex items-center gap-2 hover:text-primary"
+              className="hidden sm:flex items-center gap-2 hover:text-white/80 transition"
             >
               <FaShoppingCart size={16} /> Cart
             </Link>
@@ -123,36 +114,36 @@ export default function Navbar() {
                 {user.role === "admin" && (
                   <Link
                     to="/admin"
-                    className="px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition font-semibold text-xs"
+                    className="px-4 py-2 rounded-full bg-white/10 text-white border border-white/30 hover:bg-white/20 transition font-semibold text-xs backdrop-blur-sm"
                   >
                     Admin
                   </Link>
                 )}
-                <span className="hidden sm:block text-muted">
+                <span className="hidden sm:block text-white/80">
                   {user.name.split(" ")[0]}
                 </span>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 rounded-full border border-border hover:border-primary hover:text-primary transition"
+                  className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 hover:bg-white/10 transition text-white backdrop-blur-sm"
                 >
                   Logout
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="hover:text-primary">
+                <Link to="/login" className="hover:text-white/80 transition text-white">
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition"
+                  className="px-4 py-2 rounded-full bg-white text-gray-900 hover:bg-white/90 transition font-semibold shadow-lg"
                 >
                   Join
                 </Link>
               </div>
             )}
             <button
-              className="md:hidden text-dark/80 hover:text-dark"
+              className="md:hidden text-white/80 hover:text-white"
               aria-label="Open search panel"
               onClick={() => setMobileSearchOpen(true)}
             >
@@ -163,17 +154,17 @@ export default function Navbar() {
       </div>
 
       <div
-        className="border-t border-border bg-light hidden md:block"
+        className="border-t border-white/10 bg-black/20 backdrop-blur-md hidden md:block"
         onMouseLeave={() => setActiveMenu(null)}
       >
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold text-dark/70">
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold text-white/80">
           <NavLink
             to="/"
             className={({ isActive }) =>
-              `pb-2 border-b-2 ${
+              `pb-2 border-b-2 transition ${
                 isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent hover:border-primary/40 hover:text-primary"
+                  ? "border-white text-white"
+                  : "border-transparent hover:border-white/40 hover:text-white"
               }`
             }
           >
