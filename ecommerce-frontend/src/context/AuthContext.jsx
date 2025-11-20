@@ -1,9 +1,12 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import axiosClient from "../api/axiosClient";
 
-export const AuthContext = createContext();
+// Fast Refresh compatible: context export
+const AuthContext = createContext();
+export { AuthContext };
 
-export function AuthProvider({ children }) {
+// Fast Refresh compatible: function declaration component
+function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,3 +88,5 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+
+export { AuthProvider };

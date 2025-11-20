@@ -14,6 +14,7 @@ const defaultTheme = {
   containerRadius: "24px",
 };
 
+// Fast Refresh compatible: context creation
 const BrandThemeContext = createContext({
   theme: defaultTheme,
   refreshTheme: () => {},
@@ -33,7 +34,8 @@ const applyThemeToDocument = (theme) => {
   root.style.setProperty("--container-radius", theme.containerRadius);
 };
 
-export const BrandThemeProvider = ({ children }) => {
+// Fast Refresh compatible: component export
+function BrandThemeProvider({ children }) {
   const [theme, setTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(false);
 
@@ -65,7 +67,10 @@ export const BrandThemeProvider = ({ children }) => {
       {children}
     </BrandThemeContext.Provider>
   );
-};
+}
 
+export { BrandThemeProvider };
+
+// Fast Refresh compatible: hook export
 export const useBrandTheme = () => useContext(BrandThemeContext);
 
