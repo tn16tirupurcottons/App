@@ -61,7 +61,7 @@ export const listUsers = async (req, res, next) => {
       const stats = statsMap.get(user.id) || {};
       const lastOrder = lastOrderMap.get(user.id) || null;
       return {
-        ...user.toJSON(),
+        ...(user.get ? user.get({ plain: true }) : user),
         orderCount: Number(stats.orderCount || 0),
         lifetimeValue: Number(stats.lifetimeValue || 0),
         lastOrder,

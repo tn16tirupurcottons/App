@@ -1,22 +1,14 @@
-import Stripe from "stripe";
 import { Order, Cart, Product, OrderItem, User } from "../models/index.js";
 import { notifyOrderPlaced, sendSMS } from "../services/notificationService.js";
-
-const stripeSecret = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeSecret
-  ? new Stripe(stripeSecret, { apiVersion: "2024-06-20" })
-  : null;
-const isDemoPayments = !stripe;
-
-const buildDemoPaymentIntent = (userId) => {
-  const stamp = Date.now();
-  return {
-    id: `demo_pi_${stamp}`,
-    client_secret: `demo_secret_${userId}_${stamp}`,
-    status: "succeeded",
-    payment_method_types: ["demo"],
-  };
-};
+import {
+  createRazorpayOrder,
+  createStripePaymentIntent,
+  verifyRazorpayPayment,
+  verifyStripePayment,
+  getAvailablePaymentMethods,
+  isPaymentMethodAvailable,
+} from "../services/paymentService.js";
+import { validatePaymentMethod, validateAmount } from "../middlewares/securityMiddleware.js";
 
 const calculateTotals = (cartItems) => {
   const subtotal = cartItems.reduce(
@@ -37,6 +29,15 @@ const calculateTotals = (cartItems) => {
 
 export const createCheckoutIntent = async (req, res) => {
   try {
+    const { paymentMethod = "online" } = req.body;
+
+    // Validate payment method
+    if (!validatePaymentMethod(paymentMethod)) {
+      return res.status(400).json({ 
+        message: `Invalid payment method. Allowed: cod, online, razorpay, stripe` 
+      });
+    }
+
     const cartItems = await Cart.findAll({
       where: { userId: req.user.id },
       include: [{ model: Product }],
@@ -48,54 +49,112 @@ export const createCheckoutIntent = async (req, res) => {
 
     const totals = calculateTotals(cartItems);
 
-    let paymentIntent;
-
-    if (stripe) {
-      paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totals.total * 100),
-        currency: "inr",
-        automatic_payment_methods: { enabled: true },
-        metadata: {
-          userId: req.user.id,
-        },
-      });
-    } else {
-      console.warn(
-        "[payments] Stripe key missing. Falling back to demo payment intent."
-      );
-      paymentIntent = buildDemoPaymentIntent(req.user.id);
+    // Validate amount
+    if (!validateAmount(totals.total)) {
+      return res.status(400).json({ message: "Invalid order amount" });
     }
 
-    res.json({
-      success: true,
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      totals,
-      items: cartItems.map((item) => item.toJSON()),
-      demoMode: isDemoPayments,
+    // Convert Sequelize models to plain objects
+    const items = cartItems.map((item) => {
+      if (item && typeof item.get === "function") {
+        return item.get({ plain: true });
+      }
+      return item;
     });
+
+    // Get available payment methods
+    const availableMethods = getAvailablePaymentMethods();
+
+    // For COD, no payment intent needed
+    if (paymentMethod === "cod") {
+      return res.json({
+        success: true,
+        paymentMethod: "cod",
+        paymentIntentId: `cod_${Date.now()}`,
+        totals,
+        items,
+        availableMethods,
+      });
+    }
+
+    // For Razorpay (online payment in India)
+    if (paymentMethod === "razorpay" || paymentMethod === "online") {
+      try {
+        const razorpayOrder = await createRazorpayOrder(
+          totals.total,
+          "INR",
+          { userId: req.user.id }
+        );
+        return res.json({
+          success: true,
+          paymentMethod: "razorpay",
+          razorpayOrderId: razorpayOrder.id,
+          razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+          totals,
+          items,
+          availableMethods,
+        });
+      } catch (error) {
+        console.error("[Razorpay] Error:", error);
+        return res.status(500).json({ 
+          message: "Payment gateway unavailable. Please try Cash on Delivery." 
+        });
+      }
+    }
+
+    // For Stripe (international)
+    if (paymentMethod === "stripe") {
+      try {
+        const stripeIntent = await createStripePaymentIntent(
+          totals.total,
+          "usd",
+          { userId: req.user.id }
+        );
+        return res.json({
+          success: true,
+          paymentMethod: "stripe",
+          clientSecret: stripeIntent.client_secret,
+          paymentIntentId: stripeIntent.id,
+          totals,
+          items,
+          availableMethods,
+        });
+      } catch (error) {
+        console.error("[Stripe] Error:", error);
+        return res.status(500).json({ 
+          message: "Payment gateway unavailable. Please try another method." 
+        });
+      }
+    }
+
+    return res.status(400).json({ message: "Payment method not supported" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("[Checkout] Error:", error);
+    res.status(500).json({ message: error.message || "Checkout failed" });
   }
 };
 
 export const placeOrder = async (req, res) => {
   try {
-    const { paymentIntentId, shipping } = req.body;
-    if (!paymentIntentId || !shipping) {
-      return res
-        .status(400)
-        .json({ message: "paymentIntentId and shipping are required" });
+    const { 
+      paymentIntentId, 
+      paymentMethod = "online",
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      shipping 
+    } = req.body;
+
+    if (!shipping) {
+      return res.status(400).json({ message: "Shipping details are required" });
     }
 
-    const shippingFields = [
-      "name",
-      "phone",
-      "address",
-      "city",
-      "state",
-      "zip",
-    ];
+    // Validate payment method
+    if (!validatePaymentMethod(paymentMethod)) {
+      return res.status(400).json({ message: "Invalid payment method" });
+    }
+
+    const shippingFields = ["name", "phone", "address", "city", "state", "zip"];
     const missingFields = shippingFields.filter((field) => !shipping[field]);
     if (missingFields.length) {
       return res.status(400).json({
@@ -103,31 +162,6 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    let paymentIntent;
-
-    if (stripe) {
-      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-      if (
-        !["succeeded", "processing", "requires_capture"].includes(
-          paymentIntent.status
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ message: "Payment not completed yet. Please retry." });
-      }
-    } else {
-      console.warn(
-        "[payments] Completing order in demo mode. No payment confirmation performed."
-      );
-      paymentIntent = {
-        id: paymentIntentId,
-        status: "succeeded",
-        payment_method_types: ["demo"],
-      };
-    }
-
     const cartItems = await Cart.findAll({
       where: { userId: req.user.id },
       include: [{ model: Product }],
@@ -137,6 +171,71 @@ export const placeOrder = async (req, res) => {
     }
 
     const totals = calculateTotals(cartItems);
+
+    // Validate amount
+    if (!validateAmount(totals.total)) {
+      return res.status(400).json({ message: "Invalid order amount" });
+    }
+
+    let paymentStatus = "requires_payment";
+    let verifiedPaymentId = paymentIntentId;
+
+    // Handle COD
+    if (paymentMethod === "cod") {
+      paymentStatus = "requires_payment"; // Will be paid on delivery
+      verifiedPaymentId = `cod_${Date.now()}`;
+    }
+    // Handle Razorpay
+    else if (paymentMethod === "razorpay" || paymentMethod === "online") {
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        return res.status(400).json({ 
+          message: "Razorpay payment details are required" 
+        });
+      }
+
+      try {
+        const verifiedPayment = await verifyRazorpayPayment(
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature
+        );
+        
+        if (verifiedPayment.status !== "authorized" && verifiedPayment.status !== "captured") {
+          return res.status(400).json({ 
+            message: `Payment not completed. Status: ${verifiedPayment.status}` 
+          });
+        }
+
+        paymentStatus = verifiedPayment.captured ? "paid" : "processing";
+        verifiedPaymentId = razorpayPaymentId;
+      } catch (error) {
+        return res.status(400).json({ 
+          message: `Payment verification failed: ${error.message}` 
+        });
+      }
+    }
+    // Handle Stripe
+    else if (paymentMethod === "stripe") {
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent ID is required" });
+      }
+
+      try {
+        const verifiedPayment = await verifyStripePayment(paymentIntentId);
+        
+        if (!["succeeded", "processing", "requires_capture"].includes(verifiedPayment.status)) {
+          return res.status(400).json({ 
+            message: `Payment not completed. Status: ${verifiedPayment.status}` 
+          });
+        }
+
+        paymentStatus = verifiedPayment.status === "succeeded" ? "paid" : "processing";
+      } catch (error) {
+        return res.status(400).json({ 
+          message: `Payment verification failed: ${error.message}` 
+        });
+      }
+    }
 
     const order = await Order.create({
       userId: req.user.id,
@@ -145,9 +244,11 @@ export const placeOrder = async (req, res) => {
       shippingFee: totals.shippingFee,
       discountTotal: totals.discountTotal,
       total: totals.total,
-      paymentIntentId,
-      paymentStatus: paymentIntent.status,
-      paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
+      paymentIntentId: verifiedPaymentId,
+      paymentMethod: paymentMethod === "online" ? "razorpay" : paymentMethod,
+      paymentStatus,
+      razorpayOrderId: razorpayOrderId || null,
+      razorpayPaymentId: razorpayPaymentId || null,
       shippingName: shipping.name,
       shippingPhone: shipping.phone,
       shippingAddress: shipping.address,
@@ -155,7 +256,7 @@ export const placeOrder = async (req, res) => {
       shippingState: shipping.state,
       shippingZip: shipping.zip,
       shippingCountry: shipping.country || "India",
-      status: "pending",
+      status: paymentMethod === "cod" ? "pending" : "confirmed",
     });
 
     await Promise.all(
@@ -184,7 +285,8 @@ export const placeOrder = async (req, res) => {
     }).catch((err) =>
       console.error("[notifications] order placement failed", err)
     );
-    res.status(201).json({ success: true, order });
+    // Convert Sequelize model to plain object
+    res.status(201).json({ success: true, order: order.get({ plain: true }) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -202,7 +304,9 @@ export const getOrders = async (req, res) => {
       ],
       order: [["createdAt", "DESC"]],
     });
-    res.json({ success: true, items: orders });
+    // Convert Sequelize models to plain objects
+    const items = orders.map((order) => order.get({ plain: true }));
+    res.json({ success: true, items });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -223,7 +327,9 @@ export const getAllOrders = async (req, res) => {
       ],
       order: [["createdAt", "DESC"]],
     });
-    res.json({ success: true, items: orders });
+    // Convert Sequelize models to plain objects
+    const items = orders.map((order) => order.get({ plain: true }));
+    res.json({ success: true, items });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -259,7 +365,8 @@ export const updateOrderStatus = async (req, res) => {
       }).catch((err) => console.error("[notifications] order status update failed", err));
     }
 
-    res.json({ success: true, order });
+    // Convert Sequelize model to plain object
+    res.json({ success: true, order: order.get({ plain: true }) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -20,10 +20,13 @@ export const getWishlist = async (req, res, next) => {
       order: [["createdAt", "DESC"]],
     });
 
+    // Convert Sequelize models to plain objects
+    const plainItems = items.map((item) => item.get({ plain: true }));
+
     res.json({
       success: true,
       count: items.length,
-      items,
+      items: plainItems,
     });
   } catch (err) {
     next(err);

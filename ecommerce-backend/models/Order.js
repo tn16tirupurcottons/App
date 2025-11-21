@@ -34,7 +34,12 @@ const Order = sequelize.define(
       defaultValue: "requires_payment",
     },
     paymentIntentId: { type: DataTypes.STRING },
-    paymentMethod: { type: DataTypes.STRING, defaultValue: "card" },
+    paymentMethod: { 
+      type: DataTypes.ENUM("cod", "razorpay", "stripe", "online"),
+      defaultValue: "online" 
+    },
+    razorpayOrderId: { type: DataTypes.STRING, allowNull: true },
+    razorpayPaymentId: { type: DataTypes.STRING, allowNull: true },
     shippingName: { type: DataTypes.STRING, allowNull: false, defaultValue: "" },
     shippingPhone: {
       type: DataTypes.STRING,

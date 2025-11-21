@@ -31,17 +31,23 @@ axiosClient.interceptors.response.use(
     if (status === 401) {
       // Clear invalid token
       localStorage.removeItem("tn16_token");
-      // Only log in development
-      if (import.meta.env.DEV) {
-        console.warn("Unauthorized! Token cleared.");
+      // Redirect to login if not already there
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
       }
     }
 
-    // Only log errors in development
+    // Never log sensitive information
+    // Only log generic errors in development
     if (import.meta.env.DEV && status >= 500) {
-      console.error("API error:", message);
+      console.error("API error:", status);
     }
-    return Promise.reject(error);
+
+    // Return sanitized error (don't expose internal details)
+    return Promise.reject({
+      status,
+      message: status >= 500 ? "Server error. Please try again later." : message,
+    });
   }
 );
 

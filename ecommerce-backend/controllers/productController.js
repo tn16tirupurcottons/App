@@ -99,13 +99,16 @@ export const getProducts = async (req, res) => {
       offset,
     });
 
+    // Convert Sequelize models to plain objects to prevent circular references
+    const items = products.rows.map((product) => product.get({ plain: true }));
+
     return res.json({
       success: true,
       page: Number(page),
       limit: Number(limit),
       totalItems: products.count,
       totalPages: Math.ceil(products.count / limit),
-      items: products.rows,
+      items,
     });
   } catch (err) {
     console.error("Product Fetch Error:", err);
@@ -130,7 +133,8 @@ export const getProductById = async (req, res) => {
     if (!product)
       return res.status(404).json({ message: "Product not found" });
 
-    res.json(product);
+    // Convert Sequelize model to plain object
+    res.json(product.get({ plain: true }));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

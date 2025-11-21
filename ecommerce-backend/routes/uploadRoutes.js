@@ -35,7 +35,8 @@ router.post("/", protect, admin, upload.single("image"), async (req, res) => {
       (error, result) => {
         if (error) {
           console.error("Cloudinary upload error:", error);
-          return res.status(500).json({ message: "Upload error", error: error.message });
+          // Don't expose Cloudinary error details
+          return res.status(500).json({ message: "Upload failed. Please try again." });
         }
         res.json({ url: result.secure_url, public_id: result.public_id });
       }
@@ -43,7 +44,8 @@ router.post("/", protect, admin, upload.single("image"), async (req, res) => {
     streamifier.createReadStream(req.file.buffer).pipe(stream);
   } catch (err) {
     console.error("Upload error:", err);
-    res.status(500).json({ message: "Upload failed", error: err.message });
+    // Don't expose internal error details
+    res.status(500).json({ message: "Upload failed. Please try again." });
   }
 });
 
@@ -98,7 +100,8 @@ router.post("/multiple", protect, admin, upload.array("images", 10), async (req,
     });
   } catch (err) {
     console.error("Multiple upload error:", err);
-    res.status(500).json({ message: "Upload failed", error: err.message });
+    // Don't expose internal error details
+    res.status(500).json({ message: "Upload failed. Please try again." });
   }
 });
 

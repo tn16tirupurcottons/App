@@ -7,7 +7,9 @@ export const getCategories = async (req, res) => {
     const categories = await Category.findAll({
       order: [["name", "ASC"]],
     });
-    res.json({ success: true, items: categories });
+    // Convert Sequelize models to plain objects
+    const items = categories.map((cat) => cat.get({ plain: true }));
+    res.json({ success: true, items });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -31,7 +33,8 @@ export const getCategoryBySlug = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.json({ success: true, category });
+    // Convert Sequelize model to plain object
+    res.json({ success: true, category: category.get({ plain: true }) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

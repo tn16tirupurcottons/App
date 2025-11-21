@@ -33,9 +33,12 @@ export const getCart = async (req, res, next) => {
       order: [["createdAt", "DESC"]],
     });
 
+    // Convert Sequelize models to plain objects
+    const items = cart.map((item) => item.get({ plain: true }));
+
     res.json({
       success: true,
-      items: cart,
+      items,
       summary: buildSummary(cart),
     });
   } catch (err) {

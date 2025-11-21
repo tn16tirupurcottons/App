@@ -7,11 +7,12 @@ import {
   updateOrderStatus,
 } from "../controllers/orderController.js";
 import { protect, admin } from "../middlewares/authMiddleware.js";
+import { paymentLimiter, orderLimiter } from "../middlewares/securityMiddleware.js";
 
 const router = express.Router();
 
-router.post("/checkout", protect, createCheckoutIntent);
-router.post("/", protect, placeOrder);
+router.post("/checkout", protect, paymentLimiter, createCheckoutIntent);
+router.post("/", protect, orderLimiter, placeOrder);
 router.get("/", protect, getOrders);
 router.get("/all", protect, admin, getAllOrders);
 router.patch("/:id/status", protect, admin, updateOrderStatus);
