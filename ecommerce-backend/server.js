@@ -82,6 +82,44 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 // ---------------------------
 // INPUT SANITIZATION
 // ---------------------------
+/**
+ * Basic recursive input sanitization middleware.
+ * - Strips script tags
+ * - Trims strings
+ * - Prevents simple injection payloads in body/query/params
+ *
+ * NOTE: This is an additional safety net on top of parameterized queries
+ * via Sequelize. Do NOT rely on this alone for security.
+ */
+const sanitizeInput = (req, _res, next) => {
+  const sanitizeValue = (value) => {
+    if (typeof value === "string") {
+      // Remove script tags and trim whitespace
+      return value
+        .replace(/<\s*script/gi, "")
+        .replace(/<\s*\/\s*script\s*>/gi, "")
+        .trim();
+    }
+    if (Array.isArray(value)) {
+      return value.map(sanitizeValue);
+    }
+    if (value && typeof value === "object") {
+      const sanitized = {};
+      for (const [key, val] of Object.entries(value)) {
+        sanitized[key] = sanitizeValue(val);
+      }
+      return sanitized;
+    }
+    return value;
+  };
+
+  if (req.body) req.body = sanitizeValue(req.body);
+  if (req.query) req.query = sanitizeValue(req.query);
+  if (req.params) req.params = sanitizeValue(req.params);
+
+  next();
+};
+
 app.use(sanitizeInput);
 
 // ---------------------------

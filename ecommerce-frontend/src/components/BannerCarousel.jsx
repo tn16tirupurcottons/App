@@ -7,17 +7,19 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { data: banners = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ["banners", page, position],
     queryFn: async () => {
       try {
-        const res = await axiosClient.get(`/admin/banners?page=${page}&position=${position}`);
+        const res = await axiosClient.get(
+          `/admin/banners?page=${page}&position=${position}`
+        );
         const all = res.data.items || [];
-        // Filter by page and position, or "all" page
-        return all.filter((b) => 
-          b.isActive && 
-          (b.page === page || b.page === "all") && 
-          b.position === position
+        return all.filter(
+          (b) =>
+            b.isActive &&
+            (b.page === page || b.page === "all") &&
+            b.position === position
         );
       } catch {
         return [];
@@ -25,37 +27,71 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
     },
   });
 
-  const activeBanners = banners
-    .sort((a, b) => a.displayOrder - b.displayOrder)
+  const activeBanners = (data || [])
+    .slice()
+    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
     .slice(0, 5);
 
-  // Rotate between banners
+  // Ensure indices stay in range whenever data changes
   useEffect(() => {
-    if (activeBanners.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
-      setCurrentImageIndex(0); // Reset image index when banner changes
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [activeBanners.length]);
+    if (!activeBanners.length) {
+      setCurrentBannerIndex(0);
+      setCurrentImageIndex(0);
+      return;
+    }
+    if (currentBannerIndex >= activeBanners.length) {
+      setCurrentBannerIndex(0);
+      setCurrentImageIndex(0);
+    }
+  }, [activeBanners.length, currentBannerIndex]);
 
-  if (!activeBanners.length) return null;
-
-  const currentBanner = activeBanners[currentBannerIndex];
-  const images = currentBanner.images || (currentBanner.image ? [currentBanner.image] : []);
-
-  // Rotate between images within current banner
+  // Rotate between banners and images with a single interval
   useEffect(() => {
-    if (images.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, 3000);
+    if (!activeBanners.length) return;
+
+    const tick = () => {
+      const banner = activeBanners[currentBannerIndex];
+      const imgs =
+        (banner?.images && banner.images.length > 0
+          ? banner.images
+          : banner?.image
+          ? [banner.image]
+          : []) || [];
+
+      if (imgs.length > 1) {
+        setCurrentImageIndex((prev) => {
+          const next = prev + 1;
+          if (next < imgs.length) return next;
+          setCurrentBannerIndex((bPrev) => (bPrev + 1) % activeBanners.length);
+          return 0;
+        });
+      } else {
+        setCurrentBannerIndex((bPrev) => (bPrev + 1) % activeBanners.length);
+        setCurrentImageIndex(0);
+      }
+    };
+
+    const interval = setInterval(tick, 3000);
     return () => clearInterval(interval);
-  }, [images.length, currentBannerIndex]);
+  }, [activeBanners, currentBannerIndex]);
 
-  const currentImage = images[currentImageIndex] || images[0] || "";
+  // ✅ Safe currentBanner check
+  const currentBanner =
+    activeBanners && activeBanners[currentBannerIndex]
+      ? activeBanners[currentBannerIndex]
+      : null;
 
-  if (!currentImage) return null;
+  if (!currentBanner) return null;
+
+  const images =
+    (currentBanner?.images && currentBanner.images.length > 0
+      ? currentBanner.images
+      : currentBanner?.image
+      ? [currentBanner.image]
+      : []) || [];
+
+  const currentImage =
+    images[currentImageIndex] || images[0] || "https://via.placeholder.com/1200x600?text=Banner+Image";
 
   return (
     <div className="relative w-full rounded-3xl overflow-hidden shadow-xl">
@@ -69,11 +105,10 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-        
-        {/* Text Overlay - Always visible with proper contrast */}
+
+        {/* Text Overlay */}
         <div className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-12 z-10">
           <div className="text-center md:text-left max-w-2xl">
-            {/* Text Container with Background for Readability */}
             <div className="bg-black/60 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/20 shadow-2xl">
               {currentBanner.title && (
                 <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 text-white leading-tight">
@@ -116,7 +151,7 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
           </div>
         )}
 
-        {/* Image indicators (if multiple images in current banner) */}
+        {/* Image indicators */}
         {images.length > 1 && (
           <div className="absolute top-4 right-4 flex gap-1">
             {images.map((_, idx) => (
@@ -133,4 +168,3 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
     </div>
   );
 }
-

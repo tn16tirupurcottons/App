@@ -58,7 +58,9 @@ export const syncDB = async () => {
   try {
     await migrateLegacyProductSlugs();
     await migrateLegacyProductCategories();
-    await sequelize.sync({ alter: true });
+    // Use plain sync to avoid dropping/recreating constraints in production.
+    // All structural changes should be handled via explicit migration scripts.
+    await sequelize.sync();
     console.log("✅ Database & tables synced!");
   } catch (err) {
     console.error("❌ DB Sync Error:", err);

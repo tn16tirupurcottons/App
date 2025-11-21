@@ -38,9 +38,12 @@ export default function Navbar() {
   return (
     <header
       className="sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
-      style={{ 
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-        borderColor: "rgba(255, 255, 255, 0.1)"
+      style={{
+        // Use theme-controlled header background, fallback to luxury gradient
+        background:
+          theme.headerBackground ||
+          "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
       }}
     >
       <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-white/70 uppercase border-b border-white/10"
@@ -388,20 +391,6 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
           }}
         >
           <div className="px-6 py-4">
-            {/* Home Link */}
-            <NavLink
-              to="/"
-              onClick={onLinkClick}
-              className={({ isActive }) =>
-                `flex items-center justify-between py-4 border-b border-border ${
-                  isActive ? "text-primary" : "text-dark"
-                }`
-              }
-            >
-              <span className="font-semibold text-base">Home</span>
-              <FaChevronRight className="text-muted" size={14} />
-            </NavLink>
-
             {/* Segments */}
             {segments.map((segment) => (
               <button

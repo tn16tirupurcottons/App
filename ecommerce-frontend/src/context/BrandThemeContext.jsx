@@ -10,7 +10,9 @@ const defaultTheme = {
   textColor: "#111827",
   headingFont: '"Playfair Display", serif',
   bodyFont: '"Inter", system-ui, sans-serif',
-  headerBackground: "rgba(255,255,255,0.95)",
+  // Luxury default header gradient (overridable from Admin → Brand Settings)
+  headerBackground:
+    "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
   containerRadius: "24px",
 };
 
@@ -35,7 +37,7 @@ const applyThemeToDocument = (theme) => {
 };
 
 // Fast Refresh compatible: component export
-function BrandThemeProvider({ children }) {
+const BrandThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(false);
 
@@ -66,14 +68,16 @@ function BrandThemeProvider({ children }) {
   }, []);
 
   return (
-    <BrandThemeContext.Provider value={{ theme, refreshTheme: fetchTheme, loading }}>
+    <BrandThemeContext.Provider
+      value={{ theme, refreshTheme: fetchTheme, loading }}
+    >
       {children}
     </BrandThemeContext.Provider>
   );
-}
-
-export { BrandThemeProvider };
+};
 
 // Fast Refresh compatible: hook export
 export const useBrandTheme = () => useContext(BrandThemeContext);
+export { BrandThemeProvider };
+export default BrandThemeProvider;
 
