@@ -52,11 +52,14 @@ export const addWishlistItem = async (req, res, next) => {
 
     const item = await Wishlist.findByPk(record.id, { include: wishlistInclude });
 
+    // Convert Sequelize model to plain object
+    const plainItem = item.get({ plain: true });
+
     res.status(created ? 201 : 200).json({
       success: true,
       message: created ? "Added to wishlist" : "Already saved to wishlist",
       created,
-      item,
+      item: plainItem,
     });
   } catch (err) {
     next(err);

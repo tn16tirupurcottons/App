@@ -29,14 +29,7 @@ const calculateTotals = (cartItems) => {
 
 export const createCheckoutIntent = async (req, res) => {
   try {
-    const { paymentMethod = "online" } = req.body;
-
-    // Validate payment method
-    if (!validatePaymentMethod(paymentMethod)) {
-      return res.status(400).json({ 
-        message: `Invalid payment method. Allowed: cod, online, razorpay, stripe` 
-      });
-    }
+    const { paymentMethod } = req.body;
 
     const cartItems = await Cart.findAll({
       where: { userId: req.user.id },
@@ -65,8 +58,15 @@ export const createCheckoutIntent = async (req, res) => {
     // Get available payment methods
     const availableMethods = getAvailablePaymentMethods();
 
+    // If no payment method specified, default to COD or first available method
+    let selectedMethod = paymentMethod;
+    if (!selectedMethod || !validatePaymentMethod(selectedMethod)) {
+      // Default to COD if available, otherwise first available method
+      selectedMethod = "cod";
+    }
+
     // For COD, no payment intent needed
-    if (paymentMethod === "cod") {
+    if (selectedMethod === "cod") {
       return res.json({
         success: true,
         paymentMethod: "cod",
@@ -74,11 +74,12 @@ export const createCheckoutIntent = async (req, res) => {
         totals,
         items,
         availableMethods,
+        demoMode: false,
       });
     }
 
     // For Razorpay (online payment in India)
-    if (paymentMethod === "razorpay" || paymentMethod === "online") {
+    if (selectedMethod === "razorpay" || selectedMethod === "online") {
       try {
         const razorpayOrder = await createRazorpayOrder(
           totals.total,
@@ -93,17 +94,26 @@ export const createCheckoutIntent = async (req, res) => {
           totals,
           items,
           availableMethods,
+          demoMode: false,
         });
       } catch (error) {
         console.error("[Razorpay] Error:", error);
-        return res.status(500).json({ 
-          message: "Payment gateway unavailable. Please try Cash on Delivery." 
+        // Fallback to COD if Razorpay fails
+        return res.json({
+          success: true,
+          paymentMethod: "cod",
+          paymentIntentId: `cod_${Date.now()}`,
+          totals,
+          items,
+          availableMethods,
+          demoMode: false,
+          warning: "Online payment unavailable. Using Cash on Delivery.",
         });
       }
     }
 
     // For Stripe (international)
-    if (paymentMethod === "stripe") {
+    if (selectedMethod === "stripe") {
       try {
         const stripeIntent = await createStripePaymentIntent(
           totals.total,
@@ -118,16 +128,34 @@ export const createCheckoutIntent = async (req, res) => {
           totals,
           items,
           availableMethods,
+          demoMode: false,
         });
       } catch (error) {
         console.error("[Stripe] Error:", error);
-        return res.status(500).json({ 
-          message: "Payment gateway unavailable. Please try another method." 
+        // Fallback to COD if Stripe fails
+        return res.json({
+          success: true,
+          paymentMethod: "cod",
+          paymentIntentId: `cod_${Date.now()}`,
+          totals,
+          items,
+          availableMethods,
+          demoMode: false,
+          warning: "Payment gateway unavailable. Using Cash on Delivery.",
         });
       }
     }
 
-    return res.status(400).json({ message: "Payment method not supported" });
+    // If all else fails, return COD
+    return res.json({
+      success: true,
+      paymentMethod: "cod",
+      paymentIntentId: `cod_${Date.now()}`,
+      totals,
+      items,
+      availableMethods,
+      demoMode: false,
+    });
   } catch (error) {
     console.error("[Checkout] Error:", error);
     res.status(500).json({ message: error.message || "Checkout failed" });
