@@ -49,7 +49,7 @@ export default function BrandSettings() {
       setTheme((prev) => ({
         ...prev,
         ...Object.keys(DEFAULT_THEME).reduce((acc, key) => {
-          acc[key] = settings[key] || DEFAULT_THEME[key];
+          acc[key] = settings[key] !== null && settings[key] !== undefined ? settings[key] : DEFAULT_THEME[key];
           return acc;
         }, {}),
       }));
@@ -108,7 +108,7 @@ export default function BrandSettings() {
       actions={
         <button
           onClick={handleSave}
-          disabled={saveMutation.isPending || !assets.logo}
+          disabled={saveMutation.isPending}
           className="bg-primary text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saveMutation.isPending ? "Saving..." : "Save Settings"}
@@ -139,11 +139,11 @@ export default function BrandSettings() {
                   {field.label}
                 </label>
                 <ImageUploader
-                  images={assets[field.key] ? [assets[field.key]] : []}
+                  images={assets[field.key] && assets[field.key].trim() ? [assets[field.key]] : []}
                   onChange={(images) =>
                     setAssets((prev) => ({
                       ...prev,
-                      [field.key]: images[0] || "",
+                      [field.key]: images && images.length > 0 ? images[0] : "",
                     }))
                   }
                   maxImages={1}
@@ -329,7 +329,7 @@ export default function BrandSettings() {
         <div className="md:hidden pt-4 border-t border-border">
           <button
             onClick={handleSave}
-            disabled={saveMutation.isPending || !assets.logo}
+            disabled={saveMutation.isPending}
             className="w-full bg-primary text-white rounded-full py-3 font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition"
           >
             {saveMutation.isPending ? "Saving..." : "Save Brand Settings"}

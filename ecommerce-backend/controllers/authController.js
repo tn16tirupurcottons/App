@@ -65,28 +65,39 @@ export const register = async (req, res, next) => {
     
     // Email is required
     if (!email || !name || !password) {
-      return res.status(400).json({ message: "name, email, and password are required" });
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ message: "Please enter a valid email address" });
     }
 
     // Check if email already exists (enforce one account per email)
-    const exist = await User.findOne({ where: { email } });
+    const exist = await User.findOne({ where: { email: email.trim().toLowerCase() } });
     if (exist) {
       return res.status(400).json({ message: "An account with this email already exists. Please use a different email or log in." });
     }
     
-    // Mobile number is optional, but if provided, must be unique
+    // Mobile number is optional, but if provided, must be valid and unique
+    let cleanedMobile = null;
     if (mobileNumber && mobileNumber.trim()) {
-      const mobileExists = await User.findOne({ where: { mobileNumber } });
+      cleanedMobile = mobileNumber.replace(/^\+91/, "").replace(/\D/g, "");
+      if (cleanedMobile.length !== 10 || !/^[6-9]/.test(cleanedMobile)) {
+        return res.status(400).json({ message: "Please enter a valid 10-digit Indian mobile number" });
+      }
+      const mobileExists = await User.findOne({ where: { mobileNumber: cleanedMobile } });
       if (mobileExists) {
         return res.status(400).json({ message: "Mobile number already exists" });
       }
     }
 
     const user = await User.create({ 
-      name, 
-      email, 
+      name: name.trim(), 
+      email: email.trim().toLowerCase(), 
       password, 
-      mobileNumber: mobileNumber && mobileNumber.trim() ? mobileNumber : null 
+      mobileNumber: cleanedMobile 
     });
     const tokens = await issueTokensForUser(user, res);
 
@@ -114,16 +125,32 @@ export const login = async (req, res, next) => {
     if (!identifier || !password) {
       return res
         .status(400)
-        .json({ message: "identifier and password are required" });
+        .json({ message: "Email/mobile and password are required" });
     }
-    const whereClause = identifier?.includes("@")
-      ? { email: identifier }
-      : { mobileNumber: identifier };
+
+    // Validate identifier format
+    const trimmed = identifier.trim();
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmed);
+    const isMobile = /^(\+91)?[6-9]\d{9}$/.test(trimmed.replace(/^\+91/, "").replace(/\D/g, ""));
+
+    if (!isEmail && !isMobile) {
+      return res.status(400).json({ message: "Please enter a valid email or mobile number" });
+    }
+
+    // Find user by email or mobile
+    const whereClause = isEmail
+      ? { email: trimmed.toLowerCase() }
+      : { mobileNumber: trimmed.replace(/^\+91/, "").replace(/\D/g, "") };
+    
     const user = await User.findOne({ where: whereClause });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email/mobile or password" });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: "Invalid password" });
+    if (!match) {
+      return res.status(401).json({ message: "Invalid email/mobile or password" });
+    }
 
     const tokens = await issueTokensForUser(user, res);
 

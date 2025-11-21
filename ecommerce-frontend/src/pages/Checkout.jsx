@@ -39,7 +39,7 @@ export default function Checkout() {
   if (loading) return <div className="p-8 text-center text-dark">Preparing checkout…</div>;
   if (error)
     return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="card p-8 text-center">
           <h2 className="text-xl font-semibold text-dark mb-2">Checkout Error</h2>
           <p className="text-red-600">{error || "Stripe not configured."}</p>
@@ -55,7 +55,7 @@ export default function Checkout() {
 
   if (!orderData) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="card p-8 text-center">
           <h2 className="text-xl font-semibold text-dark mb-2">No Items to Checkout</h2>
           <p className="text-muted">Your cart is empty. Add items to proceed.</p>
@@ -72,7 +72,7 @@ export default function Checkout() {
 
   if (!demoMode && (!clientSecret || !stripePromise)) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="card p-8 text-center">
           <h2 className="text-xl font-semibold text-dark mb-2">Payment Unavailable</h2>
           <p className="text-muted">Checkout temporarily unavailable. Please try again later.</p>
@@ -88,7 +88,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 grid lg:grid-cols-2 gap-8">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid lg:grid-cols-2 gap-6 sm:gap-8">
       <OrderSummary orderData={orderData} />
       {demoMode ? (
         <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />

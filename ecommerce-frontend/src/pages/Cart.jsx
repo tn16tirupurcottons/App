@@ -48,8 +48,8 @@ export default function Cart() {
 
   if (isError) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 text-dark">
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-dark">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-6 text-center">
           <p className="font-semibold mb-2 text-red-600">Error loading cart</p>
           <p className="text-sm text-red-600/70">
             {error.response?.data?.message || error.message || "Please try again later"}
@@ -60,7 +60,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 grid lg:grid-cols-3 gap-6 text-dark">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid lg:grid-cols-3 gap-4 sm:gap-6 text-dark">
       <div className="lg:col-span-2 space-y-4">
         <h2 className="text-2xl font-display text-dark">Your TN16 bag</h2>
         {items.length === 0 ? (

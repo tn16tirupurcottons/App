@@ -58,23 +58,31 @@ const fallbackProducts = [
   },
 ];
 
-const FilterChip = ({ label, active, onClick }) => (
-  <button
-    type="button"
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onClick();
-    }}
-    className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm tracking-[0.3em] uppercase transition border cursor-pointer ${
-      active
-        ? "bg-primary text-white border-primary shadow-soft"
-        : "bg-transparent text-muted border-border hover:text-primary hover:border-primary hover:shadow-soft"
-    }`}
-  >
-    {label}
-  </button>
-);
+const FilterChip = ({ label, active, slug, navigate }) => {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (slug) {
+      navigate(`/catalog?category=${slug}`);
+    } else {
+      navigate("/catalog");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm tracking-[0.3em] uppercase transition border cursor-pointer ${
+        active
+          ? "bg-primary text-white border-primary shadow-soft"
+          : "bg-transparent text-muted border-border hover:text-primary hover:border-primary hover:shadow-soft"
+      }`}
+    >
+      {label}
+    </button>
+  );
+};
 
 const coupons = [
   { code: "TN16SAVE", text: "Get 25% off up to ₹200" },
@@ -135,16 +143,14 @@ export default function Home() {
   const currentSlide = heroSlides[activeSlide];
 
   return (
-    <div className="bg-white text-dark w-full min-h-screen">
-      {/* Hero carousel - Full Screen, Properly Aligned, Fully Responsive */}
-      <section className="w-full relative overflow-hidden">
-        <div className="w-full relative">
-          <BannerCarousel page="home" position="hero" />
-        </div>
+    <div className="bg-white text-dark w-full min-h-screen overflow-x-hidden">
+      {/* Hero carousel - Full Screen, Modern, Luxury, Fully Responsive, Not Square, Curved Edges */}
+      <section className="w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 relative overflow-hidden">
+        <BannerCarousel page="home" position="hero" />
       </section>
 
       {/* Offer slab */}
-      <section className="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-4">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {coupons.map((coupon) => (
           <div
             key={coupon.code}
@@ -160,19 +166,21 @@ export default function Home() {
       </section>
 
       {/* Category filter pills */}
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
           <FilterChip
             label="All Fits"
             active={!activeCategorySlug}
-            onClick={() => setActiveCategorySlug("")}
+            slug={null}
+            navigate={navigate}
           />
           {filterChips.map((chip) => (
             <FilterChip
               key={chip.slug}
               label={chip.label}
               active={activeCategorySlug === chip.slug}
-              onClick={() => setActiveCategorySlug(chip.slug)}
+              slug={chip.slug}
+              navigate={navigate}
             />
           ))}
         </div>
@@ -192,7 +200,7 @@ export default function Home() {
         );
       })}
 
-      <section className="max-w-7xl mx-auto px-4 py-12 space-y-6">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <p className="pill text-muted">Featured</p>

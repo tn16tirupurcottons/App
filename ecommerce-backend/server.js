@@ -195,41 +195,89 @@ const freePortIfInUse = (port) => {
   if (process.platform !== "win32") return Promise.resolve();
   
   return new Promise((resolve) => {
-    try {
-      const output = execSync(
-        `netstat -ano | findstr :${port} | findstr LISTENING`,
-        { encoding: "utf8", stdio: "pipe" }
-      ).trim();
-      
-      if (output) {
-        const lines = output.split("\n");
-        const pids = lines
-          .map((line) => line.trim().split(/\s+/).pop())
-          .filter(Boolean)
-          .filter((pid, index, arr) => arr.indexOf(pid) === index);
+    const checkAndKill = (attempts = 0) => {
+      try {
+        const output = execSync(
+          `netstat -ano | findstr :${port} | findstr LISTENING`,
+          { encoding: "utf8", stdio: "pipe" }
+        ).trim();
         
-        if (pids.length > 0) {
-          console.log(`⚠️  Port ${port} is in use. Attempting to free it...`);
-          pids.forEach((pid) => {
-            try {
-              execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
-              console.log(`   ✅ Freed port ${port} (killed PID ${pid})`);
-            } catch (e) {
-              // Process may already be terminated
+        if (output) {
+          const lines = output.split("\n").filter(line => line.trim());
+          const pids = lines
+            .map((line) => {
+              const parts = line.trim().split(/\s+/);
+              return parts[parts.length - 1]; // Get last column (PID)
+            })
+            .filter(Boolean)
+            .filter((pid) => pid !== "0" && !isNaN(parseInt(pid)))
+            .filter((pid, index, arr) => arr.indexOf(pid) === index); // Remove duplicates
+          
+          if (pids.length > 0) {
+            if (attempts === 0) {
+              console.log(`⚠️  Port ${port} is in use. Attempting to free it...`);
             }
-          });
-          // Wait a moment for port to be released
-          setTimeout(resolve, 500);
+            
+            let killedAny = false;
+            pids.forEach((pid) => {
+              try {
+                execSync(`taskkill /F /PID ${pid}`, { 
+                  stdio: "ignore",
+                  timeout: 5000
+                });
+                console.log(`   ✅ Killed process ${pid}`);
+                killedAny = true;
+              } catch (e) {
+                // Process might already be terminated
+              }
+            });
+            
+            // Wait a bit for port to be released
+            setTimeout(() => {
+              // Check again if port is still in use
+              try {
+                const checkOutput = execSync(
+                  `netstat -ano | findstr :${port} | findstr LISTENING`,
+                  { encoding: "utf8", stdio: "pipe" }
+                ).trim();
+                
+                if (checkOutput && attempts < 3) {
+                  // Retry if port still in use
+                  console.log(`   ⏳ Port still in use, retrying... (attempt ${attempts + 2}/3)`);
+                  checkAndKill(attempts + 1);
+                } else if (checkOutput) {
+                  console.log(`\n❌ Port ${port} is still in use after cleanup attempt.`);
+                  console.log(`   Please run: npm run kill-port`);
+                  console.log(`   Or manually: netstat -ano | findstr :${port} then taskkill /F /PID <PID>\n`);
+                  resolve(); // Still resolve to attempt server start
+                } else {
+                  console.log(`   ✅ Port ${port} is now free!\n`);
+                  resolve();
+                }
+              } catch (e) {
+                // Port is free (netstat returned error = no matches)
+                console.log(`   ✅ Port ${port} is now free!\n`);
+                resolve();
+              }
+            }, killedAny ? 1500 : 500);
+          } else {
+            resolve();
+          }
         } else {
           resolve();
         }
-      } else {
-        resolve();
+      } catch (e) {
+        if (e.status === 1 || e.code === 1) {
+          // netstat returns 1 when no matches found - port is free
+          resolve();
+        } else {
+          console.error("❌ Error during port cleanup:", e.message);
+          resolve(); // Still resolve to attempt server start
+        }
       }
-    } catch (e) {
-      // netstat returns 1 when no matches found (port is free)
-      resolve();
-    }
+    };
+    
+    checkAndKill();
   });
 };
 

@@ -25,9 +25,21 @@ export default function Login() {
     initialValues: { identifier: "", password: "" },
     validationSchema: Yup.object({
       identifier: Yup.string()
-        .min(4, "Enter email or mobile number")
-        .required("Required"),
-      password: Yup.string().min(6, "Min 6 characters").required("Required"),
+        .required("Email or mobile number is required")
+        .test("email-or-mobile", "Enter a valid email or mobile number", (value) => {
+          if (!value) return false;
+          const trimmed = value.trim();
+          // Check if it's an email
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (emailRegex.test(trimmed)) return true;
+          // Check if it's a mobile number (10 digits, optionally with +91)
+          const mobileRegex = /^(\+91)?[6-9]\d{9}$/;
+          const cleaned = trimmed.replace(/^\+91/, "").replace(/\D/g, "");
+          return mobileRegex.test(cleaned) || /^[6-9]\d{9}$/.test(cleaned);
+        }),
+      password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .required("Password is required"),
     }),
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       try {

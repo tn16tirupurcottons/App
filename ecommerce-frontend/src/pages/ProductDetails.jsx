@@ -7,6 +7,9 @@ import { useToast } from "../components/Toast";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80";
 
+// Ensure full responsiveness
+const responsiveClasses = "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8";
+
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -179,7 +182,7 @@ export default function ProductDetails() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 text-dark">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 text-dark">
       <div className="grid md:grid-cols-2 gap-6 md:gap-10">
         {/* Image Gallery */}
         <div>

@@ -27,7 +27,7 @@ export default function Catalog() {
   const segmentTheme = segment ? segmentThemes[segment] : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-14 space-y-8 text-dark">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-14 space-y-6 sm:space-y-8 text-dark">
       {segmentTheme && (
         <div
           className="rounded-[40px] p-8 md:p-12 text-white border border-border shadow-medium"

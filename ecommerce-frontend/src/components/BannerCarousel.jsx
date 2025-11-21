@@ -121,13 +121,23 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     images[currentImageIndex] || images[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ borderRadius: "0" }}>
-      <div className="relative w-full h-[45vh] min-[375px]:h-[50vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] xl:h-[85vh] min-h-[280px] sm:min-h-[350px] max-h-[1000px]">
+    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl">
+      <div className="relative w-full" style={{ 
+        aspectRatio: "21/9",
+        height: "clamp(350px, 45vh, 650px)",
+        minHeight: "350px",
+        maxHeight: "650px"
+      }}>
         <img
           src={currentImage}
           alt={displayBanner.title || "Banner"}
           className="w-full h-full object-cover object-center transition-all duration-700 ease-in-out"
-          style={{ objectFit: "cover", objectPosition: "center" }}
+          style={{ 
+            objectFit: "cover", 
+            objectPosition: "center",
+            width: "100%",
+            height: "100%"
+          }}
           onError={(e) => {
             e.target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
           }}

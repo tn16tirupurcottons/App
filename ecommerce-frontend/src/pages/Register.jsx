@@ -21,12 +21,21 @@ export default function Register() {
       password: ""
     },
     validationSchema: Yup.object({
-      name: Yup.string().required("Your name is required"),
-      email: Yup.string().email("Enter a valid email address").required("Email is required"),
+      name: Yup.string()
+        .required("Your name is required")
+        .min(2, "Name must be at least 2 characters"),
+      email: Yup.string()
+        .email("Enter a valid email address")
+        .required("Email is required")
+        .matches(
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+          "Please enter a valid email address"
+        ),
       mobileNumber: Yup.string()
         .test("mobile-optional", "Enter valid 10-digit Indian mobile number", (value) => {
           if (!value || value.trim() === "") return true; // Optional
-          return /^\+?91[6-9]\d{9}$/.test(value.replace(/^\+91/, "91"));
+          const cleaned = value.replace(/^\+91/, "").replace(/\D/g, "");
+          return /^[6-9]\d{9}$/.test(cleaned);
         }),
       password: Yup.string()
         .min(6, "Password must be at least 6 characters")
