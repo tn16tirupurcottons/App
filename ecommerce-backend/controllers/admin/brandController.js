@@ -15,6 +15,11 @@ const ALLOWED_KEYS = [
   "headingFont",
   "bodyFont",
   "headerBackground",
+  "headerTextColor",
+  "headerPrimaryText",
+  "headerSecondaryText",
+  "footerBackground",
+  "footerTextColor",
   "containerRadius",
   "themeTokens",
 ];
@@ -32,6 +37,11 @@ const PUBLIC_KEYS = [
   "headingFont",
   "bodyFont",
   "headerBackground",
+  "headerTextColor",
+  "headerPrimaryText",
+  "headerSecondaryText",
+  "footerBackground",
+  "footerTextColor",
   "containerRadius",
   "themeTokens",
 ];

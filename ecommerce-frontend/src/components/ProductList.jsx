@@ -98,21 +98,32 @@ export default function ProductList({ initialQuery = {} }) {
             ))}
       </div>
 
-      {/* Mobile: Swipeable carousel with 4 visible */}
-      <div className="md:hidden overflow-hidden">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4" style={{ scrollSnapType: "x mandatory" }}>
+      {/* Mobile: 10 products per row, 5 visible at a time, scrollable */}
+      <div className="md:hidden overflow-hidden -mx-4 px-4">
+        <div 
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
+          style={{ 
+            scrollSnapType: "x mandatory",
+            WebkitOverflowScrolling: "touch"
+          }}
+        >
           {isLoading
-            ? new Array(8).fill(null).map((_, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[calc(50%-0.5rem)] snap-start">
-                  <div className="h-80 rounded-[32px] bg-light animate-pulse" />
+            ? new Array(10).fill(null).map((_, idx) => (
+                <div key={idx} className="flex-shrink-0 w-[calc(20%-0.6rem)] snap-start">
+                  <div className="h-64 rounded-2xl bg-light animate-pulse" />
                 </div>
               ))
-            : products.map((product) => (
-                <div key={product.id} className="flex-shrink-0 w-[calc(50%-0.5rem)] snap-start">
+            : products.slice(0, 10).map((product) => (
+                <div key={product.id} className="flex-shrink-0 w-[calc(20%-0.6rem)] snap-start">
                   <ProductCard product={product} />
                 </div>
               ))}
         </div>
+        {products.length > 10 && (
+          <p className="text-xs text-center text-muted mt-2">
+            Swipe to see more products →
+          </p>
+        )}
       </div>
 
       {data?.totalPages > 1 && (

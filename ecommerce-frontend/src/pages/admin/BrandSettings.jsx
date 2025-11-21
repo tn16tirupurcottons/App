@@ -97,6 +97,9 @@ export default function BrandSettings() {
     { key: "surfaceColor", label: "Card Surface" },
     { key: "textColor", label: "Body Text" },
     { key: "headerBackground", label: "Header Background" },
+    { key: "headerTextColor", label: "Header Text Color" },
+    { key: "footerBackground", label: "Footer Background" },
+    { key: "footerTextColor", label: "Footer Text Color" },
   ];
 
   return (
@@ -204,6 +207,43 @@ export default function BrandSettings() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="space-y-6 border-t border-border pt-6">
+            <div className="border-b border-border pb-4">
+              <h3 className="text-lg font-semibold text-dark">Header Text Content</h3>
+              <p className="text-sm text-muted mt-1">Edit the primary and secondary text displayed in the header</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Header Primary Text
+                </label>
+                <input
+                  type="text"
+                  value={theme.headerPrimaryText || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, headerPrimaryText: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="TN16 · Luxury Cotton Studio"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Header Secondary Text
+                </label>
+                <input
+                  type="text"
+                  value={theme.headerSecondaryText || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, headerSecondaryText: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="Worldwide shipping · curated edits"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">

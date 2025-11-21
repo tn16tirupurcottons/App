@@ -7,6 +7,7 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import { execSync } from "child_process";
 dotenv.config();
 
 // Database Sync
@@ -189,15 +190,72 @@ app.use(errorHandler);
 // ---------------------------
 const PORT = process.env.PORT || 5000;
 
+// Helper function to free port if in use (Windows only)
+const freePortIfInUse = (port) => {
+  if (process.platform !== "win32") return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    try {
+      const output = execSync(
+        `netstat -ano | findstr :${port} | findstr LISTENING`,
+        { encoding: "utf8", stdio: "pipe" }
+      ).trim();
+      
+      if (output) {
+        const lines = output.split("\n");
+        const pids = lines
+          .map((line) => line.trim().split(/\s+/).pop())
+          .filter(Boolean)
+          .filter((pid, index, arr) => arr.indexOf(pid) === index);
+        
+        if (pids.length > 0) {
+          console.log(`⚠️  Port ${port} is in use. Attempting to free it...`);
+          pids.forEach((pid) => {
+            try {
+              execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
+              console.log(`   ✅ Freed port ${port} (killed PID ${pid})`);
+            } catch (e) {
+              // Process may already be terminated
+            }
+          });
+          // Wait a moment for port to be released
+          setTimeout(resolve, 500);
+        } else {
+          resolve();
+        }
+      } else {
+        resolve();
+      }
+    } catch (e) {
+      // netstat returns 1 when no matches found (port is free)
+      resolve();
+    }
+  });
+};
+
 syncDB()
   .then(async () => {
     console.log("✅ Database synced successfully!");
     await bootstrapCatalog().catch((error) =>
       console.error("❌ Catalog bootstrap failed:", error?.message || error)
     );
-    app.listen(PORT, () =>
+    
+    // Try to free port before starting
+    await freePortIfInUse(PORT);
+    
+    const server = app.listen(PORT, () =>
       console.log(`🚀 Server running at http://localhost:${PORT}`)
     );
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`\n❌ Port ${PORT} is still in use after cleanup attempt.`);
+        console.error(`   Please run: npm run kill-port`);
+        console.error(`   Or manually: netstat -ano | findstr :${PORT} then taskkill /F /PID <PID>`);
+        process.exit(1);
+      } else {
+        throw err;
+      }
+    });
   })
   .catch((err) => {
     console.error("❌ Database Sync Error:", err);

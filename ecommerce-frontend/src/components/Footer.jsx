@@ -1,12 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { useBrandTheme } from "../context/BrandThemeContext";
 
 export default function Footer() {
   const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
+  const theme = useBrandTheme();
 
   return (
-    <footer className="mt-16 border-t border-border bg-light text-dark">
+    <footer 
+      className="mt-16 border-t border-border w-full"
+      style={{
+        background: theme.footerBackground || "#f8fafc",
+        color: theme.footerTextColor || "#111827"
+      }}
+    >
       <div className="max-w-7xl mx-auto px-6 py-12 grid gap-10 md:grid-cols-4 text-sm">
 
         {/* Brand Section */}

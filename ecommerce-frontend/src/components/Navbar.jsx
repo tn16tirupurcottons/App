@@ -39,22 +39,29 @@ export default function Navbar() {
     <header
       className="sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
       style={{
-        // Use theme-controlled header background, fallback to luxury gradient
+        // Use theme-controlled header background, fallback to luxury light gradient
         background:
           theme.headerBackground ||
-          "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-        borderColor: "rgba(255, 255, 255, 0.1)",
+          "linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f1f3f5 100%)",
+        borderColor: "rgba(0, 0, 0, 0.1)",
       }}
     >
-      <div className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] text-white/70 uppercase border-b border-white/10"
-        style={{ background: "rgba(0, 0, 0, 0.2)" }}>
-        <span>TN16 · Luxury Cotton Studio</span>
-        <span>Worldwide shipping · curated edits</span>
+      <div 
+        className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] uppercase border-b"
+        style={{ 
+          background: "rgba(0, 0, 0, 0.02)",
+          borderColor: "rgba(0, 0, 0, 0.1)",
+          color: theme.headerTextColor || "#0a0a0a"
+        }}
+      >
+        <span>{theme.headerPrimaryText || "TN16 · Luxury Cotton Studio"}</span>
+        <span>{theme.headerSecondaryText || "Worldwide shipping · curated edits"}</span>
       </div>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-4 py-4">
           <button
-            className="md:hidden text-white/80 hover:text-white"
+            className="md:hidden hover:opacity-80 transition"
+            style={{ color: theme.headerTextColor || "#0a0a0a" }}
             aria-label="Open navigation menu"
             onClick={() => setMobileMenuOpen(true)}
           >
@@ -64,14 +71,23 @@ export default function Navbar() {
             to="/"
             className="hidden md:flex items-center gap-4"
           >
-            <div className="h-12 w-12 rounded-full border-2 border-white/30 text-white font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm">
+            <div 
+              className="h-12 w-12 rounded-full border-2 border-white/30 font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm"
+              style={{ color: theme.headerTextColor || "#0a0a0a" }}
+            >
               TN
             </div>
             <div className="text-left">
-              <p className="text-white font-semibold text-lg leading-tight">
+              <p 
+                className="font-semibold text-lg leading-tight"
+                style={{ color: theme.headerTextColor || "#0a0a0a" }}
+              >
                 {brand}
               </p>
-              <p className="pill text-[10px] text-white/70">
+              <p 
+                className="pill text-[10px]"
+                style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.7)" }}
+              >
                 Tirupur · Established MMXXV
               </p>
             </div>
@@ -81,18 +97,25 @@ export default function Navbar() {
             to="/"
             className="md:hidden"
           >
-            <div className="h-10 w-10 rounded-full border-2 border-white/30 text-white font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm">
+            <div 
+              className="h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm"
+              style={{ color: theme.headerTextColor || "#0a0a0a" }}
+            >
               TN
             </div>
           </Link>
 
           <div className="hidden md:flex flex-1 justify-center">
-            <div className="flex items-center gap-2 w-full max-w-2xl bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 shadow-lg">
-              <FaSearch className="text-white/70" />
+            <div className="flex items-center gap-2 w-full max-w-2xl bg-black/5 backdrop-blur-md border rounded-full px-5 py-2 shadow-lg" style={{ borderColor: theme.headerTextColor ? `${theme.headerTextColor}20` : "rgba(10,10,10,0.2)" }}>
+              <FaSearch style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.7)" }} />
               <input
                 type="text"
                 placeholder="Search pieces, collections, artisans"
-                className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-white/60"
+                className="flex-1 bg-transparent text-sm focus:outline-none"
+                style={{ 
+                  color: theme.headerTextColor || "#0a0a0a",
+                  "--placeholder-color": theme.headerTextColor ? `${theme.headerTextColor}99` : "rgba(10,10,10,0.6)"
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.target.value.trim()) {
                     navigate(
@@ -104,11 +127,15 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-3 text-sm font-medium text-white">
+          <div 
+            className="ml-auto flex items-center gap-3 text-sm font-medium"
+            style={{ color: theme.headerTextColor || "#0a0a0a" }}
+          >
             <Link
               to="/cart"
               aria-label="View cart"
-              className="hidden sm:flex items-center gap-2 hover:text-white/80 transition"
+              className="hidden sm:flex items-center gap-2 hover:opacity-80 transition"
+              style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               <FaShoppingCart size={16} /> Cart
             </Link>
@@ -117,24 +144,38 @@ export default function Navbar() {
                 {user.role === "admin" && (
                   <Link
                     to="/admin"
-                    className="px-4 py-2 rounded-full bg-white/10 text-white border border-white/30 hover:bg-white/20 transition font-semibold text-xs backdrop-blur-sm"
+                    className="px-4 py-2 rounded-full border transition font-semibold text-xs backdrop-blur-sm"
+                    style={{ 
+                      backgroundColor: theme.headerTextColor ? `${theme.headerTextColor}10` : "rgba(10,10,10,0.1)",
+                      color: theme.headerTextColor || "#0a0a0a",
+                      borderColor: theme.headerTextColor ? `${theme.headerTextColor}30` : "rgba(10,10,10,0.3)"
+                    }}
                   >
                     Admin
                   </Link>
                 )}
-                <span className="hidden sm:block text-white/80">
+                <span className="hidden sm:block" style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}>
                   {user.name.split(" ")[0]}
                 </span>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 hover:bg-white/10 transition text-white backdrop-blur-sm"
+                  className="px-4 py-2 rounded-full border transition backdrop-blur-sm"
+                  style={{ 
+                    borderColor: theme.headerTextColor ? `${theme.headerTextColor}30` : "rgba(10,10,10,0.3)",
+                    color: theme.headerTextColor || "#0a0a0a",
+                    backgroundColor: "transparent"
+                  }}
                 >
                   Logout
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="hover:text-white/80 transition text-white">
+                <Link 
+                  to="/login" 
+                  className="hover:opacity-80 transition"
+                  style={{ color: theme.headerTextColor || "#0a0a0a" }}
+                >
                   Login
                 </Link>
                 <Link
@@ -146,7 +187,8 @@ export default function Navbar() {
               </div>
             )}
             <button
-              className="md:hidden text-white/80 hover:text-white"
+              className="md:hidden hover:opacity-80 transition"
+              style={{ color: theme.headerTextColor || "#0a0a0a" }}
               aria-label="Open search panel"
               onClick={() => setMobileSearchOpen(true)}
             >
@@ -157,19 +199,28 @@ export default function Navbar() {
       </div>
 
       <div
-        className="border-t border-white/10 bg-black/20 backdrop-blur-md hidden md:block"
+        className="border-t backdrop-blur-md hidden md:block"
+        style={{
+          borderColor: theme.headerTextColor ? `${theme.headerTextColor}10` : "rgba(10,10,10,0.1)",
+          backgroundColor: theme.headerTextColor ? `${theme.headerTextColor}05` : "rgba(10,10,10,0.05)"
+        }}
         onMouseLeave={() => setActiveMenu(null)}
       >
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold text-white/80">
+        <div 
+          className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold"
+          style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}
+        >
           <NavLink
             to="/"
             className={({ isActive }) =>
               `pb-2 border-b-2 transition ${
-                isActive
-                  ? "border-white text-white"
-                  : "border-transparent hover:border-white/40 hover:text-white"
+                isActive ? "" : "border-transparent hover:opacity-80"
               }`
             }
+            style={({ isActive }) => ({
+              color: theme.headerTextColor || "#0a0a0a",
+              borderBottomColor: isActive ? (theme.headerTextColor || "#0a0a0a") : "transparent"
+            })}
           >
             Home
           </NavLink>

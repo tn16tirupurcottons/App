@@ -31,44 +31,44 @@ export default function AdminOrders() {
       <div className="space-y-6">
         {isLoading ? (
           <div className="bg-white rounded-3xl shadow p-6">
-            <p>Loading orders…</p>
+          <p>Loading orders…</p>
           </div>
         ) : isError ? (
           <div className="bg-white rounded-3xl shadow p-6">
-            <p className="text-red-600">Unable to load orders.</p>
+          <p className="text-red-600">Unable to load orders.</p>
           </div>
         ) : (
           <>
             <div className="bg-white rounded-3xl shadow p-6">
-              <div className="overflow-auto rounded-2xl border border-gray-100">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-left text-xs uppercase tracking-widest text-gray-500">
-                    <tr>
+          <div className="overflow-auto rounded-2xl border border-gray-100">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs uppercase tracking-widest text-gray-500">
+              <tr>
                       <th className="p-3">Order ID</th>
-                      <th className="p-3">Customer</th>
+                <th className="p-3">Customer</th>
                       <th className="p-3">Items</th>
-                      <th className="p-3">Total</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Payment</th>
+                <th className="p-3">Total</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Payment</th>
                       <th className="p-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data?.map((order) => (
+              </tr>
+            </thead>
+            <tbody>
+              {data?.map((order) => (
                       <tr key={order.id} className="border-t border-gray-50 hover:bg-gray-50">
-                        <td className="p-3">
+                  <td className="p-3">
                           <p className="font-semibold text-gray-900 font-mono text-xs">
                             {order.id.substring(0, 8)}...
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(order.createdAt).toLocaleString()}
-                          </p>
-                        </td>
-                        <td className="p-3">
-                          <p className="font-semibold text-gray-900">
-                            {order.User?.name || "Guest"}
-                          </p>
-                          <p className="text-xs text-gray-500">{order.User?.email}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(order.createdAt).toLocaleString()}
+                    </p>
+                  </td>
+                  <td className="p-3">
+                    <p className="font-semibold text-gray-900">
+                      {order.User?.name || "Guest"}
+                    </p>
+                    <p className="text-xs text-gray-500">{order.User?.email}</p>
                           {order.User?.mobileNumber && (
                             <p className="text-xs text-gray-500">{order.User.mobileNumber}</p>
                           )}
@@ -77,46 +77,46 @@ export default function AdminOrders() {
                           <p className="text-sm text-gray-700">
                             {order.OrderItems?.length || 0} item(s)
                           </p>
-                        </td>
-                        <td className="p-3 font-semibold">
+                  </td>
+                  <td className="p-3 font-semibold">
                           ₹{Number(order.total).toFixed(2)}
-                        </td>
-                        <td className="p-3">
-                          <select
+                  </td>
+                  <td className="p-3">
+                    <select
                             className="border rounded-full px-3 py-1 text-xs w-full"
-                            value={order.status}
-                            onChange={(e) =>
-                              updateStatus.mutate({
-                                id: order.id,
-                                payload: { status: e.target.value },
-                              })
-                            }
-                          >
-                            {statusOptions.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="p-3">
-                          <select
+                      value={order.status}
+                      onChange={(e) =>
+                        updateStatus.mutate({
+                          id: order.id,
+                          payload: { status: e.target.value },
+                        })
+                      }
+                    >
+                      {statusOptions.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-3">
+                    <select
                             className="border rounded-full px-3 py-1 text-xs w-full"
-                            value={order.paymentStatus}
-                            onChange={(e) =>
-                              updateStatus.mutate({
-                                id: order.id,
-                                payload: { paymentStatus: e.target.value },
-                              })
-                            }
-                          >
-                            {paymentOptions.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
+                      value={order.paymentStatus}
+                      onChange={(e) =>
+                        updateStatus.mutate({
+                          id: order.id,
+                          payload: { paymentStatus: e.target.value },
+                        })
+                      }
+                    >
+                      {paymentOptions.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                         <td className="p-3">
                           <button
                             onClick={() => setSelectedOrder(order)}
@@ -126,18 +126,18 @@ export default function AdminOrders() {
                             <Eye size={16} />
                           </button>
                         </td>
-                      </tr>
-                    ))}
-                    {!data?.length && (
-                      <tr>
+                </tr>
+              ))}
+              {!data?.length && (
+                <tr>
                         <td colSpan="7" className="p-6 text-center text-gray-500">
-                          No orders yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    No orders yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          </div>
             </div>
 
             {/* Order Details Modal */}

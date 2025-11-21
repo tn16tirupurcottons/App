@@ -135,11 +135,12 @@ export default function Home() {
   const currentSlide = heroSlides[activeSlide];
 
   return (
-    <div className="bg-white text-dark">
-      {/* Hero carousel */}
-      {/* Banner Carousel - Hero Position */}
-      <section className="max-w-7xl mx-auto px-4 mt-8">
-        <BannerCarousel page="home" position="hero" />
+    <div className="bg-white text-dark w-full min-h-screen">
+      {/* Hero carousel - Full Screen, Properly Aligned, Fully Responsive */}
+      <section className="w-full relative overflow-hidden">
+        <div className="w-full relative">
+          <BannerCarousel page="home" position="hero" />
+        </div>
       </section>
 
       {/* Offer slab */}

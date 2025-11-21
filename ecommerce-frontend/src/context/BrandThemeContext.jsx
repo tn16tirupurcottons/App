@@ -10,9 +10,14 @@ const defaultTheme = {
   textColor: "#111827",
   headingFont: '"Playfair Display", serif',
   bodyFont: '"Inter", system-ui, sans-serif',
-  // Luxury default header gradient (overridable from Admin → Brand Settings)
+  // Luxury default header - light background with luxury black text
   headerBackground:
-    "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+    "linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f1f3f5 100%)",
+  headerTextColor: "#0a0a0a", // Luxury black
+  headerPrimaryText: "TN16 · Luxury Cotton Studio",
+  headerSecondaryText: "Worldwide shipping · curated edits",
+  footerBackground: "#f8fafc",
+  footerTextColor: "#111827",
   containerRadius: "24px",
 };
 
@@ -33,6 +38,11 @@ const applyThemeToDocument = (theme) => {
   root.style.setProperty("--heading-font", theme.headingFont);
   root.style.setProperty("--body-font", theme.bodyFont);
   root.style.setProperty("--header-background", theme.headerBackground);
+  root.style.setProperty("--header-text-color", theme.headerTextColor);
+  root.style.setProperty("--header-primary-text", theme.headerPrimaryText);
+  root.style.setProperty("--header-secondary-text", theme.headerSecondaryText);
+  root.style.setProperty("--footer-background", theme.footerBackground);
+  root.style.setProperty("--footer-text-color", theme.footerTextColor);
   root.style.setProperty("--container-radius", theme.containerRadius);
 };
 
@@ -76,8 +86,13 @@ const BrandThemeProvider = ({ children }) => {
   );
 };
 
-// Fast Refresh compatible: hook export
-export const useBrandTheme = () => useContext(BrandThemeContext);
-export { BrandThemeProvider };
+// Hook for consuming the theme context
+function useBrandTheme() {
+  return useContext(BrandThemeContext);
+}
+
+// Named exports
+export { BrandThemeProvider, useBrandTheme };
+// Default export
 export default BrandThemeProvider;
 

@@ -42,7 +42,7 @@ export default function BannerManagement() {
       images: banner?.images || (banner?.image ? [banner.image] : []),
       ctaLabel: banner?.ctaLabel || "Shop Now",
       ctaLink: banner?.ctaLink || "/catalog",
-      segment: banner?.segment || "default",
+      segment: banner?.segment || "men", // Default to "men" for category-based banners
       page: banner?.page || "home",
       position: banner?.position || "hero",
       displayOrder: banner?.displayOrder || 0,
@@ -119,7 +119,7 @@ export default function BannerManagement() {
               Banner Images * <span className="text-gray-500 font-normal">(Max 5, auto-rotates every 3s)</span>
             </label>
             <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-              <ImageUploader
+            <ImageUploader
                 images={form.images || []}
                 onChange={(images) => {
                   const limited = images.slice(0, 5);
@@ -130,8 +130,8 @@ export default function BannerManagement() {
                   });
                 }}
                 maxImages={5}
-                maxSizeMB={5}
-              />
+              maxSizeMB={5}
+            />
             </div>
             <p className="text-xs text-gray-600 mt-2 font-medium">
               💡 Upload 1-5 images. They will rotate automatically in a carousel. Text overlay will be clearly visible.
@@ -194,18 +194,22 @@ export default function BannerManagement() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Segment</label>
+              <label className="block text-sm font-bold text-gray-900 mb-2">Category/Segment *</label>
               <select
                 value={form.segment}
                 onChange={(e) => setForm({ ...form, segment: e.target.value })}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                required
               >
-                <option value="default">Default</option>
                 <option value="men">Men</option>
                 <option value="women">Women</option>
                 <option value="kids">Kids</option>
+                <option value="accessories">Accessories</option>
+                <option value="default">Default (All)</option>
                 <option value="genz">Gen Z</option>
+                <option value="athleisure">Athleisure</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">Select category for auto-sliding banners</p>
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">Display Order</label>
@@ -222,13 +226,13 @@ export default function BannerManagement() {
           </div>
           
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <input
-              type="checkbox"
+              <input
+                type="checkbox"
               id="isActive"
-              checked={form.isActive}
-              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-            />
+              />
             <label htmlFor="isActive" className="text-sm font-bold text-gray-900 cursor-pointer">
               Active (Banner will be visible on selected page/position)
             </label>

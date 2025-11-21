@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 
-export default function BannerCarousel({ page = "home", position = "hero" }) {
+export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data } = useQuery({
-    queryKey: ["banners", page, position],
+    queryKey: ["banners", page, position, category],
     queryFn: async () => {
       try {
         const res = await axiosClient.get(
@@ -19,7 +19,8 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
           (b) =>
             b.isActive &&
             (b.page === page || b.page === "all") &&
-            b.position === position
+            b.position === position &&
+            (category ? (b.segment === category || b.segment === "default") : true)
         );
       } catch {
         return [];
@@ -27,10 +28,26 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
     },
   });
 
-  const activeBanners = (data || [])
-    .slice()
-    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-    .slice(0, 5);
+  // Group banners by segment/category for auto-sliding
+  const bannersByCategory = useMemo(() => {
+    return (data || []).reduce((acc, banner) => {
+      const segment = banner.segment || "default";
+      if (!acc[segment]) acc[segment] = [];
+      acc[segment].push(banner);
+      return acc;
+    }, {});
+  }, [data]);
+
+  // Get banners for Men, Women, Kids, Accessories in order
+  const activeBanners = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const categoryOrder = ["men", "women", "kids", "accessories"];
+    const categoryBanners = categoryOrder
+      .map(cat => (bannersByCategory[cat] || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)))
+      .flat();
+    const defaultBanners = (bannersByCategory["default"] || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    return [...categoryBanners, ...defaultBanners].slice(0, 20); // Allow more banners for category rotation
+  }, [bannersByCategory, data]);
 
   // Ensure indices stay in range whenever data changes
   useEffect(() => {
@@ -81,60 +98,71 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
       ? activeBanners[currentBannerIndex]
       : null;
 
-  if (!currentBanner) return null;
+  // Fallback banner if no banners exist
+  const fallbackBanner = {
+    title: "Welcome to TN16 Tirupur Cotton",
+    subtitle: "Premium Cotton Apparel Made in India",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80",
+    images: ["https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80"],
+    ctaLabel: "Shop Now",
+    ctaLink: "/catalog",
+  };
+
+  const displayBanner = currentBanner || fallbackBanner;
 
   const images =
-    (currentBanner?.images && currentBanner.images.length > 0
-      ? currentBanner.images
-      : currentBanner?.image
-      ? [currentBanner.image]
+    (displayBanner?.images && displayBanner.images.length > 0
+      ? displayBanner.images
+      : displayBanner?.image
+      ? [displayBanner.image]
       : []) || [];
 
   const currentImage =
-    images[currentImageIndex] || images[0] || "https://via.placeholder.com/1200x600?text=Banner+Image";
+    images[currentImageIndex] || images[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
 
   return (
-    <div className="relative w-full rounded-3xl overflow-hidden shadow-xl">
-      <div className="relative h-[400px] md:h-[500px] lg:h-[600px]">
+    <div className="relative w-full overflow-hidden" style={{ borderRadius: "0" }}>
+      <div className="relative w-full h-[45vh] min-[375px]:h-[50vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] xl:h-[85vh] min-h-[280px] sm:min-h-[350px] max-h-[1000px]">
         <img
           src={currentImage}
-          alt={currentBanner.title || "Banner"}
-          className="w-full h-full object-cover transition-opacity duration-500"
+          alt={displayBanner.title || "Banner"}
+          className="w-full h-full object-cover object-center transition-all duration-700 ease-in-out"
+          style={{ objectFit: "cover", objectPosition: "center" }}
           onError={(e) => {
-            e.target.src = "https://via.placeholder.com/1200x600?text=Banner+Image";
+            e.target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
 
-        {/* Text Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-12 z-10">
-          <div className="text-center md:text-left max-w-2xl">
-            <div className="bg-black/60 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/20 shadow-2xl">
-              {currentBanner.title && (
-                <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 text-white leading-tight">
-                  {currentBanner.title}
+        {/* Text Overlay - Fully Responsive */}
+        <div className="absolute inset-0 flex items-center justify-center md:justify-start px-4 sm:px-6 md:px-8 lg:px-12 z-10">
+          <div className="text-center md:text-left w-full max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl">
+            <div className="bg-black/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border border-white/20 shadow-2xl">
+              {displayBanner.title && (
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 text-white leading-tight">
+                  {displayBanner.title}
                 </h2>
               )}
-              {currentBanner.subtitle && (
-                <p className="text-lg md:text-xl mb-6 text-white/95 leading-relaxed">
-                  {currentBanner.subtitle}
+              {displayBanner.subtitle && (
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 text-white/95 leading-relaxed">
+                  {displayBanner.subtitle}
                 </p>
               )}
-              {currentBanner.ctaLabel && currentBanner.ctaLink && (
+              {displayBanner.ctaLabel && displayBanner.ctaLink && (
                 <Link
-                  to={currentBanner.ctaLink}
-                  className="inline-block bg-white text-gray-900 px-8 py-4 rounded-full font-bold tracking-[0.3em] uppercase text-xs hover:bg-gray-100 transition shadow-2xl"
+                  to={displayBanner.ctaLink}
+                  className="inline-block bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs hover:bg-gray-100 transition shadow-2xl"
                 >
-                  {currentBanner.ctaLabel}
+                  {displayBanner.ctaLabel}
                 </Link>
               )}
             </div>
           </div>
         </div>
 
-        {/* Banner Indicators */}
-        {activeBanners.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {/* Banner Indicators - Responsive */}
+        {activeBanners.length > 1 && currentBanner && (
+          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
             {activeBanners.map((_, idx) => (
               <button
                 key={idx}
@@ -142,8 +170,8 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
                   setCurrentBannerIndex(idx);
                   setCurrentImageIndex(0);
                 }}
-                className={`h-2 rounded-full transition-all ${
-                  idx === currentBannerIndex ? "w-8 bg-white" : "w-2 bg-white/50"
+                className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                  idx === currentBannerIndex ? "w-6 sm:w-8 bg-white" : "w-1.5 sm:w-2 bg-white/50"
                 }`}
                 aria-label={`Go to banner ${idx + 1}`}
               />
@@ -151,14 +179,14 @@ export default function BannerCarousel({ page = "home", position = "hero" }) {
           </div>
         )}
 
-        {/* Image indicators */}
+        {/* Image indicators - Responsive */}
         {images.length > 1 && (
-          <div className="absolute top-4 right-4 flex gap-1">
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex gap-1 z-10">
             {images.map((_, idx) => (
               <div
                 key={idx}
-                className={`h-1 rounded-full transition-all ${
-                  idx === currentImageIndex ? "w-4 bg-white" : "w-1 bg-white/50"
+                className={`h-0.5 sm:h-1 rounded-full transition-all ${
+                  idx === currentImageIndex ? "w-3 sm:w-4 bg-white" : "w-0.5 sm:w-1 bg-white/50"
                 }`}
               />
             ))}
