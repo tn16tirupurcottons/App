@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
 export default function Cart() {
   const qc = useQueryClient();
@@ -74,13 +75,11 @@ export default function Cart() {
               className="flex items-center gap-4 card p-4"
             >
               <img
-                src={
-                  item.Product?.thumbnail ||
-                  item.Product?.gallery?.[0] ||
-                  "/placeholder.png"
-                }
-                alt={item.Product?.name}
+                src={getProductImage(item.Product, item.Product?.Category?.name)}
+                alt={item.Product?.name || "Product"}
                 className="w-24 h-24 object-cover rounded-xl"
+                loading="lazy"
+                onError={(e) => handleImageError(e, FALLBACK_IMAGES.product)}
               />
               <div className="flex-1">
                 <div className="font-semibold text-dark">{item.Product?.name}</div>

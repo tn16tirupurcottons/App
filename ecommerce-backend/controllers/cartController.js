@@ -1,5 +1,6 @@
 // controllers/cartController.js
-import { Cart, Product } from "../models/index.js";
+import { Cart, Product, Category } from "../models/index.js";
+import { Op } from "sequelize";
 
 export const buildSummary = (items) => {
   const subtotal = items.reduce((sum, item) => {
@@ -29,7 +30,18 @@ export const getCart = async (req, res, next) => {
   try {
     const cart = await Cart.findAll({
       where: { userId: req.user.id },
-      include: [{ model: Product }],
+      include: [
+        { 
+          model: Product,
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+          include: [
+            {
+              model: Category,
+              attributes: ["id", "name", "slug"],
+            }
+          ]
+        }
+      ],
       order: [["createdAt", "DESC"]],
     });
 
@@ -65,12 +77,28 @@ export const addToCart = async (req, res, next) => {
     const maxQuantity = Math.min(quantity, inventory);
     const unitPrice = product.price - (product.discount || 0);
 
-    const matchClause = { userId: req.user.id, productId };
-    if (selectedSize) matchClause.selectedSize = selectedSize;
-    if (selectedColor) matchClause.selectedColor = selectedColor;
+    // Build where clause - handle null values properly using Sequelize Op
+    const whereConditions = {
+      userId: req.user.id,
+      productId,
+    };
+
+    // Handle size - if provided, match exact; if null/empty, match null
+    if (selectedSize && selectedSize.trim() !== "") {
+      whereConditions.selectedSize = selectedSize;
+    } else {
+      whereConditions.selectedSize = { [Op.is]: null };
+    }
+
+    // Handle color - if provided, match exact; if null/empty, match null
+    if (selectedColor && selectedColor.trim() !== "") {
+      whereConditions.selectedColor = selectedColor;
+    } else {
+      whereConditions.selectedColor = { [Op.is]: null };
+    }
 
     const existing = await Cart.findOne({
-      where: matchClause,
+      where: whereConditions,
     });
 
     if (existing) {
@@ -79,20 +107,54 @@ export const addToCart = async (req, res, next) => {
         inventory
       );
       await existing.save();
-      return res.json({ success: true, item: existing });
+      
+      // Reload with Product association and convert to plain object
+      await existing.reload({
+        include: [
+          { 
+            model: Product, 
+            attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+            include: [
+              {
+                model: Category,
+                attributes: ["id", "name", "slug"],
+              }
+            ]
+          }
+        ],
+      });
+      
+      return res.json({ success: true, item: existing.get({ plain: true }) });
     }
 
     const cartItem = await Cart.create({
       userId: req.user.id,
       productId,
       quantity: maxQuantity,
-      selectedSize,
-      selectedColor,
+      selectedSize: selectedSize && selectedSize.trim() !== "" ? selectedSize : null,
+      selectedColor: selectedColor && selectedColor.trim() !== "" ? selectedColor : null,
       unitPrice,
     });
 
-    res.status(201).json({ success: true, item: cartItem });
+    // Load with Product association and convert to plain object
+    await cartItem.reload({
+      include: [
+        { 
+          model: Product, 
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+          include: [
+            {
+              model: Category,
+              attributes: ["id", "name", "slug"],
+            }
+          ]
+        }
+      ],
+    });
+
+    res.status(201).json({ success: true, item: cartItem.get({ plain: true }) });
   } catch (err) {
+    console.error("Add to cart error:", err);
     next(err);
   }
 };
@@ -103,7 +165,18 @@ export const addToCart = async (req, res, next) => {
 export const updateCart = async (req, res, next) => {
   try {
     const cartItem = await Cart.findByPk(req.params.id, {
-      include: [{ model: Product }],
+      include: [
+        { 
+          model: Product,
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand", "inventory"],
+          include: [
+            {
+              model: Category,
+              attributes: ["id", "name", "slug"],
+            }
+          ]
+        }
+      ],
     });
 
     if (!cartItem)
@@ -125,7 +198,8 @@ export const updateCart = async (req, res, next) => {
       cartItem.Product.price - (cartItem.Product.discount || 0);
     await cartItem.save();
 
-    res.json({ success: true, item: cartItem });
+    // Convert to plain object
+    res.json({ success: true, item: cartItem.get({ plain: true }) });
   } catch (err) {
     next(err);
   }

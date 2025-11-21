@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
+import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80";
+const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
 // Ensure full responsiveness
 const responsiveClasses = "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8";
@@ -36,15 +37,31 @@ export default function ProductDetails() {
   const gallery = useMemo(() => {
     if (!product) return [FALLBACK_IMAGE];
     const images = [];
-    if (product.gallery && Array.isArray(product.gallery) && product.gallery.length > 0) {
-      images.push(...product.gallery);
+    const categoryName = product?.Category?.name || product?.category?.name || "";
+    
+    // Get primary product image using utility function
+    const primaryImage = getProductImage(product, categoryName);
+    if (primaryImage && !images.includes(primaryImage)) {
+      images.push(primaryImage);
     }
+    
+    // Add gallery images if available
+    if (product.gallery && Array.isArray(product.gallery) && product.gallery.length > 0) {
+      product.gallery.forEach(img => {
+        if (img && !images.includes(img)) {
+          images.push(img);
+        }
+      });
+    }
+    
+    // Add other image fields
     if (product.thumbnail && !images.includes(product.thumbnail)) {
       images.unshift(product.thumbnail);
     }
     if (product.image && !images.includes(product.image)) {
       images.push(product.image);
     }
+    
     return images.length > 0 ? images : [FALLBACK_IMAGE];
   }, [product]);
 
@@ -86,6 +103,8 @@ export default function ProductDetails() {
     onSuccess: () => {
       setFeedback("Added to bag! 🛍️");
       setTimeout(() => setFeedback(""), 3000);
+      // Invalidate cart query to refresh cart data
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
     onError: (err) => {
       if (err.response?.status === 401 || err.message === "AUTH_REQUIRED") {
@@ -199,9 +218,7 @@ export default function ProductDetails() {
               className={`w-full h-[400px] md:h-[480px] object-cover transition-transform ${
                 zoom ? "scale-150" : "scale-100"
               }`}
-              onError={(e) => {
-                e.target.src = FALLBACK_IMAGE;
-              }}
+              onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
             />
             {product.discount > 0 && (
               <span className="absolute top-4 left-4 text-[10px] tracking-[0.4em] uppercase bg-primary text-white px-2 py-1 rounded-full font-semibold">
@@ -254,11 +271,10 @@ export default function ProductDetails() {
                 >
                   <img
                     src={img || FALLBACK_IMAGE}
-                    alt={`Thumbnail ${idx + 1}`}
+                    alt={`${product.name || "Product"} view ${idx + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = FALLBACK_IMAGE;
-                    }}
+                    loading="lazy"
+                    onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
                   />
                 </button>
               ))}

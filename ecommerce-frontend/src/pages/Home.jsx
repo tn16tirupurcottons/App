@@ -6,6 +6,14 @@ import ProductCard from "../components/ProductCard";
 import BannerCarousel from "../components/BannerCarousel";
 import axiosClient from "../api/axiosClient";
 import { heroSlides, segmentThemes } from "../data/segments";
+import {
+  EditorsPicksSection,
+  SeasonalCollectionsSection,
+  SpecialOffersSection,
+  CuratedLooksSection,
+  HeroOfferBanner,
+} from "../components/LuxurySections";
+import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
 const fallbackFilters = [
   { label: "Men's Shirts", slug: "mens-shirts" },
@@ -22,8 +30,7 @@ const fallbackProducts = [
     price: 1899,
     discount: 200,
     brand: "TN16",
-    thumbnail:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     Category: { name: "Men" },
   },
   {
@@ -32,8 +39,7 @@ const fallbackProducts = [
     price: 2499,
     discount: 0,
     brand: "TN16",
-    thumbnail:
-      "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?auto=format&fit=crop&w=800&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80",
     Category: { name: "Women" },
   },
   {
@@ -42,8 +48,7 @@ const fallbackProducts = [
     price: 1299,
     discount: 150,
     brand: "TN16",
-    thumbnail:
-      "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=80",
     Category: { name: "Kids" },
   },
   {
@@ -52,8 +57,43 @@ const fallbackProducts = [
     price: 1699,
     discount: 100,
     brand: "TN16",
-    thumbnail:
-      "https://images.unsplash.com/photo-1484519332611-516457305ff6?auto=format&fit=crop&w=800&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1484519332611-516457305ff6?auto=format&fit=crop&w=800&q=80",
+    Category: { name: "Athleisure" },
+  },
+  {
+    id: "fallback-5",
+    name: "Premium Cotton T-Shirt",
+    price: 899,
+    discount: 100,
+    brand: "TN16",
+    thumbnail: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=800&q=80",
+    Category: { name: "Men" },
+  },
+  {
+    id: "fallback-6",
+    name: "Elegant Saree Collection",
+    price: 3499,
+    discount: 300,
+    brand: "TN16",
+    thumbnail: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+    Category: { name: "Women" },
+  },
+  {
+    id: "fallback-7",
+    name: "Kids Cotton Set",
+    price: 999,
+    discount: 100,
+    brand: "TN16",
+    thumbnail: "https://images.unsplash.com/photo-1539533018447-63fc4c2f0f4e?auto=format&fit=crop&w=800&q=80",
+    Category: { name: "Kids" },
+  },
+  {
+    id: "fallback-8",
+    name: "Activewear Collection",
+    price: 1599,
+    discount: 200,
+    brand: "TN16",
+    thumbnail: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80",
     Category: { name: "Athleisure" },
   },
 ];
@@ -242,6 +282,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Luxury Sections - Added below Signature Categories */}
+      <EditorsPicksSection />
+      <SeasonalCollectionsSection />
+      <SpecialOffersSection />
+      <CuratedLooksSection />
+      <HeroOfferBanner />
+
       <section className="max-w-7xl mx-auto px-4 pb-20 grid md:grid-cols-2 gap-6">
         <div className="card p-6">
           <h3 className="text-xl font-display text-dark">Craft from Tirupur</h3>
@@ -302,16 +349,17 @@ function SegmentBand({ segment, flip }) {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 p-3 md:p-5 flex-1">
-          {segment.tiles?.map((tile) => (
+          {segment.tiles?.map((tile, idx) => (
             <div
-              key={tile}
+              key={tile || idx}
               className="rounded-2xl overflow-hidden border border-border"
             >
               <img
-                src={tile}
-                alt={segment.label}
+                src={tile || FALLBACK_IMAGES.default}
+                alt={`${segment.label} ${idx + 1}`}
                 className="w-full h-40 sm:h-48 object-cover"
                 loading="lazy"
+                onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
               />
             </div>
           ))}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
+import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
 export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -102,8 +103,8 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
   const fallbackBanner = {
     title: "Welcome to TN16 Tirupur Cotton",
     subtitle: "Premium Cotton Apparel Made in India",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80",
-    images: ["https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80"],
+    image: FALLBACK_IMAGES.banner,
+    images: [FALLBACK_IMAGES.banner],
     ctaLabel: "Shop Now",
     ctaLink: "/catalog",
   };
@@ -112,13 +113,13 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
 
   const images =
     (displayBanner?.images && displayBanner.images.length > 0
-      ? displayBanner.images
+      ? displayBanner.images.filter(img => img) // Filter out empty/null images
       : displayBanner?.image
       ? [displayBanner.image]
       : []) || [];
 
   const currentImage =
-    images[currentImageIndex] || images[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
+    images[currentImageIndex] || images[0] || FALLBACK_IMAGES.banner;
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl">
@@ -138,9 +139,7 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
             width: "100%",
             height: "100%"
           }}
-          onError={(e) => {
-            e.target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80";
-          }}
+          onError={(e) => handleImageError(e, FALLBACK_IMAGES.banner)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
 

@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { useToast } from "../components/Toast";
+import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80";
+const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
 export default function Wishlist() {
   const toast = useToast();
@@ -122,8 +122,8 @@ export default function Wishlist() {
 
 function WishlistItem({ item, onRemove, isRemoving }) {
   const product = item.Product;
-  const image =
-    product?.thumbnail || product?.gallery?.[0] || FALLBACK_IMAGE;
+  const categoryName = product?.Category?.name || product?.category?.name || "";
+  const image = getProductImage(product, categoryName);
   const finalPrice =
     Number(product?.price || 0) - Number(product?.discount || 0);
 
@@ -138,6 +138,7 @@ function WishlistItem({ item, onRemove, isRemoving }) {
           alt={product?.name || "Wishlist product"}
           className="w-24 h-24 object-cover rounded-2xl border border-border"
           loading="lazy"
+          onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
         />
         <div className="flex-1 text-left">
           <p className="text-xs uppercase tracking-[0.4em] text-muted">

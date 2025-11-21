@@ -19,6 +19,7 @@ const defaultTheme = {
   footerBackground: "#f8fafc",
   footerTextColor: "#111827",
   containerRadius: "24px",
+  logo: null, // Logo URL from admin settings
 };
 
 // Fast Refresh compatible: context creation
@@ -44,6 +45,12 @@ const applyThemeToDocument = (theme) => {
   root.style.setProperty("--footer-background", theme.footerBackground);
   root.style.setProperty("--footer-text-color", theme.footerTextColor);
   root.style.setProperty("--container-radius", theme.containerRadius);
+  // Set logo URL if available
+  if (theme.logo) {
+    root.style.setProperty("--logo-url", `url(${theme.logo})`);
+  } else {
+    root.style.setProperty("--logo-url", "none");
+  }
 };
 
 // Fast Refresh compatible: component export
@@ -60,10 +67,13 @@ const BrandThemeProvider = ({ children }) => {
       setTheme(merged);
       applyThemeToDocument(merged);
     } catch (err) {
+      // Silently fail and use default theme - don't crash the app
       // Only log in development
       if (import.meta.env.DEV) {
-        console.warn("Failed to load brand theme", err);
+        console.warn("Failed to load brand theme, using defaults:", err?.message || err);
       }
+      // Always apply default theme even on error
+      setTheme(defaultTheme);
       applyThemeToDocument(defaultTheme);
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { getCategoryImage, handleImageError } from "../utils/imageUtils";
 
 export default function CategoryGrid({ categories = [], loading = false }) {
   const fallback = [
@@ -64,10 +65,11 @@ export default function CategoryGrid({ categories = [], loading = false }) {
             ) : (
               <>
                 <img
-                  src={cat?.heroImage}
-                  alt={cat?.name}
+                  src={getCategoryImage(cat)}
+                  alt={cat?.name || "Category"}
                   className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  onError={(e) => handleImageError(e)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute inset-x-4 bottom-4 text-white">
