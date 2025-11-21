@@ -7,10 +7,10 @@ module.exports = {
         primary: "#36c1f8ff",
         secondary: "#7c3aed",
         accent: "#f59e0b",
-        dark: "#1f2937",
+        dark: "#1a1818ff",
         light: "#f8ededff",
         muted: "#3a3439ff",
-        border: "#e5e7eb",
+        border: "#ebeff5ff",
       },
       fontFamily: {
         display: ['"Playfair Display"', "serif"],
