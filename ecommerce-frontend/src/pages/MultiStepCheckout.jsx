@@ -111,7 +111,22 @@ export default function MultiStepCheckout() {
     }
   };
 
-  const handlePaymentNext = () => {
+  const handlePaymentNext = async () => {
+    // Initialize Razorpay if selected
+    if (paymentMethod === "razorpay") {
+      try {
+        const res = await axiosClient.post("/orders/checkout", {
+          paymentMethod: "razorpay",
+        });
+        if (res.data.razorpayOrderId) {
+          setOrderData((prev) => ({ ...prev, ...res.data }));
+        }
+      } catch (err) {
+        console.error("Razorpay initialization error:", err);
+        toast.error("Failed to initialize payment. Please try again.");
+        return;
+      }
+    }
     setCurrentStep(STEPS.VERIFICATION);
   };
 
@@ -131,7 +146,7 @@ export default function MultiStepCheckout() {
     return true;
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (updatedOrderData = null) => {
     if (!verificationValid()) {
       toast.error("Please enter a valid mobile number");
       return;
@@ -149,15 +164,18 @@ export default function MultiStepCheckout() {
       };
       delete shippingPayload.address2;
 
+      // Use updated order data if provided (from Razorpay callback)
+      const finalOrderData = updatedOrderData || orderData;
+
       const orderPayload = {
-        paymentIntentId: orderData?.paymentIntentId || `cod_${Date.now()}`,
+        paymentIntentId: finalOrderData?.paymentIntentId || `cod_${Date.now()}`,
         paymentMethod: paymentMethod,
         shipping: shippingPayload,
         mobile: verification.mobile.replace(/\D/g, ""),
         email: verification.email || undefined,
-        razorpayOrderId: orderData?.razorpayOrderId,
-        razorpayPaymentId: orderData?.razorpayPaymentId,
-        razorpaySignature: orderData?.razorpaySignature,
+        razorpayOrderId: finalOrderData?.razorpayOrderId,
+        razorpayPaymentId: finalOrderData?.razorpayPaymentId,
+        razorpaySignature: finalOrderData?.razorpaySignature,
       };
 
       const res = await axiosClient.post("/orders", orderPayload);
@@ -287,7 +305,15 @@ export default function MultiStepCheckout() {
               paymentMethod={paymentMethod}
               orderData={orderData}
               clientSecret={clientSecret}
-              onPlaceOrder={handlePlaceOrder}
+              onPlaceOrder={(updatedData) => {
+                if (updatedData) {
+                  setOrderData(updatedData);
+                  // Call handlePlaceOrder with updated data
+                  setTimeout(() => handlePlaceOrder(updatedData), 100);
+                } else {
+                  handlePlaceOrder();
+                }
+              }}
               processing={processing}
               error={error}
               onBack={() => setCurrentStep(STEPS.PAYMENT)}
@@ -457,10 +483,81 @@ function PaymentStep({ paymentMethod, onPaymentMethodChange, orderData, clientSe
 
 // Step 3: Verification
 function VerificationStep({ verification, onChange, paymentMethod, orderData, clientSecret, onPlaceOrder, processing, error, onBack }) {
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const phoneRegex = /^[6-9]\d{9}$/;
   const mobile = verification.mobile.replace(/\D/g, "");
   const isValidMobile = mobile && phoneRegex.test(mobile);
   const isValidEmail = !verification.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verification.email);
+
+  // Load Razorpay script
+  useEffect(() => {
+    if (paymentMethod === "razorpay" && orderData?.razorpayKeyId && !razorpayLoaded) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => setRazorpayLoaded(true);
+      script.onerror = () => {
+        console.error("Failed to load Razorpay script");
+        setRazorpayLoaded(false);
+      };
+      document.body.appendChild(script);
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, [paymentMethod, orderData?.razorpayKeyId, razorpayLoaded]);
+
+  const handleRazorpayPayment = () => {
+    if (!window.Razorpay || !orderData?.razorpayOrderId || !orderData?.razorpayKeyId) {
+      onPlaceOrder(); // Fallback to direct order placement
+      return;
+    }
+
+    const options = {
+      key: orderData.razorpayKeyId,
+      amount: orderData.totals?.total * 100, // Amount in paise
+      currency: "INR",
+      name: "TN16 Tirupur Cotton",
+      description: "Order Payment",
+      order_id: orderData.razorpayOrderId,
+      handler: function (response) {
+        // Update orderData with payment details
+        const updatedOrderData = {
+          ...orderData,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+        };
+        // Call onPlaceOrder with updated data
+        onPlaceOrder(updatedOrderData);
+      },
+      prefill: {
+        name: verification.mobile ? "Customer" : "",
+        contact: verification.mobile || "",
+        email: verification.email || "",
+      },
+      theme: {
+        color: "#000000",
+      },
+      modal: {
+        ondismiss: function () {
+          // User closed the payment modal
+          console.log("Payment cancelled");
+        },
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  };
+
+  const handlePlaceOrderClick = () => {
+    if (paymentMethod === "razorpay" && orderData?.razorpayOrderId) {
+      handleRazorpayPayment();
+    } else {
+      onPlaceOrder();
+    }
+  };
 
   return (
     <div className="card p-4 sm:p-6 space-y-4">
@@ -532,11 +629,11 @@ function VerificationStep({ verification, onChange, paymentMethod, orderData, cl
           Back
         </button>
         <button
-          onClick={onPlaceOrder}
-          disabled={!isValidMobile || processing || (verification.email && !isValidEmail)}
+          onClick={handlePlaceOrderClick}
+          disabled={!isValidMobile || processing || (verification.email && !isValidEmail) || (paymentMethod === "razorpay" && !razorpayLoaded && !orderData?.razorpayOrderId)}
           className="flex-1 bg-primary text-white py-3 rounded-full font-semibold tracking-[0.2em] uppercase text-xs hover:bg-primary/90 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {processing ? "Placing Order..." : "Place Order"}
+          {processing ? "Placing Order..." : paymentMethod === "razorpay" ? "Pay Now" : "Place Order"}
         </button>
       </div>
     </div>

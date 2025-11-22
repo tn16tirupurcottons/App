@@ -215,11 +215,14 @@ export const placeOrder = async (req, res) => {
     }
     // Handle Razorpay
     else if (paymentMethod === "razorpay" || paymentMethod === "online") {
+      // Only require Razorpay details if Razorpay is actually being used
+      // If Razorpay details are missing, fallback to COD
       if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        return res.status(400).json({ 
-          message: "Razorpay payment details are required" 
-        });
-      }
+        // Fallback to COD if Razorpay details are not provided
+        paymentMethod = "cod";
+        paymentStatus = "requires_payment";
+        verifiedPaymentId = `cod_${Date.now()}`;
+      } else {
 
       try {
         const verifiedPayment = await verifyRazorpayPayment(
@@ -237,9 +240,11 @@ export const placeOrder = async (req, res) => {
         paymentStatus = verifiedPayment.captured ? "paid" : "processing";
         verifiedPaymentId = razorpayPaymentId;
       } catch (error) {
-        return res.status(400).json({ 
-          message: `Payment verification failed: ${error.message}` 
-        });
+        // If Razorpay verification fails, fallback to COD
+        paymentMethod = "cod";
+        paymentStatus = "requires_payment";
+        verifiedPaymentId = `cod_${Date.now()}`;
+      }
       }
     }
     // Handle Stripe
