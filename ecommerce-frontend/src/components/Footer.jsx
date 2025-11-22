@@ -70,9 +70,9 @@ export default function Footer() {
 
           <div className="flex space-x-4 text-muted">
             {[
-              { icon: FaFacebookF, link: "https://www.facebook.com/AjithHP" },
-              { icon: FaInstagram, link: "https://www.instagram.com/kumar_mvibes" },
-              { icon: FaWhatsapp, link: "https://wa.me/8438401519" },
+              { icon: FaFacebookF, link: "https://www.facebook.com/" },
+              { icon: FaInstagram, link: "https://www.instagram.com/" },
+              { icon: FaWhatsapp, link: "https://wa.me/9597698343" },
             ].map((item, idx) => (
               <a
                 key={idx}

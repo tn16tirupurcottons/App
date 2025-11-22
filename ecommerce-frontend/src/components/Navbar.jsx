@@ -22,13 +22,57 @@ const extraLinks = [
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout: logoutContext } = useContext(AuthContext);
   const { theme } = useBrandTheme();
   const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
   const [activeMenu, setActiveMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const segments = Object.values(segmentThemes);
+
+  // Handle scroll to show/hide header
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const scrollDifference = currentScrollY - lastScrollY;
+          
+          // Always show header when at the very top
+          if (currentScrollY < 10) {
+            setIsHeaderVisible(true);
+          } 
+          // Show header immediately on ANY upward scroll, regardless of position
+          else if (scrollDifference < -1) {
+            // Any upward scroll movement (even 1px) shows the header immediately
+            setIsHeaderVisible(true);
+          } 
+          // Hide header when scrolling down (only after a threshold to prevent flickering)
+          else if (scrollDifference > 3 && currentScrollY > 100) {
+            // Only hide if scrolling down more than 3px and past 100px from top
+            setIsHeaderVisible(false);
+          }
+          // For very small movements (0-3px down), maintain current state to prevent flickering
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
+  // Logout handler with redirect
+  const logout = () => {
+    logoutContext();
+    navigate("/");
+  };
 
   const handleSegmentNavigate = (segmentKey) => {
     navigate(`/catalog?segment=${segmentKey}`);
@@ -38,7 +82,9 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
+      className={`sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg transition-transform duration-300 ease-in-out ${
+        isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
       style={{
         // Use theme-controlled header background, fallback to luxury light gradient
         background:
@@ -160,7 +206,7 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Link 
                   to="/login" 
                   className="hover:opacity-80 transition"
@@ -270,29 +316,21 @@ export default function Navbar() {
           extraLinks={extraLinks}
           onNavigate={(segmentKey) => handleSegmentNavigate(segmentKey)}
           onLinkClick={() => setMobileMenuOpen(false)}
+          user={user}
+          logout={logout}
         />
       )}
 
       {/* Mobile search overlay */}
       {mobileSearchOpen && (
         <div className="md:hidden fixed inset-0 bg-white z-50 px-6 py-7">
-          <div className="flex items-center justify-between mb-6 text-dark">
-            <p className="text-sm uppercase tracking-[0.4em] text-muted">
-              Search
-            </p>
-            <button
-              aria-label="Close search"
-              className="text-muted hover:text-dark"
-              onClick={() => setMobileSearchOpen(false)}
-            >
-              <FaTimes size={18} />
-            </button>
-          </div>
           <SearchBar
             placeholder="Search TN16 studio"
             className="w-full"
             style={{ color: "#0a0a0a" }}
             onClose={() => setMobileSearchOpen(false)}
+            showCloseButton={true}
+            autoFocus={true}
           />
         </div>
       )}
@@ -301,7 +339,7 @@ export default function Navbar() {
 }
 
 // Myntra-style Mobile Drawer Component
-function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLinkClick }) {
+function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLinkClick, user, logout }) {
   const drawerRef = useRef(null);
   const overlayRef = useRef(null);
   const [touchStart, setTouchStart] = useState(null);
@@ -403,7 +441,7 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={`absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
+        className={`absolute inset-y-0 left-0 w-[75vw] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -485,6 +523,28 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
                 <FaChevronRight className="text-muted" size={14} />
               </NavLink>
             </div>
+
+            {/* Login/Join Section - at the bottom */}
+            {!user && (
+              <div className="mt-6 pt-6 border-t-2 border-border">
+                <Link
+                  to="/login"
+                  onClick={onLinkClick}
+                  className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                >
+                  <span className="font-semibold text-base">Login</span>
+                  <FaChevronRight className="text-muted" size={14} />
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={onLinkClick}
+                  className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                >
+                  <span className="font-semibold text-base">Join</span>
+                  <FaChevronRight className="text-muted" size={14} />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

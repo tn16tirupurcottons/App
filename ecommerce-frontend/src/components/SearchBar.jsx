@@ -2,15 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaTimes } from "react-icons/fa";
 
-export default function SearchBar({ placeholder = "Search pieces, collections, artisans", className = "", style = {}, onClose }) {
+export default function SearchBar({ placeholder = "Search pieces, collections, artisans", className = "", style = {}, onClose, showCloseButton = false, autoFocus = false }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const searchRef = useRef(null);
   const suggestionsRef = useRef(null);
+
+  // Auto-focus when component mounts if autoFocus is true
+  useEffect(() => {
+    if (autoFocus && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [autoFocus]);
 
   // Fetch search suggestions
   const { data: suggestionsData } = useQuery({
@@ -52,8 +59,23 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
       }
     };
 
+    const handleTouchOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleTouchOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleTouchOutside);
+    };
   }, []);
 
   const handleSearch = (query) => {
@@ -120,12 +142,26 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
             color: style.color || "#0a0a0a",
           }}
         />
+        {showCloseButton && onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close search"
+            className="flex-shrink-0 p-1 hover:opacity-70 transition"
+            style={{ color: style.color ? `${style.color}CC` : "rgba(10,10,10,0.7)" }}
+          >
+            <FaTimes size={16} />
+          </button>
+        )}
       </div>
 
       {showSuggestions && hasSuggestions && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-xl max-h-80 overflow-auto"
+          className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-xl max-h-80 overflow-auto scrollbar-hide"
+          style={{
+            maxHeight: "min(20rem, calc(100vh - 12rem))",
+          }}
         >
           {suggestions.categories?.length > 0 && (
             <div className="border-b border-gray-100">

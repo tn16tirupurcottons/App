@@ -141,19 +141,20 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
           }}
           onError={(e) => handleImageError(e, FALLBACK_IMAGES.banner)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+        {/* Subtle gradient overlay only at bottom for text readability - no blur */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* Text Overlay - Fully Responsive */}
         <div className="absolute inset-0 flex items-center justify-center md:justify-start px-4 sm:px-6 md:px-8 lg:px-12 z-10">
           <div className="text-center md:text-left w-full max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl">
-            <div className="bg-black/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border border-white/20 shadow-2xl">
+            <div className="bg-white/98 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border-2 border-gray-200/50 shadow-2xl">
               {displayBanner.title && (
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 text-white leading-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 text-gray-900 leading-tight drop-shadow-sm">
                   {displayBanner.title}
                 </h2>
               )}
               {displayBanner.subtitle && (
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 text-white/95 leading-relaxed">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 text-gray-800 leading-relaxed">
                   {displayBanner.subtitle}
                 </p>
               )}

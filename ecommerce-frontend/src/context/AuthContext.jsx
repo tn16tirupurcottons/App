@@ -77,9 +77,12 @@ function AuthProvider({ children }) {
     return res;
   };
 
-  const logout = () => {
+  const logout = (callback) => {
     localStorage.removeItem("tn16_token");
     setUser(null);
+    if (callback && typeof callback === "function") {
+      callback();
+    }
   };
 
   return (
