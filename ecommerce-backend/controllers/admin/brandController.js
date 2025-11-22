@@ -26,6 +26,8 @@ const ALLOWED_KEYS = [
   "heroTextColor",
   "heroTitleShadow",
   "heroSubtitleShadow",
+  "navActiveColor",
+  "navActiveBorderColor",
   "themeTokens",
 ];
 const PUBLIC_KEYS = [
@@ -53,6 +55,8 @@ const PUBLIC_KEYS = [
   "heroTextColor",
   "heroTitleShadow",
   "heroSubtitleShadow",
+  "navActiveColor",
+  "navActiveBorderColor",
   "themeTokens",
 ];
 

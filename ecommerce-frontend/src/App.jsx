@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Lazy loaded pages - code split for better performance
 const MultiStepCheckout = lazy(() => import("./pages/MultiStepCheckout"));
@@ -25,6 +26,7 @@ const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 const About = lazy(() => import("./pages/About"));
 const Shipping = lazy(() => import("./pages/Shipping"));
 const Membership = lazy(() => import("./pages/Membership"));
+const Editions = lazy(() => import("./pages/Editions"));
 
 // Admin pages - lazy loaded (large bundle, only for admins)
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
@@ -54,6 +56,7 @@ export default function App() {
         <BrandThemeProvider>
           <ToastProvider>
             <BrowserRouter>
+            <ScrollToTop />
             <Routes>
 
               <Route element={<AppLayout />}>
@@ -136,6 +139,14 @@ export default function App() {
                   element={
                     <Suspense fallback={<LoadingFallback />}>
                       <Membership />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/editions" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Editions />
                     </Suspense>
                   } 
                 />

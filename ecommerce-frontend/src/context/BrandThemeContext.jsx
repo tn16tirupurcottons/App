@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
 const defaultTheme = {
-  primaryColor: "#1d4ed8",
+  primaryColor: "#19c7f3ff",
   secondaryColor: "#9333ea",
   accentColor: "#f97316",
   backgroundColor: "#ffffff",

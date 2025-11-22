@@ -258,6 +258,65 @@ export default function BrandSettings() {
                   placeholder="#ffffff"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-6 border-t border-border pt-6">
+            <div className="border-b border-border pb-4">
+              <h3 className="text-lg font-semibold text-dark">Navigation Active State Styling</h3>
+              <p className="text-sm text-muted mt-1">Customize the active link colors in the header navigation</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Active Link Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={theme.navActiveColor || theme.primaryColor || "#1d4ed8"}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, navActiveColor: e.target.value }))
+                    }
+                    className="w-14 h-14 rounded-xl border border-border cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={theme.navActiveColor || theme.primaryColor || "#1d4ed8"}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, navActiveColor: e.target.value }))
+                    }
+                    className="flex-1 border border-border rounded-full px-4 py-3 text-sm"
+                    placeholder="#1d4ed8"
+                  />
+                </div>
+                <p className="text-xs text-muted mt-1">Color for active navigation links</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Active Border Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={theme.navActiveBorderColor || theme.primaryColor || "#1d4ed8"}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, navActiveBorderColor: e.target.value }))
+                    }
+                    className="w-14 h-14 rounded-xl border border-border cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={theme.navActiveBorderColor || theme.primaryColor || "#1d4ed8"}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, navActiveBorderColor: e.target.value }))
+                    }
+                    className="flex-1 border border-border rounded-full px-4 py-3 text-sm"
+                    placeholder="#1d4ed8"
+                  />
+                </div>
+                <p className="text-xs text-muted mt-1">Border color for active navigation links</p>
+              </div>
               <div>
                 <label className="text-sm font-semibold text-dark mb-2 block">
                   Title Text Shadow (CSS)

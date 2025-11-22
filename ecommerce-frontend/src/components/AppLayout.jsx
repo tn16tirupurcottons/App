@@ -20,6 +20,7 @@ const getPageBackground = (pathname) => {
     "/about": "bg-gradient-to-br from-white via-amber-50/20 to-orange-50/20",
     "/shipping": "bg-gradient-to-br from-white via-teal-50/20 to-cyan-50/20",
     "/membership": "bg-gradient-to-br from-white via-purple-50/20 to-pink-50/20",
+    "/editions": "bg-gradient-to-br from-white via-slate-50/20 to-gray-50/20",
     "/orders": "bg-gradient-to-br from-white via-green-50/20 to-emerald-50/20",
   };
 
@@ -61,8 +62,8 @@ export default function AppLayout() {
   return (
     <div className={`w-full min-h-screen flex flex-col ${pageBackground} text-[var(--text-color)] overflow-x-hidden transition-colors duration-300`}>
       <Navbar />
-      {/* Add padding-top to account for fixed header - responsive heights (header is ~118px mobile, ~160px desktop) */}
-      <main className={`flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 ${isHomePage ? 'pt-[118px] sm:pt-[130px] md:pt-[160px]' : 'pt-[118px] sm:pt-[130px] md:pt-[160px]'} min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-24 sm:pb-6 md:pb-0`}>
+      {/* Add padding-top to account for fixed header - responsive heights (header is ~118px mobile, ~130px desktop after reduction) */}
+      <main className={`flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 ${isHomePage ? 'pt-[118px] sm:pt-[120px] md:pt-[130px]' : 'pt-[118px] sm:pt-[120px] md:pt-[130px]'} min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-24 sm:pb-6 md:pb-0`}>
         {isHomePage ? (
           // Home page - no content wrapper, direct outlet
           <Outlet />

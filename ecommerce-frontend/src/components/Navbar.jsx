@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import {
   FaBars,
@@ -22,6 +22,8 @@ const extraLinks = [
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user, logout: logoutContext } = useContext(AuthContext);
   const { theme } = useBrandTheme();
   const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
@@ -30,6 +32,15 @@ export default function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const segments = Object.values(segmentThemes);
+  
+  // Check if an extraLink is active based on URL params
+  const isExtraLinkActive = (slug) => {
+    if (location.pathname === "/catalog") {
+      const categoryParam = searchParams.get("category");
+      return categoryParam === slug;
+    }
+    return false;
+  };
 
   // Handle scroll to show/hide header
   useEffect(() => {
@@ -107,7 +118,7 @@ export default function Navbar() {
       }}
     >
       <div 
-        className="hidden md:flex items-center justify-between px-8 py-2 text-[11px] tracking-[0.3em] uppercase border-b"
+        className="hidden md:flex items-center justify-between px-6 py-1.5 text-[10px] tracking-[0.3em] uppercase border-b"
         style={{ 
           background: "rgba(0, 0, 0, 0.02)",
           borderColor: "rgba(0, 0, 0, 0.1)",
@@ -118,7 +129,7 @@ export default function Navbar() {
         <span>{theme.headerSecondaryText || "Worldwide shipping · curated edits"}</span>
       </div>
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-4 py-4">
+        <div className="flex items-center gap-3 py-2.5">
           <button
             className="md:hidden hover:opacity-80 transition"
             style={{ color: theme.headerTextColor || "#0a0a0a" }}
@@ -127,16 +138,17 @@ export default function Navbar() {
           >
             <FaBars size={22} />
           </button>
+          {/* Desktop: Logo and brand name - positioned left */}
           <Link
             to="/"
-            className="hidden md:flex items-center gap-4"
+            className="hidden md:flex items-center gap-3 flex-shrink-0"
           >
             {theme.logo ? (
               <img 
                 src={theme.logo} 
                 alt={brand}
-                className="h-12 w-12 object-contain"
-                style={{ maxWidth: '48px', maxHeight: '48px' }}
+                className="h-10 w-10 object-contain"
+                style={{ maxWidth: '40px', maxHeight: '40px' }}
                 onError={(e) => {
                   // Fallback to text logo if image fails to load
                   e.target.style.display = 'none';
@@ -146,20 +158,20 @@ export default function Navbar() {
               />
             ) : null}
             <div 
-              className={`logo-fallback h-12 w-12 rounded-full border-2 border-white/30 font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
+              className={`logo-fallback h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               TN
             </div>
             <div className="text-left">
               <p 
-                className="font-semibold text-lg leading-tight"
+                className="font-semibold text-base leading-tight"
                 style={{ color: theme.headerTextColor || "#0a0a0a" }}
               >
                 {brand}
               </p>
               <p 
-                className="pill text-[10px]"
+                className="pill text-[9px]"
                 style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.7)" }}
               >
                 Tirupur · Established MMXXV
@@ -193,7 +205,8 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <div className="hidden md:flex flex-1 justify-center">
+          {/* Desktop: Search bar - centered */}
+          <div className="hidden md:flex flex-1 justify-center px-4">
             <SearchBar
               placeholder="Search pieces, collections, artisans"
               className="w-full max-w-2xl"
@@ -204,17 +217,18 @@ export default function Navbar() {
             />
           </div>
 
+          {/* Desktop: Right side actions */}
           <div 
-            className="ml-auto flex items-center gap-3 text-sm font-medium"
+            className="hidden md:flex items-center gap-3 text-sm font-medium flex-shrink-0"
             style={{ color: theme.headerTextColor || "#0a0a0a" }}
           >
             <Link
               to="/cart"
               aria-label="View cart"
-              className="hidden sm:flex items-center gap-2 hover:opacity-80 transition"
+              className="flex items-center gap-2 hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
-              <FaShoppingCart size={16} /> Cart
+              <FaShoppingCart size={16} /> <span className="hidden lg:inline">Cart</span>
             </Link>
             {user ? (
               <div className="flex items-center gap-2">
@@ -231,7 +245,7 @@ export default function Navbar() {
                     Admin
                   </Link>
                 )}
-                <span className="hidden sm:block" style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}>
+                <span className="hidden lg:block" style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}>
                   {user.name.split(" ")[0]}
                 </span>
                 <button
@@ -292,7 +306,7 @@ export default function Navbar() {
         onMouseLeave={() => setActiveMenu(null)}
       >
         <div 
-          className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-3 text-sm font-semibold"
+          className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-2 text-sm font-semibold"
           style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}
         >
           <NavLink
@@ -324,26 +338,46 @@ export default function Navbar() {
               {segment.label}
             </button>
           ))}
-          {extraLinks.map((link) => (
-            <NavLink
-              key={link.slug}
-              to={`/catalog?category=${link.slug}`}
-              className={({ isActive }) =>
-                `pb-2 border-b-2 ${
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent hover:border-primary/40 hover:text-primary"
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
-          <div className="ml-auto flex items-center gap-3 text-[11px] tracking-[0.35em] uppercase text-muted">
-            <span className="flex items-center gap-2">
-              Editions <FaArrowRight size={10} />
-            </span>
-          </div>
+          {extraLinks.map((link) => {
+            const isActive = isExtraLinkActive(link.slug);
+            const activeColor = theme.navActiveColor || theme.primaryColor || "#1d4ed8";
+            const activeBorderColor = theme.navActiveBorderColor || theme.primaryColor || "#1d4ed8";
+            
+            return (
+              <NavLink
+                key={link.slug}
+                to={`/catalog?category=${link.slug}`}
+                className="pb-2 border-b-2 transition"
+                style={{
+                  borderColor: isActive ? activeBorderColor : "transparent",
+                  color: isActive ? activeColor : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.borderColor = `${activeBorderColor}40`;
+                    e.currentTarget.style.color = activeColor;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.borderColor = "transparent";
+                    e.currentTarget.style.color = undefined;
+                  }
+                }}
+              >
+                {link.label}
+              </NavLink>
+            );
+          })}
+          <Link 
+            to="/editions"
+            className="ml-auto flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase transition hover:opacity-70"
+            style={{ 
+              color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)"
+            }}
+          >
+            Editions <FaArrowRight size={10} />
+          </Link>
         </div>
         <MegaMenu segment={segmentThemes[activeMenu]} />
       </div>
