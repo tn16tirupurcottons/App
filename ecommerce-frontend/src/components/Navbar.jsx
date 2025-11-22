@@ -131,8 +131,22 @@ export default function Navbar() {
             to="/"
             className="hidden md:flex items-center gap-4"
           >
+            {theme.logo ? (
+              <img 
+                src={theme.logo} 
+                alt={brand}
+                className="h-12 w-12 object-contain"
+                style={{ maxWidth: '48px', maxHeight: '48px' }}
+                onError={(e) => {
+                  // Fallback to text logo if image fails to load
+                  e.target.style.display = 'none';
+                  const fallback = e.target.parentElement?.querySelector('.logo-fallback');
+                  if (fallback) fallback.style.display = 'grid';
+                }}
+              />
+            ) : null}
             <div 
-              className="h-12 w-12 rounded-full border-2 border-white/30 font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm"
+              className={`logo-fallback h-12 w-12 rounded-full border-2 border-white/30 font-display text-lg tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               TN
@@ -157,8 +171,22 @@ export default function Navbar() {
             to="/"
             className="md:hidden"
           >
+            {theme.logo ? (
+              <img 
+                src={theme.logo} 
+                alt={brand}
+                className="h-10 w-10 object-contain"
+                style={{ maxWidth: '40px', maxHeight: '40px' }}
+                onError={(e) => {
+                  // Fallback to text logo if image fails to load
+                  e.target.style.display = 'none';
+                  const fallback = e.target.parentElement?.querySelector('.logo-fallback-mobile');
+                  if (fallback) fallback.style.display = 'grid';
+                }}
+              />
+            ) : null}
             <div 
-              className="h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm"
+              className={`logo-fallback-mobile h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               TN
@@ -537,27 +565,25 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
               </NavLink>
             </div>
 
-            {/* Login/Join Section - at the bottom */}
-            {!user && (
-              <div className="mt-6 pt-6 border-t-2 border-border">
-                <Link
-                  to="/login"
-                  onClick={onLinkClick}
-                  className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                >
-                  <span className="font-semibold text-base">Login</span>
-                  <FaChevronRight className="text-muted" size={14} />
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={onLinkClick}
-                  className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                >
-                  <span className="font-semibold text-base">Join</span>
-                  <FaChevronRight className="text-muted" size={14} />
-                </Link>
-              </div>
-            )}
+            {/* Login/Join Section - at the bottom (Mobile only - always show Login/Join) */}
+            <div className="mt-6 pt-6 border-t-2 border-border">
+              <Link
+                to="/login"
+                onClick={onLinkClick}
+                className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+              >
+                <span className="font-semibold text-base">Login</span>
+                <FaChevronRight className="text-muted" size={14} />
+              </Link>
+              <Link
+                to="/register"
+                onClick={onLinkClick}
+                className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+              >
+                <span className="font-semibold text-base">Join</span>
+                <FaChevronRight className="text-muted" size={14} />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
