@@ -5,6 +5,7 @@ import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
 import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl } from "../utils/imageUtils";
+import FullScreenImageViewer from "../components/FullScreenImageViewer";
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
@@ -65,13 +66,13 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [zoom, setZoom] = useState(false);
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     setActiveImage(0);
-    setZoom(false);
+    setIsFullScreenOpen(false);
   }, [id]);
 
   useEffect(() => {
@@ -203,18 +204,16 @@ export default function ProductDetails() {
         {/* Image Gallery */}
         <div className="w-full">
           <div
-            className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-zoom-in shadow-soft"
+            className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-pointer shadow-soft"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            onClick={() => setZoom(!zoom)}
+            onClick={() => setIsFullScreenOpen(true)}
           >
             <img
               src={gallery[activeImage] || FALLBACK_IMAGE}
               alt={product.name || "Product"}
-              className={`w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[480px] object-cover transition-transform ${
-                zoom ? "scale-150" : "scale-100"
-              }`}
+              className="w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[480px] object-cover transition-opacity hover:opacity-90"
               onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
             />
             {product.discount > 0 && (
@@ -471,6 +470,14 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
+
+      {/* Full Screen Image Viewer */}
+      <FullScreenImageViewer
+        images={gallery}
+        initialIndex={activeImage}
+        isOpen={isFullScreenOpen}
+        onClose={() => setIsFullScreenOpen(false)}
+      />
     </div>
   );
 }

@@ -288,6 +288,7 @@ export default function Navbar() {
               aria-label="View cart"
               className="flex items-center justify-center hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
+              onClick={() => setMobileSearchOpen(false)}
             >
               <FaShoppingCart size={20} />
             </Link>
@@ -295,7 +296,10 @@ export default function Navbar() {
               className="flex items-center justify-center hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
               aria-label="Open search panel"
-              onClick={() => setMobileSearchOpen(true)}
+              onClick={() => {
+                setMobileSearchOpen(true);
+                setMobileMenuOpen(false);
+              }}
             >
               <FaSearch size={18} />
             </button>
@@ -392,28 +396,45 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <MobileDrawer
           isOpen={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
+          onClose={() => {
+            setMobileMenuOpen(false);
+            setMobileSearchOpen(false);
+          }}
           segments={segments}
           extraLinks={extraLinks}
           onNavigate={(segmentKey) => handleSegmentNavigate(segmentKey)}
-          onLinkClick={() => setMobileMenuOpen(false)}
+          onLinkClick={() => {
+            setMobileMenuOpen(false);
+            setMobileSearchOpen(false);
+          }}
           user={user}
           logout={logout}
         />
       )}
 
-      {/* Mobile search overlay - inside header */}
+      {/* Mobile search overlay - inside header with click-outside to close */}
       {mobileSearchOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200/50 shadow-lg z-50 px-4 py-3">
-          <SearchBar
-            placeholder="Search TN16 studio"
-            className="w-full"
-            style={{ color: "#0a0a0a" }}
-            onClose={() => setMobileSearchOpen(false)}
-            showCloseButton={true}
-            autoFocus={true}
+        <>
+          {/* Backdrop overlay for click-outside detection */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black/20 z-40 top-[130px]"
+            onClick={() => setMobileSearchOpen(false)}
           />
-        </div>
+          {/* Search bar container */}
+          <div 
+            className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200/50 shadow-lg z-50 px-4 py-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SearchBar
+              placeholder="Search TN16 studio"
+              className="w-full"
+              style={{ color: "#0a0a0a" }}
+              onClose={() => setMobileSearchOpen(false)}
+              showCloseButton={true}
+              autoFocus={true}
+            />
+          </div>
+        </>
       )}
     </header>
   );

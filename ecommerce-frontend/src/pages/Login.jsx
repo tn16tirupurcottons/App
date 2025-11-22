@@ -10,14 +10,10 @@ export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  // If already logged in, redirect
+  // If already logged in, redirect to home (for both admin and regular users)
   React.useEffect(() => {
     if (user) {
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      navigate("/");
     }
   }, [user, navigate]);
 
@@ -45,12 +41,8 @@ export default function Login() {
       try {
         const identifier = values.identifier.trim();
         const response = await login(identifier, values.password.trim());
-        const loggedInUser = response.data?.user;
-        if (loggedInUser?.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
+        // Always redirect to home page after login (for both admin and regular users)
+        navigate("/");
       } catch (err) {
         const errorMessage =
           err.response?.data?.message ||
