@@ -23,11 +23,16 @@ export default function Checkout() {
   useEffect(() => {
     const init = async () => {
       try {
-        const res = await axiosClient.post("/orders/checkout");
+        const res = await axiosClient.post("/orders/checkout", {
+          paymentMethod: "cod", // Request COD by default
+        });
         setClientSecret(res.data.clientSecret || "");
         setOrderData(res.data);
-        setDemoMode(Boolean(res.data.demoMode));
+        // Set demo mode if COD or if no payment gateway is available
+        const isCOD = res.data.paymentMethod === "cod" || res.data.paymentIntentId?.startsWith("cod_");
+        setDemoMode(Boolean(res.data.demoMode) || isCOD || !res.data.clientSecret);
       } catch (err) {
+        console.error("Checkout initialization error:", err);
         setError(err.response?.data?.message || "Unable to start checkout");
       } finally {
         setLoading(false);
@@ -94,16 +99,15 @@ export default function Checkout() {
         <OrderSummary orderData={orderData} />
       </div>
       <div className="lg:order-1">
-        {demoMode ? (
+        {demoMode || orderData?.paymentMethod === "cod" ? (
           <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />
         ) : stripePromise && clientSecret ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
             <CheckoutFormWrapper orderData={orderData} isDemoMode={false} />
           </Elements>
         ) : (
-          <div className="card p-4 sm:p-6">
-            <p className="text-muted text-sm sm:text-base">Initializing payment...</p>
-          </div>
+          // Fallback to COD if Stripe is not available
+          <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />
         )}
       </div>
     </div>
@@ -198,16 +202,21 @@ function CheckoutFormDemo({ orderData }) {
 
   if (success) {
     return (
-      <div className="card p-6 text-center">
-        <h2 className="text-xl font-semibold text-dark">
+      <div className="card p-4 sm:p-6 text-center">
+        <h2 className="text-lg sm:text-xl font-semibold text-dark">
           Order placed successfully 🎉
         </h2>
-        <p className="text-muted mt-2">
+        <p className="text-sm sm:text-base text-muted mt-2">
           We'll keep you posted once your Tirupur cotton fit ships.
         </p>
+        {orderData?.paymentMethod === "cod" && (
+          <p className="text-xs sm:text-sm text-muted mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            💰 Cash on Delivery: Please keep exact change ready when your order arrives.
+          </p>
+        )}
         <button
           onClick={() => (window.location.href = "/")}
-          className="mt-6 bg-primary text-white px-6 py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs hover:bg-primary/90"
+          className="mt-6 bg-primary text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs hover:bg-primary/90 active:scale-95 transition-transform"
         >
           Continue shopping
         </button>
@@ -217,7 +226,14 @@ function CheckoutFormDemo({ orderData }) {
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
-      <h2 className="text-lg sm:text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
+      <h2 className="text-lg sm:text-xl font-semibold mb-2 text-dark">Shipping Details</h2>
+      {orderData?.paymentMethod === "cod" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-xs sm:text-sm text-blue-800">
+            💰 <strong>Cash on Delivery:</strong> Pay when you receive your order. No payment required now.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Full name"
@@ -453,6 +469,13 @@ function CheckoutForm({ orderData }) {
       className="card p-4 sm:p-6 space-y-3 sm:space-y-4"
     >
       <h2 className="text-lg sm:text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
+      {orderData?.paymentMethod === "cod" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-xs sm:text-sm text-blue-800">
+            💰 <strong>Cash on Delivery:</strong> Pay when you receive your order. No payment required now.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Full name"
