@@ -53,13 +53,16 @@ export default function Catalog() {
           {segmentTheme ? `${segmentTheme.label} Edit` : "TN16 Cotton Edit"}
         </p>
         <h1 className="text-2xl md:text-3xl font-display mt-1 text-dark">
-          {segmentTheme
+          {searchParams.get("query")
+            ? `Search results for "${searchParams.get("query")}"`
+            : segmentTheme
             ? `Browse ${segmentTheme.label} collection`
             : "Browse the complete TN16 Tirupur Cotton catalog"}
         </h1>
         <p className="text-muted mt-3 max-w-2xl">
-          Filter by category, sort by price and discover curated cotton looks
-          from Tirupur's ateliers.
+          {searchParams.get("query")
+            ? "Find your perfect cotton pieces from our curated collection."
+            : "Filter by category, sort by price and discover curated cotton looks from Tirupur's ateliers."}
         </p>
       </div>
 

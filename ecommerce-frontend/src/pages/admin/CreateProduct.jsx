@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../admin/components/AdminLayout";
 import ImageUploader from "../../components/ImageUploader";
+import AutocompleteInput from "../../components/AutocompleteInput";
+import AutocompleteColorsInput from "../../components/AutocompleteColorsInput";
 import { useToast } from "../../components/Toast";
 import axiosClient from "../../api/axiosClient";
 
@@ -32,6 +34,59 @@ export default function CreateProduct() {
       return res.data.items || [];
     },
   });
+
+  // Fetch all products for autocomplete suggestions
+  const { data: allProductsData } = useQuery({
+    queryKey: ["allProductsForSuggestions"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/admin/products?limit=1000");
+      const products = res.data.items || [];
+      // Ensure categoryId is accessible (handle both plain objects and Sequelize models)
+      return products.map((p) => ({
+        ...p,
+        categoryId: p.categoryId || p.Category?.id || null,
+      }));
+    },
+  });
+
+  // Extract unique suggestions filtered by selected category
+  const productNameSuggestions = useMemo(() => {
+    if (!allProductsData || !form.categoryId) return [];
+    const names = new Set();
+    allProductsData.forEach((p) => {
+      // Only include products from the selected category
+      if (p.name && p.categoryId === form.categoryId) {
+        names.add(p.name);
+      }
+    });
+    return Array.from(names).sort();
+  }, [allProductsData, form.categoryId]);
+
+  const brandSuggestions = useMemo(() => {
+    if (!allProductsData || !form.categoryId) return [];
+    const brands = new Set();
+    allProductsData.forEach((p) => {
+      // Only include brands from the selected category
+      if (p.brand && p.categoryId === form.categoryId) {
+        brands.add(p.brand);
+      }
+    });
+    return Array.from(brands).sort();
+  }, [allProductsData, form.categoryId]);
+
+  const colorSuggestions = useMemo(() => {
+    if (!allProductsData || !form.categoryId) return [];
+    const colors = new Set();
+    allProductsData.forEach((p) => {
+      // Only include colors from the selected category
+      if (p.categoryId === form.categoryId && p.colors && Array.isArray(p.colors)) {
+        p.colors.forEach((c) => {
+          if (c && c.trim()) colors.add(c.trim());
+        });
+      }
+    });
+    return Array.from(colors).sort();
+  }, [allProductsData, form.categoryId]);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -85,12 +140,39 @@ export default function CreateProduct() {
           {/* Basic Information */}
           <div className="grid md:grid-cols-2 gap-4 md:gap-6">
             <div className="space-y-4">
-              <Input
-                label="Product Name *"
+              <label className="block text-sm font-semibold text-gray-700">
+                Category *
+                <select
+                  className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm mt-1 focus:outline-none focus:border-pink-500"
+                  value={form.categoryId}
+                  onChange={(e) => {
+                    handleChange("categoryId", e.target.value);
+                    // Clear name, brand, and colors when category changes to show fresh suggestions
+                    if (e.target.value !== form.categoryId) {
+                      handleChange("name", "");
+                      handleChange("brand", "");
+                      handleChange("colors", "");
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <AutocompleteInput
+                label="Product Name"
                 value={form.name}
                 onChange={(e) => handleChange("name", e.target.value)}
+                suggestions={productNameSuggestions}
+                placeholder={form.categoryId ? "e.g., Heritage Cuban Shirt" : "Select category first"}
                 required
-                placeholder="e.g., Heritage Cuban Shirt"
+                disabled={!form.categoryId}
               />
               <Input
                 label="Price (INR) *"
@@ -102,29 +184,15 @@ export default function CreateProduct() {
                 required
                 placeholder="1899"
               />
-              <Input
-                label="Brand *"
+              <AutocompleteInput
+                label="Brand"
                 value={form.brand}
                 onChange={(e) => handleChange("brand", e.target.value)}
+                suggestions={brandSuggestions}
+                placeholder={form.categoryId ? "TN16" : "Select category first"}
                 required
-                placeholder="TN16"
+                disabled={!form.categoryId}
               />
-              <label className="block text-sm font-semibold text-gray-700">
-                Category *
-                <select
-                  className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm mt-1 focus:outline-none focus:border-pink-500"
-                  value={form.categoryId}
-                  onChange={(e) => handleChange("categoryId", e.target.value)}
-                  required
-                >
-                  <option value="">Select category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
 
             <div className="space-y-4">
@@ -142,11 +210,13 @@ export default function CreateProduct() {
                 onChange={(e) => handleChange("sizes", e.target.value)}
                 placeholder="S, M, L, XL"
               />
-              <Input
+              <AutocompleteColorsInput
                 label="Colors (comma separated)"
                 value={form.colors}
                 onChange={(e) => handleChange("colors", e.target.value)}
-                placeholder="White, Black, Blue"
+                suggestions={colorSuggestions}
+                placeholder={form.categoryId ? "White, Black, Blue" : "Select category first"}
+                disabled={!form.categoryId}
               />
               <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 cursor-pointer">
                 <input

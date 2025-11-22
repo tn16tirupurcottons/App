@@ -10,6 +10,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import MegaMenu from "./MegaMenu";
+import SearchBar from "./SearchBar";
 import { segmentThemes } from "../data/segments";
 import { useBrandTheme } from "../context/BrandThemeContext";
 
@@ -106,25 +107,14 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex flex-1 justify-center">
-            <div className="flex items-center gap-2 w-full max-w-2xl bg-black/5 backdrop-blur-md border rounded-full px-5 py-2 shadow-lg" style={{ borderColor: theme.headerTextColor ? `${theme.headerTextColor}20` : "rgba(10,10,10,0.2)" }}>
-              <FaSearch style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.7)" }} />
-              <input
-                type="text"
-                placeholder="Search pieces, collections, artisans"
-                className="flex-1 bg-transparent text-sm focus:outline-none"
-                style={{ 
-                  color: theme.headerTextColor || "#0a0a0a",
-                  "--placeholder-color": theme.headerTextColor ? `${theme.headerTextColor}99` : "rgba(10,10,10,0.6)"
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.target.value.trim()) {
-                    navigate(
-                      `/catalog?query=${encodeURIComponent(e.target.value)}`
-                    );
-                  }
-                }}
-              />
-            </div>
+            <SearchBar
+              placeholder="Search pieces, collections, artisans"
+              className="w-full max-w-2xl"
+              style={{
+                color: theme.headerTextColor || "#0a0a0a",
+                borderColor: theme.headerTextColor ? `${theme.headerTextColor}20` : "rgba(10,10,10,0.2)",
+              }}
+            />
           </div>
 
           <div 
@@ -298,21 +288,12 @@ export default function Navbar() {
               <FaTimes size={18} />
             </button>
           </div>
-          <div className="flex items-center gap-3 border-2 border-border rounded-full px-5 py-3 focus-within:border-primary">
-            <FaSearch className="text-muted" />
-            <input
-              autoFocus
-              type="text"
-              placeholder="Search TN16 studio"
-              className="flex-1 bg-transparent text-dark focus:outline-none placeholder:text-muted"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.target.value.trim()) {
-                  navigate(`/catalog?query=${encodeURIComponent(e.target.value)}`);
-                  setMobileSearchOpen(false);
-                }
-              }}
-            />
-          </div>
+          <SearchBar
+            placeholder="Search TN16 studio"
+            className="w-full"
+            style={{ color: "#0a0a0a" }}
+            onClose={() => setMobileSearchOpen(false)}
+          />
         </div>
       )}
     </header>

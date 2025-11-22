@@ -204,13 +204,16 @@ export const adminGetProducts = async (req, res) => {
       offset,
     });
 
+    // Convert Sequelize models to plain objects to ensure categoryId is accessible
+    const items = rows.map((product) => product.get({ plain: true }));
+
     return res.json({
       success: true,
       page,
       limit,
       totalItems: count,
       totalPages: Math.ceil(count / limit),
-      items: rows,
+      items,
     });
   } catch (err) {
     return res.status(500).json({
