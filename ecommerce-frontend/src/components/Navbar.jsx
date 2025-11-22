@@ -277,16 +277,20 @@ export default function Navbar() {
                 </Link>
               </div>
             )}
+          </div>
+
+          {/* Mobile: Cart and Search icons */}
+          <div className="md:hidden ml-auto flex items-center gap-3">
             <Link
               to="/cart"
               aria-label="View cart"
-              className="md:hidden flex items-center hover:opacity-80 transition relative"
+              className="flex items-center hover:opacity-80 transition relative"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               <FaShoppingCart size={20} />
             </Link>
             <button
-              className="md:hidden hover:opacity-80 transition ml-2"
+              className="hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
               aria-label="Open search panel"
               onClick={() => setMobileSearchOpen(true)}
