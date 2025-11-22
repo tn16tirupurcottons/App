@@ -3,10 +3,19 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { useBrandTheme } from "../context/BrandThemeContext";
 
 export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
+  const { theme } = useBrandTheme();
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Hero banner styling from theme (with defaults)
+  const heroBoxBg = theme.heroBoxBackground || "linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.5))";
+  const heroBoxBorder = theme.heroBoxBorder || "rgba(255,255,255,0.2)";
+  const heroTextColor = theme.heroTextColor || "#ffffff";
+  const heroTitleShadow = theme.heroTitleShadow || "0 2px 8px rgba(0,0,0,0.5)";
+  const heroSubtitleShadow = theme.heroSubtitleShadow || "0 1px 4px rgba(0,0,0,0.5)";
 
   const { data } = useQuery({
     queryKey: ["banners", page, position, category],
@@ -141,27 +150,45 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
           }}
           onError={(e) => handleImageError(e, FALLBACK_IMAGES.banner)}
         />
-        {/* Subtle gradient overlay only at bottom for text readability - no blur */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Subtle gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
         {/* Text Overlay - Fully Responsive */}
         <div className="absolute inset-0 flex items-center justify-center md:justify-start px-4 sm:px-6 md:px-8 lg:px-12 z-10">
           <div className="text-center md:text-left w-full max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl">
-            <div className="bg-white/98 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border-2 border-gray-200/50 shadow-2xl">
+            <div 
+              className="backdrop-blur-md rounded-xl sm:rounded-2xl p-5 sm:p-7 md:p-9 border shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+              style={{
+                background: heroBoxBg,
+                borderColor: heroBoxBorder,
+              }}
+            >
               {displayBanner.title && (
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 text-gray-900 leading-tight drop-shadow-sm">
+                <h2 
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 leading-tight" 
+                  style={{ 
+                    color: heroTextColor,
+                    textShadow: heroTitleShadow
+                  }}
+                >
                   {displayBanner.title}
                 </h2>
               )}
               {displayBanner.subtitle && (
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 text-gray-800 leading-relaxed">
+                <p 
+                  className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 leading-relaxed font-medium" 
+                  style={{ 
+                    color: `${heroTextColor}95`,
+                    textShadow: heroSubtitleShadow
+                  }}
+                >
                   {displayBanner.subtitle}
                 </p>
               )}
               {displayBanner.ctaLabel && displayBanner.ctaLink && (
                 <Link
                   to={displayBanner.ctaLink}
-                  className="inline-block bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs hover:bg-gray-100 transition shadow-2xl"
+                  className="inline-block bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs hover:bg-gray-100 transition-all shadow-lg"
                 >
                   {displayBanner.ctaLabel}
                 </Link>

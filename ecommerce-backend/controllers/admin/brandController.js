@@ -21,6 +21,11 @@ const ALLOWED_KEYS = [
   "footerBackground",
   "footerTextColor",
   "containerRadius",
+  "heroBoxBackground",
+  "heroBoxBorder",
+  "heroTextColor",
+  "heroTitleShadow",
+  "heroSubtitleShadow",
   "themeTokens",
 ];
 const PUBLIC_KEYS = [
@@ -43,6 +48,11 @@ const PUBLIC_KEYS = [
   "footerBackground",
   "footerTextColor",
   "containerRadius",
+  "heroBoxBackground",
+  "heroBoxBorder",
+  "heroTextColor",
+  "heroTitleShadow",
+  "heroSubtitleShadow",
   "themeTokens",
 ];
 

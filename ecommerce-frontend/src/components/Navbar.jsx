@@ -29,44 +29,57 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const segments = Object.values(segmentThemes);
 
   // Handle scroll to show/hide header
   useEffect(() => {
     let ticking = false;
+    let lastKnownScrollY = window.scrollY;
+    
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
-          const scrollDifference = currentScrollY - lastScrollY;
+          const scrollDifference = currentScrollY - lastKnownScrollY;
           
-          // Always show header when at the very top
-          if (currentScrollY < 10) {
+          // Always show and keep header visible when at the very top
+          if (currentScrollY <= 10) {
             setIsHeaderVisible(true);
           } 
-          // Show header immediately on ANY upward scroll, regardless of position
-          else if (scrollDifference < -1) {
-            // Any upward scroll movement (even 1px) shows the header immediately
+          // Show header immediately on ANY upward scroll
+          else if (scrollDifference < 0) {
+            // Any upward scroll movement shows the header immediately
             setIsHeaderVisible(true);
           } 
-          // Hide header when scrolling down (only after a threshold to prevent flickering)
-          else if (scrollDifference > 3 && currentScrollY > 100) {
-            // Only hide if scrolling down more than 3px and past 100px from top
+          // Hide header when scrolling down (only after threshold)
+          else if (scrollDifference > 0 && currentScrollY > 100) {
+            // Hide if scrolling down and past 100px from top
             setIsHeaderVisible(false);
           }
-          // For very small movements (0-3px down), maintain current state to prevent flickering
+          // For zero movement or small down movements, maintain current state
           
-          setLastScrollY(currentScrollY);
+          lastKnownScrollY = currentScrollY;
           ticking = false;
         });
         ticking = true;
       }
     };
 
+    // Initialize scroll position
+    lastKnownScrollY = window.scrollY;
+    
+    // Set initial visibility - always show at top
+    if (window.scrollY <= 10) {
+      setIsHeaderVisible(true);
+    } else {
+      setIsHeaderVisible(false);
+    }
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   // Logout handler with redirect
   const logout = () => {
@@ -82,7 +95,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg transition-transform duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg transition-transform duration-200 ease-in-out ${
         isHeaderVisible ? "translate-y-0" : "-translate-y-full"
       }`}
       style={{

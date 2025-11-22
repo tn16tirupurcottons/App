@@ -55,11 +55,25 @@ export default function AppLayout() {
     );
   }
 
+  // Check if current page is Home page (needs special layout)
+  const isHomePage = location.pathname === "/";
+
   return (
     <div className={`w-full min-h-screen flex flex-col ${pageBackground} text-[var(--text-color)] overflow-x-hidden transition-colors duration-300`}>
       <Navbar />
-      <main className="flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-24 sm:pb-6 md:pb-0">
-        <Outlet />
+      {/* Add padding-top to account for fixed header - responsive heights (header is ~118px mobile, ~160px desktop) */}
+      <main className={`flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 ${isHomePage ? 'pt-[118px] sm:pt-[130px] md:pt-[160px]' : 'pt-[118px] sm:pt-[130px] md:pt-[160px]'} min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-24 sm:pb-6 md:pb-0`}>
+        {isHomePage ? (
+          // Home page - no content wrapper, direct outlet
+          <Outlet />
+        ) : (
+          // Other pages - with content wrapper
+          <div className="bg-white/70 backdrop-blur-[1px] rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 min-h-full">
+            <div className="p-4 sm:p-6 md:p-8">
+              <Outlet />
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
       <BottomNav />

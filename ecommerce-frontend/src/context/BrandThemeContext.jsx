@@ -20,6 +20,12 @@ const defaultTheme = {
   footerTextColor: "#111827",
   containerRadius: "24px",
   logo: null, // Logo URL from admin settings
+  // Hero banner styling
+  heroBoxBackground: "linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.5))",
+  heroBoxBorder: "rgba(255,255,255,0.2)",
+  heroTextColor: "#ffffff",
+  heroTitleShadow: "0 2px 8px rgba(0,0,0,0.5)",
+  heroSubtitleShadow: "0 1px 4px rgba(0,0,0,0.5)",
 };
 
 // Fast Refresh compatible: context creation
@@ -45,6 +51,11 @@ const applyThemeToDocument = (theme) => {
   root.style.setProperty("--footer-background", theme.footerBackground);
   root.style.setProperty("--footer-text-color", theme.footerTextColor);
   root.style.setProperty("--container-radius", theme.containerRadius);
+  root.style.setProperty("--hero-box-background", theme.heroBoxBackground);
+  root.style.setProperty("--hero-box-border", theme.heroBoxBorder);
+  root.style.setProperty("--hero-text-color", theme.heroTextColor);
+  root.style.setProperty("--hero-title-shadow", theme.heroTitleShadow);
+  root.style.setProperty("--hero-subtitle-shadow", theme.heroSubtitleShadow);
   // Set logo URL if available
   if (theme.logo) {
     root.style.setProperty("--logo-url", `url(${theme.logo})`);

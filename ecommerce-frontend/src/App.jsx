@@ -1,40 +1,49 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { BrandThemeProvider } from "./context/BrandThemeContext";
 import { ToastProvider } from "./components/Toast";
 
+// Core pages - loaded immediately
 import Home from "./pages/Home";
-import MultiStepCheckout from "./pages/MultiStepCheckout";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Catalog from "./pages/Catalog";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Wishlist from "./pages/Wishlist";
-import OrderTracking from "./pages/OrderTracking";
 
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Admin pages
-import AdminPanel from "./pages/admin/AdminPanel";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminCategories from "./pages/admin/AdminCategories";
-import CreateProduct from "./pages/admin/CreateProduct";
-import EditProduct from "./pages/admin/EditProduct";
-import BannerManagement from "./pages/admin/BannerManagement";
-import BrandSettings from "./pages/admin/BrandSettings";
-import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminUsers from "./pages/admin/AdminUsers";
+// Lazy loaded pages - code split for better performance
+const MultiStepCheckout = lazy(() => import("./pages/MultiStepCheckout"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+const About = lazy(() => import("./pages/About"));
+const Shipping = lazy(() => import("./pages/Shipping"));
+const Membership = lazy(() => import("./pages/Membership"));
 
-// ⚠️ IMPORT YOUR NEW PAGES
-import About from "./pages/About";
-import Shipping from "./pages/Shipping";
-import Membership from "./pages/Membership";
+// Admin pages - lazy loaded (large bundle, only for admins)
+const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const CreateProduct = lazy(() => import("./pages/admin/CreateProduct"));
+const EditProduct = lazy(() => import("./pages/admin/EditProduct"));
+const BannerManagement = lazy(() => import("./pages/admin/BannerManagement"));
+const BrandSettings = lazy(() => import("./pages/admin/BrandSettings"));
+const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+
+// Loading component
+const LoadingFallback = () => (
+  <div className="w-full h-screen flex items-center justify-center">
+    <div className="text-lg font-semibold">Loading...</div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -57,7 +66,9 @@ export default function App() {
                   path="/wishlist"
                   element={
                     <ProtectedRoute>
-                      <Wishlist />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Wishlist />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -66,36 +77,77 @@ export default function App() {
                   path="/orders/:id"
                   element={
                     <ProtectedRoute>
-                      <OrderTracking />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <OrderTracking />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route 
+                  path="/forgot-password" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ForgotPassword />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/reset-password" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ResetPassword />
+                    </Suspense>
+                  } 
+                />
 
                 <Route
                   path="/checkout"
                   element={
                     <ProtectedRoute>
-                      <MultiStepCheckout />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <MultiStepCheckout />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
 
                 {/* NEW ROUTES */}
-                <Route path="/about" element={<About />} />
-                <Route path="/shipping" element={<Shipping />} />
-                <Route path="/membership" element={<Membership />} />
+                <Route 
+                  path="/about" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <About />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/shipping" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Shipping />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/membership" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Membership />
+                    </Suspense>
+                  } 
+                />
 
-                {/* ADMIN ROUTES */}
+                {/* ADMIN ROUTES - Lazy loaded */}
                 <Route
                   path="/admin"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminPanel />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminPanel />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -104,7 +156,9 @@ export default function App() {
                   path="/admin/products"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminProducts />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminProducts />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -113,7 +167,9 @@ export default function App() {
                   path="/admin/orders"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminOrders />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminOrders />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -122,7 +178,9 @@ export default function App() {
                   path="/admin/categories"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminCategories />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminCategories />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -131,7 +189,9 @@ export default function App() {
                   path="/admin/create-product"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <CreateProduct />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <CreateProduct />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -140,7 +200,9 @@ export default function App() {
                   path="/admin/edit-product/:id"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <EditProduct />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <EditProduct />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -149,7 +211,9 @@ export default function App() {
                   path="/admin/banners"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <BannerManagement />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <BannerManagement />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -158,7 +222,9 @@ export default function App() {
                   path="/admin/customers"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminCustomers />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminCustomers />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -167,7 +233,9 @@ export default function App() {
                   path="/admin/users"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <AdminUsers />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminUsers />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />
@@ -176,7 +244,9 @@ export default function App() {
                   path="/admin/brand-settings"
                   element={
                     <ProtectedRoute adminOnly={true}>
-                      <BrandSettings />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <BrandSettings />
+                      </Suspense>
                     </ProtectedRoute>
                   }
                 />

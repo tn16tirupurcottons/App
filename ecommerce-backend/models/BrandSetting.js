@@ -33,6 +33,11 @@ const BrandSetting = sequelize.define(
     footerBackground: DataTypes.STRING,
     footerTextColor: DataTypes.STRING,
     containerRadius: { type: DataTypes.STRING, defaultValue: "24px" },
+    heroBoxBackground: DataTypes.TEXT,
+    heroBoxBorder: DataTypes.STRING,
+    heroTextColor: DataTypes.STRING,
+    heroTitleShadow: DataTypes.STRING,
+    heroSubtitleShadow: DataTypes.STRING,
     themeTokens: {
       type: DataTypes.JSONB,
       defaultValue: {},

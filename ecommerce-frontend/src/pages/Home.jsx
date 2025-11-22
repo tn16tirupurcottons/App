@@ -185,7 +185,8 @@ export default function Home() {
   return (
     <div className="bg-white text-dark w-full min-h-screen overflow-x-hidden">
       {/* Hero carousel - Full Screen, Modern, Luxury, Fully Responsive, Not Square, Curved Edges */}
-      <section className="w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 relative overflow-hidden">
+      {/* AppLayout handles top padding for fixed header, add small responsive gap for visual spacing */}
+      <section className="w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 pt-2 sm:pt-3 md:pt-4 relative overflow-hidden">
         <BannerCarousel page="home" position="hero" />
       </section>
 

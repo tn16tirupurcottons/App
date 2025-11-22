@@ -211,6 +211,86 @@ export default function BrandSettings() {
 
           <div className="space-y-6 border-t border-border pt-6">
             <div className="border-b border-border pb-4">
+              <h3 className="text-lg font-semibold text-dark">Hero Banner Styling</h3>
+              <p className="text-sm text-muted mt-1">Customize the hero banner text box appearance</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Text Box Background (CSS Gradient/Color)
+                </label>
+                <input
+                  type="text"
+                  value={theme.heroBoxBackground || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, heroBoxBackground: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6))"
+                />
+                <p className="text-xs text-muted mt-1">Use CSS gradient or rgba/rgb color</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Text Box Border Color
+                </label>
+                <input
+                  type="text"
+                  value={theme.heroBoxBorder || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, heroBoxBorder: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="rgba(255,255,255,0.2)"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Text Color
+                </label>
+                <input
+                  type="text"
+                  value={theme.heroTextColor || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, heroTextColor: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="#ffffff"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Title Text Shadow (CSS)
+                </label>
+                <input
+                  type="text"
+                  value={theme.heroTitleShadow || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, heroTitleShadow: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="0 2px 8px rgba(0,0,0,0.5)"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark mb-2 block">
+                  Subtitle Text Shadow (CSS)
+                </label>
+                <input
+                  type="text"
+                  value={theme.heroSubtitleShadow || ""}
+                  onChange={(e) =>
+                    setTheme((prev) => ({ ...prev, heroSubtitleShadow: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  placeholder="0 1px 4px rgba(0,0,0,0.5)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6 border-t border-border pt-6">
+            <div className="border-b border-border pb-4">
               <h3 className="text-lg font-semibold text-dark">Header Text Content</h3>
               <p className="text-sm text-muted mt-1">Edit the primary and secondary text displayed in the header</p>
             </div>
