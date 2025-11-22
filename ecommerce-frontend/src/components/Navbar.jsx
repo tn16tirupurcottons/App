@@ -128,7 +128,7 @@ export default function Navbar() {
         <span>{theme.headerPrimaryText || "TN16 · Luxury Cotton Studio"}</span>
         <span>{theme.headerSecondaryText || "Worldwide shipping · curated edits"}</span>
       </div>
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 relative">
         <div className="flex items-center justify-between gap-3 py-2.5">
           <div className="flex items-center gap-3 flex-shrink-0">
             <button
@@ -402,9 +402,9 @@ export default function Navbar() {
         />
       )}
 
-      {/* Mobile search overlay */}
+      {/* Mobile search overlay - inside header */}
       {mobileSearchOpen && (
-        <div className="md:hidden fixed inset-0 bg-white z-50 px-6 py-7">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200/50 shadow-lg z-50 px-4 py-3">
           <SearchBar
             placeholder="Search TN16 studio"
             className="w-full"
@@ -605,24 +605,54 @@ function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLin
               </NavLink>
             </div>
 
-            {/* Login/Join Section - at the bottom (Mobile only - always show Login/Join) */}
+            {/* Login/Logout Section - at the bottom (Mobile only - based on login status) */}
             <div className="mt-6 pt-6 border-t-2 border-border">
-              <Link
-                to="/login"
-                onClick={onLinkClick}
-                className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-              >
-                <span className="font-semibold text-base">Login</span>
-                <FaChevronRight className="text-muted" size={14} />
-              </Link>
-              <Link
-                to="/register"
-                onClick={onLinkClick}
-                className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-              >
-                <span className="font-semibold text-base">Join</span>
-                <FaChevronRight className="text-muted" size={14} />
-              </Link>
+              {user ? (
+                <>
+                  {/* Logout button for logged-in users */}
+                  <button
+                    onClick={() => {
+                      logout();
+                      onLinkClick();
+                    }}
+                    className="w-full flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                  >
+                    <span className="font-semibold text-base">Logout</span>
+                    <FaChevronRight className="text-muted" size={14} />
+                  </button>
+                  {/* Admin Dashboard link - only for admins */}
+                  {user.role === "admin" && (
+                    <Link
+                      to="/admin"
+                      onClick={onLinkClick}
+                      className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                    >
+                      <span className="font-semibold text-base">Admin Dashboard</span>
+                      <FaChevronRight className="text-muted" size={14} />
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Login and Join for non-logged-in users */}
+                  <Link
+                    to="/login"
+                    onClick={onLinkClick}
+                    className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                  >
+                    <span className="font-semibold text-base">Login</span>
+                    <FaChevronRight className="text-muted" size={14} />
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={onLinkClick}
+                    className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
+                  >
+                    <span className="font-semibold text-base">Join</span>
+                    <FaChevronRight className="text-muted" size={14} />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
