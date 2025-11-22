@@ -129,20 +129,21 @@ export default function Navbar() {
         <span>{theme.headerSecondaryText || "Worldwide shipping · curated edits"}</span>
       </div>
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-3 py-2.5">
-          <button
-            className="md:hidden hover:opacity-80 transition"
-            style={{ color: theme.headerTextColor || "#0a0a0a" }}
-            aria-label="Open navigation menu"
-            onClick={() => setMobileMenuOpen(true)}
-          >
-            <FaBars size={22} />
-          </button>
-          {/* Desktop: Logo and brand name - positioned left */}
-          <Link
-            to="/"
-            className="hidden md:flex items-center gap-3 flex-shrink-0"
-          >
+        <div className="flex items-center justify-between gap-3 py-2.5">
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              className="md:hidden hover:opacity-80 transition flex items-center"
+              style={{ color: theme.headerTextColor || "#0a0a0a" }}
+              aria-label="Open navigation menu"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <FaBars size={22} />
+            </button>
+            {/* Desktop: Logo and brand name - positioned left */}
+            <Link
+              to="/"
+              className="hidden md:flex items-center gap-3 flex-shrink-0"
+            >
             {theme.logo ? (
               <img 
                 src={theme.logo} 
@@ -181,7 +182,7 @@ export default function Navbar() {
           {/* Mobile: Only show logo */}
           <Link
             to="/"
-            className="md:hidden"
+            className="md:hidden flex items-center flex-shrink-0"
           >
             {theme.logo ? (
               <img 
@@ -204,6 +205,7 @@ export default function Navbar() {
               TN
             </div>
           </Link>
+          </div>
 
           {/* Desktop: Search bar - centered */}
           <div className="hidden md:flex flex-1 justify-center px-4">
@@ -280,17 +282,17 @@ export default function Navbar() {
           </div>
 
           {/* Mobile: Cart and Search icons */}
-          <div className="md:hidden ml-auto flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-3 flex-shrink-0">
             <Link
               to="/cart"
               aria-label="View cart"
-              className="flex items-center hover:opacity-80 transition relative"
+              className="flex items-center justify-center hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
             >
               <FaShoppingCart size={20} />
             </Link>
             <button
-              className="hover:opacity-80 transition"
+              className="flex items-center justify-center hover:opacity-80 transition"
               style={{ color: theme.headerTextColor || "#0a0a0a" }}
               aria-label="Open search panel"
               onClick={() => setMobileSearchOpen(true)}
