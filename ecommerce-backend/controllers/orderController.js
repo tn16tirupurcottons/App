@@ -322,6 +322,29 @@ export const placeOrder = async (req, res) => {
 
 export const getOrders = async (req, res) => {
   try {
+    // If order ID is provided, return single order
+    if (req.params.id) {
+      const order = await Order.findOne({
+        where: { 
+          id: req.params.id,
+          userId: req.user.id, // Ensure user can only access their own orders
+        },
+        include: [
+          {
+            model: OrderItem,
+            include: [{ model: Product }],
+          },
+        ],
+      });
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      return res.json({ success: true, order: order.get({ plain: true }) });
+    }
+    
+    // Otherwise return all orders
     const orders = await Order.findAll({
       where: { userId: req.user.id },
       include: [

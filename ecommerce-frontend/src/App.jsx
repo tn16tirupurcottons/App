@@ -5,7 +5,7 @@ import { BrandThemeProvider } from "./context/BrandThemeContext";
 import { ToastProvider } from "./components/Toast";
 
 import Home from "./pages/Home";
-import Checkout from "./pages/Checkout";
+import MultiStepCheckout from "./pages/MultiStepCheckout";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Catalog from "./pages/Catalog";
@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Wishlist from "./pages/Wishlist";
+import OrderTracking from "./pages/OrderTracking";
 
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -61,6 +62,15 @@ export default function App() {
                   }
                 />
 
+                <Route
+                  path="/orders/:id"
+                  element={
+                    <ProtectedRoute>
+                      <OrderTracking />
+                    </ProtectedRoute>
+                  }
+                />
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -70,7 +80,7 @@ export default function App() {
                   path="/checkout"
                   element={
                     <ProtectedRoute>
-                      <Checkout />
+                      <MultiStepCheckout />
                     </ProtectedRoute>
                   }
                 />
