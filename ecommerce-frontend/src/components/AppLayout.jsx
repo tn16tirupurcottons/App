@@ -21,7 +21,7 @@ export default function AppLayout() {
   return (
     <div className="w-full min-h-screen flex flex-col bg-[var(--background-color)] text-[var(--text-color)] overflow-x-hidden">
       <Navbar />
-      <main className="flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-20 sm:pb-24 md:pb-0">
+      <main className="flex-1 w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] pb-24 sm:pb-6 md:pb-0">
         <Outlet />
       </main>
       <Footer />

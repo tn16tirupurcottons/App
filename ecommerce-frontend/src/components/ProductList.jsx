@@ -98,28 +98,28 @@ export default function ProductList({ initialQuery = {} }) {
             ))}
       </div>
 
-      {/* Mobile: 10 products per row, 5 visible at a time, scrollable */}
-      <div className="md:hidden overflow-hidden -mx-4 px-4">
+      {/* Mobile: 2 products visible at a time, scrollable */}
+      <div className="md:hidden overflow-hidden -mx-3 sm:-mx-4 px-3 sm:px-4">
         <div 
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
+          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
           style={{ 
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch"
           }}
         >
           {isLoading
-            ? new Array(10).fill(null).map((_, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[calc(20%-0.6rem)] snap-start">
-                  <div className="h-64 rounded-2xl bg-light animate-pulse" />
+            ? new Array(6).fill(null).map((_, idx) => (
+                <div key={idx} className="flex-shrink-0 w-[calc(50%-0.75rem)] sm:w-[calc(50%-1rem)] snap-start">
+                  <div className="h-80 sm:h-96 rounded-2xl bg-light animate-pulse" />
                 </div>
               ))
-            : products.slice(0, 10).map((product) => (
-                <div key={product.id} className="flex-shrink-0 w-[calc(20%-0.6rem)] snap-start">
+            : products.map((product) => (
+                <div key={product.id} className="flex-shrink-0 w-[calc(50%-0.75rem)] sm:w-[calc(50%-1rem)] snap-start">
                   <ProductCard product={product} />
                 </div>
               ))}
         </div>
-        {products.length > 10 && (
+        {products.length > 2 && (
           <p className="text-xs text-center text-muted mt-2">
             Swipe to see more products →
           </p>

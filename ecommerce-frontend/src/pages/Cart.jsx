@@ -61,37 +61,37 @@ export default function Cart() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid lg:grid-cols-3 gap-4 sm:gap-6 text-dark">
-      <div className="lg:col-span-2 space-y-4">
-        <h2 className="text-2xl font-display text-dark">Your TN16 bag</h2>
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 grid lg:grid-cols-3 gap-4 sm:gap-6 text-dark pb-24 sm:pb-6 md:pb-0">
+      <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+        <h2 className="text-xl sm:text-2xl font-display text-dark">Your TN16 bag</h2>
         {items.length === 0 ? (
-          <div className="text-muted text-center py-10 border border-border rounded-2xl card">
+          <div className="text-muted text-center py-8 sm:py-10 border border-border rounded-2xl card text-sm sm:text-base">
             Your cart is empty 🛍️
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-4 card p-4"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 card p-3 sm:p-4"
             >
               <img
                 src={getProductImage(item.Product, item.Product?.Category?.name)}
                 alt={item.Product?.name || "Product"}
-                className="w-24 h-24 object-cover rounded-xl"
+                className="w-full sm:w-20 md:w-24 h-48 sm:h-20 md:h-24 object-cover rounded-xl sm:flex-shrink-0"
                 loading="lazy"
                 onError={(e) => handleImageError(e, FALLBACK_IMAGES.product)}
               />
-              <div className="flex-1">
-                <div className="font-semibold text-dark">{item.Product?.name}</div>
-                <div className="text-[11px] text-muted uppercase tracking-[0.3em] mt-1">
+              <div className="flex-1 w-full sm:w-auto">
+                <div className="font-semibold text-dark text-sm sm:text-base line-clamp-2">{item.Product?.name}</div>
+                <div className="text-[10px] sm:text-[11px] text-muted uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1">
                   {item.selectedSize && `Size: ${item.selectedSize} `}
                   {item.selectedColor && `• Color: ${item.selectedColor}`}
                 </div>
-                <div className="text-sm text-primary font-semibold">
+                <div className="text-xs sm:text-sm text-primary font-semibold mt-1">
                   ₹{(item.unitPrice || item.Product?.price || 0).toFixed(0)} each
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                 <input
                   type="number"
                   min="1"
@@ -102,11 +102,11 @@ export default function Cart() {
                       quantity: Number(e.target.value),
                     })
                   }
-                  className="w-16 border border-border bg-white rounded px-2 py-1 text-center text-dark"
+                  className="w-16 sm:w-14 border border-border bg-white rounded px-2 py-1.5 sm:py-1 text-center text-dark text-sm"
                 />
                 <button
                   onClick={() => remove.mutate(item.id)}
-                  className="text-xs uppercase tracking-[0.3em] text-muted hover:text-primary"
+                  className="text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-muted hover:text-primary px-2 sm:px-0"
                 >
                   Remove
                 </button>
@@ -116,7 +116,7 @@ export default function Cart() {
         )}
       </div>
 
-      <div className="card p-6 h-fit">
+      <div className="card p-4 sm:p-6 h-fit sticky top-20 sm:top-24">
         <h3 className="text-lg font-semibold mb-4 text-dark">Order summary</h3>
         <div className="space-y-2 text-sm text-dark/70">
           <SummaryRow label="Subtotal" value={summary.subtotal} />
@@ -130,7 +130,7 @@ export default function Cart() {
         <button
           onClick={() => navigate("/checkout")}
           disabled={!items.length}
-          className="w-full mt-6 bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
+          className="w-full mt-4 sm:mt-6 bg-primary text-white py-3 sm:py-3.5 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-transform"
         >
           Proceed to Checkout
         </button>

@@ -70,15 +70,16 @@ export default function Checkout() {
     );
   }
 
-  if (!demoMode && (!clientSecret || !stripePromise)) {
+  // COD mode doesn't need Stripe - allow checkout to proceed
+  if (!demoMode && orderData?.paymentMethod !== "cod" && (!clientSecret || !stripePromise)) {
     return (
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="card p-8 text-center">
-          <h2 className="text-xl font-semibold text-dark mb-2">Payment Unavailable</h2>
-          <p className="text-muted">Checkout temporarily unavailable. Please try again later.</p>
+      <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10">
+        <div className="card p-6 sm:p-8 text-center">
+          <h2 className="text-lg sm:text-xl font-semibold text-dark mb-2">Payment Unavailable</h2>
+          <p className="text-sm sm:text-base text-muted">Checkout temporarily unavailable. Please try again later.</p>
           <button
             onClick={() => window.location.href = "/cart"}
-            className="mt-4 bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/90"
+            className="mt-4 bg-primary text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full hover:bg-primary/90 active:scale-95 transition-transform text-xs sm:text-sm"
           >
             Back to Cart
           </button>
@@ -88,19 +89,23 @@ export default function Checkout() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid lg:grid-cols-2 gap-6 sm:gap-8">
-      <OrderSummary orderData={orderData} />
-      {demoMode ? (
-        <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />
-      ) : stripePromise && clientSecret ? (
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutFormWrapper orderData={orderData} isDemoMode={false} />
-        </Elements>
-      ) : (
-        <div className="card p-6">
-          <p className="text-muted">Initializing payment...</p>
-        </div>
-      )}
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-10 grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 pb-24 sm:pb-6 md:pb-0">
+      <div className="lg:order-2">
+        <OrderSummary orderData={orderData} />
+      </div>
+      <div className="lg:order-1">
+        {demoMode ? (
+          <CheckoutFormWrapper orderData={orderData} isDemoMode={true} />
+        ) : stripePromise && clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <CheckoutFormWrapper orderData={orderData} isDemoMode={false} />
+          </Elements>
+        ) : (
+          <div className="card p-4 sm:p-6">
+            <p className="text-muted text-sm sm:text-base">Initializing payment...</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -159,7 +164,7 @@ function CheckoutFormDemo({ orderData }) {
     setError("");
 
     try {
-      if (!orderData || !orderData.paymentIntentId) {
+      if (!orderData) {
         setError("Order data is missing. Please refresh and try again.");
         setSubmitting(false);
         return;
@@ -173,10 +178,14 @@ function CheckoutFormDemo({ orderData }) {
       };
       delete shippingPayload.address2;
 
-      await axiosClient.post("/orders", {
-        paymentIntentId: orderData.paymentIntentId,
+      // For COD, paymentIntentId might be a generated ID, which is fine
+      const orderPayload = {
+        paymentIntentId: orderData.paymentIntentId || `cod_${Date.now()}`,
+        paymentMethod: orderData.paymentMethod || "cod",
         shipping: shippingPayload,
-      });
+      };
+
+      await axiosClient.post("/orders", orderPayload);
       qc.invalidateQueries({ queryKey: ["cart"] });
       qc.invalidateQueries({ queryKey: ["orders"] });
       setSuccess(true);
@@ -207,9 +216,9 @@ function CheckoutFormDemo({ orderData }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      <h2 className="text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+      <h2 className="text-lg sm:text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Full name"
           value={shipping.name}
@@ -234,18 +243,21 @@ function CheckoutFormDemo({ orderData }) {
           onChange={(e) => handleChange("address2", e.target.value)}
           className="col-span-2"
         />
-        <LocationSelect
-          country={shipping.country}
-          state={shipping.state}
-          city={shipping.city}
-          onStateChange={(val) => handleChange("state", val)}
-          onCityChange={(val) => handleChange("city", val)}
-          required
-        />
+        <div className="col-span-1 sm:col-span-2 space-y-3">
+          <LocationSelect
+            country={shipping.country}
+            state={shipping.state}
+            city={shipping.city}
+            onStateChange={(val) => handleChange("state", val)}
+            onCityChange={(val) => handleChange("city", val)}
+            required
+          />
+        </div>
         <Input
           label="Postal code"
           value={shipping.zip}
           onChange={(e) => handleChange("zip", e.target.value)}
+          className="col-span-1 sm:col-span-2"
         />
       </div>
 
@@ -254,7 +266,7 @@ function CheckoutFormDemo({ orderData }) {
       <button
         type="submit"
         disabled={!shippingValid || submitting}
-        className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
+        className="w-full bg-primary text-white py-3 sm:py-3.5 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-transform"
       >
         {submitting ? "Processing..." : "Place Order"}
       </button>
@@ -275,9 +287,9 @@ function OrderSummary({ orderData }) {
   const totals = orderData?.totals || {};
 
   return (
-    <div className="card p-6">
-      <h2 className="text-xl font-semibold mb-4 text-dark">Order summary</h2>
-      <div className="space-y-3 max-h-80 overflow-auto pr-2 text-dark/70">
+    <div className="card p-4 sm:p-6 sticky top-20 sm:top-24">
+      <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-dark">Order summary</h2>
+      <div className="space-y-2 sm:space-y-3 max-h-60 sm:max-h-80 overflow-auto pr-2 text-dark/70">
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
             <div>
@@ -396,10 +408,16 @@ function CheckoutForm({ orderData }) {
       };
       delete shippingPayload.address2;
 
-      await axiosClient.post("/orders", {
+      // Determine payment method from orderData
+      const paymentMethod = orderData.paymentMethod || (paymentIntentId?.startsWith("cod_") ? "cod" : "stripe");
+      
+      const orderPayload = {
         paymentIntentId,
+        paymentMethod,
         shipping: shippingPayload,
-      });
+      };
+
+      await axiosClient.post("/orders", orderPayload);
       qc.invalidateQueries({ queryKey: ["cart"] });
       qc.invalidateQueries({ queryKey: ["orders"] });
       setSuccess(true);
@@ -432,14 +450,15 @@ function CheckoutForm({ orderData }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="card p-6 space-y-4"
+      className="card p-4 sm:p-6 space-y-3 sm:space-y-4"
     >
-      <h2 className="text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
-      <div className="grid grid-cols-2 gap-3">
+      <h2 className="text-lg sm:text-xl font-semibold mb-2 text-dark">Shipping & Payment</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Full name"
           value={shipping.name}
           onChange={(e) => handleChange("name", e.target.value)}
+          className="sm:col-span-1"
         />
         <Input
           label="Phone"
@@ -447,31 +466,35 @@ function CheckoutForm({ orderData }) {
           inputMode="tel"
           maxLength={12}
           onChange={(e) => handleChange("phone", e.target.value)}
+          className="sm:col-span-1"
         />
         <Input
           label="Address"
           value={shipping.address}
           onChange={(e) => handleChange("address", e.target.value)}
-          className="col-span-2"
+          className="col-span-1 sm:col-span-2"
         />
         <Input
           label="Apartment / Suite (optional)"
           value={shipping.address2}
           onChange={(e) => handleChange("address2", e.target.value)}
-          className="col-span-2"
+          className="col-span-1 sm:col-span-2"
         />
-        <LocationSelect
-          country={shipping.country}
-          state={shipping.state}
-          city={shipping.city}
-          onStateChange={(val) => handleChange("state", val)}
-          onCityChange={(val) => handleChange("city", val)}
-          required
-        />
+        <div className="col-span-1 sm:col-span-2 space-y-3">
+          <LocationSelect
+            country={shipping.country}
+            state={shipping.state}
+            city={shipping.city}
+            onStateChange={(val) => handleChange("state", val)}
+            onCityChange={(val) => handleChange("city", val)}
+            required
+          />
+        </div>
         <Input
           label="Postal code"
           value={shipping.zip}
           onChange={(e) => handleChange("zip", e.target.value)}
+          className="col-span-1 sm:col-span-2"
         />
       </div>
 
@@ -482,23 +505,23 @@ function CheckoutForm({ orderData }) {
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <button
-          type="submit"
-          disabled={!canSubmit || submitting}
-          className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-40 hover:bg-primary/90"
-        >
-          {submitting ? "Processing..." : "Confirm & Pay"}
-        </button>
+        type="submit"
+        disabled={!canSubmit || submitting}
+        className="w-full bg-primary text-white py-3 sm:py-3.5 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-transform"
+      >
+        {submitting ? "Processing..." : "Confirm & Pay"}
+      </button>
     </form>
   );
 }
 
 function Input({ label, className = "", ...props }) {
   return (
-    <label className={`text-sm font-semibold text-dark/70 ${className}`}>
-      <span className="block mb-1">{label}</span>
+    <label className={`block text-xs sm:text-sm font-semibold text-dark/70 ${className}`}>
+      <span className="block mb-1.5">{label}</span>
       <input
         {...props}
-        className="w-full border border-border bg-white rounded-full px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
+        className="w-full border border-border bg-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-dark focus:outline-none focus:border-primary"
       />
     </label>
   );

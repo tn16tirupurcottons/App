@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl } from "../utils/imageUtils";
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
@@ -54,12 +54,9 @@ export default function ProductDetails() {
       });
     }
     
-    // Add other image fields
-    if (product.thumbnail && !images.includes(product.thumbnail)) {
+    // Add thumbnail if not already included
+    if (product.thumbnail && !images.includes(product.thumbnail) && isValidImageUrl(product.thumbnail)) {
       images.unshift(product.thumbnail);
-    }
-    if (product.image && !images.includes(product.image)) {
-      images.push(product.image);
     }
     
     return images.length > 0 ? images : [FALLBACK_IMAGE];
@@ -201,10 +198,10 @@ export default function ProductDetails() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 text-dark">
-      <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-10 text-dark pb-24 sm:pb-6 md:pb-0">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10">
         {/* Image Gallery */}
-        <div>
+        <div className="w-full">
           <div
             className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-zoom-in shadow-soft"
             onTouchStart={handleTouchStart}
@@ -215,7 +212,7 @@ export default function ProductDetails() {
             <img
               src={gallery[activeImage] || FALLBACK_IMAGE}
               alt={product.name || "Product"}
-              className={`w-full h-[400px] md:h-[480px] object-cover transition-transform ${
+              className={`w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[480px] object-cover transition-transform ${
                 zoom ? "scale-150" : "scale-100"
               }`}
               onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
@@ -283,7 +280,7 @@ export default function ProductDetails() {
         </div>
 
         {/* Product Info */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-muted">
               {product.Category?.name || product.brand || "TN16 Collection"}
@@ -423,36 +420,38 @@ export default function ProductDetails() {
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-col gap-2 sm:gap-3 pt-4">
             <button
               onClick={() => addToCart.mutate()}
               disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
-              className="flex-1 bg-primary text-white px-6 py-4 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
+              className="w-full bg-primary text-white px-4 sm:px-6 py-3 sm:py-4 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-transform"
             >
               {addToCart.isLoading ? "Adding..." : "Add to Bag 🛍️"}
             </button>
-            <button
-              onClick={() => {
-                if (!user) {
-                  navigate("/login");
-                  return;
-                }
-                addToCart.mutate(undefined, {
-                  onSuccess: () => navigate("/checkout"),
-                });
-              }}
-              disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
-              className="flex-1 border-2 border-primary text-primary px-6 py-4 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/5"
-            >
-              Buy Now
-            </button>
-            <button
-              onClick={() => wishlistMutation.mutate()}
-              disabled={wishlistMutation.isPending}
-              className="flex-1 border border-border text-dark/70 px-6 py-4 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:text-primary"
-            >
-              {wishlistMutation.isPending ? "Saving..." : "Save to Wishlist"}
-            </button>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <button
+                onClick={() => {
+                  if (!user) {
+                    navigate("/login");
+                    return;
+                  }
+                  addToCart.mutate(undefined, {
+                    onSuccess: () => navigate("/checkout"),
+                  });
+                }}
+                disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
+                className="w-full border-2 border-primary text-primary px-3 sm:px-6 py-3 sm:py-4 rounded-full font-semibold text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/5 active:scale-95 transition-transform"
+              >
+                Buy Now
+              </button>
+              <button
+                onClick={() => wishlistMutation.mutate()}
+                disabled={wishlistMutation.isPending}
+                className="w-full border border-border text-dark/70 px-3 sm:px-6 py-3 sm:py-4 rounded-full font-semibold text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:text-primary active:scale-95 transition-transform"
+              >
+                {wishlistMutation.isPending ? "Saving..." : "Save ❤️"}
+              </button>
+            </div>
           </div>
 
           {/* Additional Info */}

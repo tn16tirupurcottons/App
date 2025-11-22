@@ -58,22 +58,22 @@ export default function ProductCard({ product }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="group card overflow-hidden flex flex-col hover:shadow-medium transition-shadow"
+      className="group card overflow-hidden flex flex-col hover:shadow-medium transition-shadow w-full"
     >
-      <div className="relative bg-gray-100 overflow-hidden">
+      <div className="relative bg-gray-100 overflow-hidden w-full">
         <button
           onClick={handleWishlist}
           aria-label="Save to wishlist"
-          className="absolute top-4 right-4 z-10 bg-white/90 text-muted hover:text-primary rounded-full p-2 border border-border shadow-soft"
+          className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 bg-white/90 text-muted hover:text-primary rounded-full p-1.5 sm:p-2 border border-border shadow-soft"
         >
           <FaHeart
-            className={`h-4 w-4 ${
+            className={`h-3 w-3 sm:h-4 sm:w-4 ${
               wishlistMutation.isSuccess ? "text-primary fill-primary" : ""
             }`}
             aria-hidden="true"
           />
         </button>
-        <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
+        <div className="w-full h-48 sm:h-56 md:h-64 bg-gray-100 flex items-center justify-center aspect-square">
           <img
             src={currentImage || image || FALLBACK_IMAGES.product}
             alt={product.name || "Product"}
@@ -99,22 +99,22 @@ export default function ProductCard({ product }) {
           </span>
         )}
       </div>
-      <div className="p-5 flex-1 flex flex-col text-dark">
-        <p className="text-xs uppercase tracking-[0.4em] text-muted">
+      <div className="p-3 sm:p-4 md:p-5 flex-1 flex flex-col text-dark">
+        <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] text-muted line-clamp-1">
           {product.Category?.name || product.brand || "TN16"}
         </p>
-        <h3 className="text-base font-semibold mt-2 line-clamp-2 min-h-[44px]">
+        <h3 className="text-sm sm:text-base font-semibold mt-1 sm:mt-2 line-clamp-2 min-h-[40px] sm:min-h-[44px]">
           {product.name}
         </h3>
-        <div className="mt-5 flex items-baseline gap-2">
-          <span className="text-2xl font-semibold text-primary">₹{finalPrice.toFixed(0)}</span>
+        <div className="mt-3 sm:mt-5 flex items-baseline gap-2">
+          <span className="text-lg sm:text-xl md:text-2xl font-semibold text-primary">₹{finalPrice.toFixed(0)}</span>
           {product.discount > 0 && (
-            <span className="text-sm text-muted line-through">
+            <span className="text-xs sm:text-sm text-muted line-through">
               ₹{Number(product.price).toFixed(0)}
             </span>
           )}
         </div>
-        <p className="text-[11px] text-muted mt-auto tracking-[0.3em] uppercase">
+        <p className="text-[10px] sm:text-[11px] text-muted mt-auto tracking-[0.2em] sm:tracking-[0.3em] uppercase line-clamp-1">
           Ships in 72 hrs · Tirupur
         </p>
       </div>

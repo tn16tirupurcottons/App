@@ -33,7 +33,7 @@ export const getCart = async (req, res, next) => {
       include: [
         { 
           model: Product,
-          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "brand"],
           include: [
             {
               model: Category,
@@ -113,7 +113,7 @@ export const addToCart = async (req, res, next) => {
         include: [
           { 
             model: Product, 
-            attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+            attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "brand"],
             include: [
               {
                 model: Category,
@@ -141,7 +141,7 @@ export const addToCart = async (req, res, next) => {
       include: [
         { 
           model: Product, 
-          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand"],
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "brand"],
           include: [
             {
               model: Category,
@@ -168,7 +168,7 @@ export const updateCart = async (req, res, next) => {
       include: [
         { 
           model: Product,
-          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "image", "brand", "inventory"],
+          attributes: ["id", "name", "price", "discount", "thumbnail", "gallery", "brand", "inventory"],
           include: [
             {
               model: Category,
