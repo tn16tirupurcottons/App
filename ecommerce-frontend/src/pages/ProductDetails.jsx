@@ -204,16 +204,28 @@ export default function ProductDetails() {
         {/* Image Gallery */}
         <div className="w-full">
           <div
-            className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-pointer shadow-soft"
+            className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-pointer shadow-soft w-full"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onClick={() => setIsFullScreenOpen(true)}
+            style={{
+              aspectRatio: '1 / 1',
+              minHeight: '280px',
+              maxHeight: '90vh'
+            }}
           >
             <img
               src={gallery[activeImage] || FALLBACK_IMAGE}
               alt={product.name || "Product"}
-              className="w-full h-auto min-h-[280px] sm:min-h-[350px] md:min-h-[400px] lg:min-h-[480px] max-h-[90vh] object-contain sm:object-cover transition-opacity hover:opacity-90"
+              className="w-full h-full object-cover transition-opacity hover:opacity-90"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+                minHeight: '280px'
+              }}
               onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
             />
             {product.discount > 0 && (
