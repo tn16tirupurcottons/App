@@ -229,7 +229,7 @@ export default function FullScreenImageViewer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-md"
+      className="fixed inset-0 z-[100] bg-black"
       onClick={(e) => {
         // Close when clicking on the backdrop
         if (e.target === containerRef.current) {
@@ -240,29 +240,37 @@ export default function FullScreenImageViewer({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
+      style={{
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}
     >
-      {/* Close Button - Always visible, fixed position */}
+      {/* Close Button - Always visible, prominent */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
           onClose();
         }}
-        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[110] bg-white hover:bg-gray-100 text-black p-3 sm:p-4 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/50 cursor-pointer"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[110] bg-white hover:bg-gray-100 text-black rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/50 cursor-pointer flex items-center justify-center"
         aria-label="Close viewer"
         title="Close (Esc key)"
         style={{ 
+          width: '48px',
+          height: '48px',
           minWidth: '48px',
-          minHeight: '48px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          minHeight: '48px'
         }}
       >
-        <FaTimes size={24} className="sm:w-8 sm:h-8" />
+        <FaTimes size={20} />
       </button>
 
-      {/* Navigation Arrows - Hidden, use swipe/arrow keys */}
+      {/* Navigation Arrows - Always visible on desktop, visible on mobile */}
       {images.length > 1 && (
         <>
           <button
@@ -271,11 +279,20 @@ export default function FullScreenImageViewer({
               e.preventDefault();
               setCurrentIndex(currentIndex > 0 ? currentIndex - 1 : images.length - 1);
             }}
-            className="fixed left-4 sm:left-6 top-1/2 -translate-y-1/2 z-[105] bg-white/10 hover:bg-white/20 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg border border-white/20 cursor-pointer opacity-0 hover:opacity-100"
+            className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-[105] bg-white/90 hover:bg-white text-black p-3 sm:p-4 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/50 cursor-pointer"
             aria-label="Previous image"
             title="Previous image (← Arrow key)"
+            style={{
+              width: '44px',
+              height: '44px',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <FaChevronLeft size={18} className="sm:w-5 sm:h-5" />
+            <FaChevronLeft size={18} />
           </button>
           <button
             onClick={(e) => {
@@ -283,23 +300,32 @@ export default function FullScreenImageViewer({
               e.preventDefault();
               setCurrentIndex(currentIndex < images.length - 1 ? currentIndex + 1 : 0);
             }}
-            className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-[105] bg-white/10 hover:bg-white/20 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg border border-white/20 cursor-pointer opacity-0 hover:opacity-100"
+            className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-[105] bg-white/90 hover:bg-white text-black p-3 sm:p-4 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/50 cursor-pointer"
             aria-label="Next image"
             title="Next image (→ Arrow key)"
+            style={{
+              width: '44px',
+              height: '44px',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <FaChevronRight size={18} className="sm:w-5 sm:h-5" />
+            <FaChevronRight size={18} />
           </button>
         </>
       )}
 
-      {/* Image Counter - Hidden */}
+      {/* Image Counter - Always visible */}
       {images.length > 1 && (
-        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[105] bg-white/10 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold shadow-lg border border-white/20 opacity-0 hover:opacity-100 transition-opacity">
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[105] bg-white/90 backdrop-blur-md text-black px-4 py-2 rounded-full text-sm font-semibold shadow-2xl border-2 border-white/50">
           {currentIndex + 1} / {images.length}
         </div>
       )}
 
-      {/* Scrollable Image Container */}
+      {/* Full-screen Image Container - Perfectly centered */}
       <div
         ref={scrollContainerRef}
         className="w-full h-full overflow-auto"
@@ -312,34 +338,39 @@ export default function FullScreenImageViewer({
         style={{
           scrollBehavior: 'smooth',
           WebkitOverflowScrolling: 'touch',
-          cursor: zoom > 1 && isDragging ? 'grabbing' : 'default'
+          cursor: zoom > 1 && isDragging ? 'grabbing' : 'default',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
         <div 
-          className="min-w-full min-h-full flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12"
+          className="flex items-center justify-center w-full h-full p-4"
           style={{
+            width: '100%',
+            height: '100%',
             minHeight: '100%',
-            padding: '2rem'
+            boxSizing: 'border-box'
           }}
         >
           <img
             ref={imageRef}
             src={currentImage}
             alt={`Product view ${currentIndex + 1}`}
-            className="select-none"
+            className="select-none max-w-full max-h-full w-auto h-auto object-contain"
             style={{
               transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
               transition: isDragging || pinchStart ? "none" : "transform 0.2s ease-out",
-              cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "move",
+              cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
               touchAction: "none",
               userSelect: "none",
               WebkitUserSelect: "none",
               pointerEvents: "auto",
-              maxWidth: zoom > 1 ? "none" : "100%",
-              maxHeight: zoom > 1 ? "none" : "100%",
-              width: "auto",
-              height: "auto",
-              objectFit: "contain"
+              maxWidth: zoom > 1 ? "none" : "calc(100vw - 2rem)",
+              maxHeight: zoom > 1 ? "none" : "calc(100vh - 2rem)",
+              display: "block"
             }}
             onMouseDown={handleMouseDown}
             onDoubleClick={handleDoubleClick}

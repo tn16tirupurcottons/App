@@ -213,7 +213,7 @@ export default function ProductDetails() {
             <img
               src={gallery[activeImage] || FALLBACK_IMAGE}
               alt={product.name || "Product"}
-              className="w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[480px] object-cover transition-opacity hover:opacity-90"
+              className="w-full h-auto min-h-[280px] sm:min-h-[350px] md:min-h-[400px] lg:min-h-[480px] max-h-[90vh] object-contain sm:object-cover transition-opacity hover:opacity-90"
               onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
             />
             {product.discount > 0 && (
