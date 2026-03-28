@@ -5,6 +5,7 @@ import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
 import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl } from "../utils/imageUtils";
+import { isUuid } from "../utils/validation";
 import FullScreenImageViewer from "../components/FullScreenImageViewer";
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
@@ -96,7 +97,10 @@ export default function ProductDetails() {
         navigate("/login");
         throw new Error("Please log in to save wishlist");
       }
-      return axiosClient.post("/wishlist", { productId: product.id });
+      if (!product?.id || !isUuid(product.id)) {
+        throw new Error("Invalid product — can't update wishlist.");
+      }
+      return axiosClient.post("/wishlist", { productId: String(product.id).trim() });
     },
     onSuccess: (response) => {
       toast.success(response?.data?.message || "Saved to wishlist");

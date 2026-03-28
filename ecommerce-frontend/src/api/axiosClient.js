@@ -2,7 +2,8 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true,
+  // JWT is sent via Authorization; omit credentials to avoid CORS edge cases with wildcard origins.
+  withCredentials: false,
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,9 +22,15 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const rawMessage = error.response?.data?.message || error.message || "Request failed";
+    const data = error.response?.data;
+    const rawMessage =
+      (typeof data === "object" && data !== null && data.message) ||
+      (typeof data === "string" ? data : null) ||
+      error.message ||
+      "Request failed";
+
     const finalMessage =
-      status >= 500 ? "Server error. Please try again later." : rawMessage;
+      status >= 500 ? "Server error. Please try again later." : String(rawMessage);
 
     if (status === 401) {
       localStorage.removeItem("tn16_token");
@@ -42,7 +49,10 @@ API.interceptors.response.use(
       message: finalMessage,
       response: {
         status: status ?? 0,
-        data: { message: finalMessage },
+        data:
+          typeof data === "object" && data !== null
+            ? { ...data, message: finalMessage }
+            : { message: finalMessage },
       },
     });
     return Promise.reject(normalized);

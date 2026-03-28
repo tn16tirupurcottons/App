@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductList from "../components/ProductList";
 import { segmentThemes } from "../data/segments";
+import { normalizeCategorySlug } from "../utils/validation";
 
 const segmentToCategorySlug = {
   men: "mens-shirts",
@@ -18,7 +19,9 @@ export default function Catalog() {
   const initialQuery = useMemo(
     () => ({
       search: searchParams.get("query") || "",
-      categorySlug: searchParams.get("category") || categorySlugFromSegment || "",
+      categorySlug: normalizeCategorySlug(
+        searchParams.get("category") || categorySlugFromSegment || ""
+      ),
     }),
     [searchParams, categorySlugFromSegment]
   );

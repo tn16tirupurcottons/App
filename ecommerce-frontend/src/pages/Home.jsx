@@ -104,9 +104,9 @@ const FilterChip = ({ label, active, slug, navigate }) => {
     e.preventDefault();
     e.stopPropagation();
     if (slug) {
-      navigate(`/?category=${encodeURIComponent(slug)}`);
+      navigate(`/catalog?category=${encodeURIComponent(slug)}`);
     } else {
-      navigate("/");
+      navigate("/catalog");
     }
   };
 
@@ -148,7 +148,7 @@ export default function Home() {
 
   const filterChips = useMemo(() => {
     if (!categories.length) return fallbackFilters;
-    return categories.slice(0, 6).map((cat) => ({
+    return categories.map((cat) => ({
       label: cat.name,
       slug: cat.slug,
     }));

@@ -75,8 +75,7 @@ export default function Wishlist() {
 
       {isError && (
         <div className="p-4 rounded-2xl border border-red-200 bg-red-50 text-red-700">
-          {error?.response?.data?.message ||
-            "Unable to fetch wishlist right now."}
+          {error?.message || error?.response?.data?.message || "Unable to fetch wishlist right now."}
         </div>
       )}
 

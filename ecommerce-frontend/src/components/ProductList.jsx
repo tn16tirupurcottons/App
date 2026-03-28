@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import ProductCard from "./ProductCard";
+import { normalizeCategorySlug } from "../utils/validation";
 
 const defaultQuery = {
   search: "",
@@ -11,16 +12,36 @@ const defaultQuery = {
   limit: 12,
 };
 
+function buildProductQueryString(q) {
+  const params = new URLSearchParams();
+  Object.entries(q).forEach(([key, value]) => {
+    if (value === "" || value === null || value === undefined) return;
+    if (key === "categorySlug" && normalizeCategorySlug(value) === "") return;
+    params.set(key, String(value));
+  });
+  return params.toString();
+}
+
 export default function ProductList({ initialQuery = {} }) {
-  const [query, setQuery] = useState({ ...defaultQuery, ...initialQuery });
+  const mergedInitial = useMemo(() => {
+    const cat = normalizeCategorySlug(initialQuery.categorySlug);
+    return {
+      ...defaultQuery,
+      ...initialQuery,
+      categorySlug: cat,
+      search: initialQuery.search ?? "",
+    };
+  }, [initialQuery]);
+
+  const [query, setQuery] = useState(mergedInitial);
 
   useEffect(() => {
     setQuery((prev) => ({
       ...prev,
-      ...initialQuery,
+      ...mergedInitial,
       page: 1,
     }));
-  }, [initialQuery]);
+  }, [mergedInitial]);
 
   const { data: categoriesData } = useQuery({
     queryKey: ["catalog-categories"],
@@ -35,8 +56,8 @@ export default function ProductList({ initialQuery = {} }) {
   const { data, isLoading } = useQuery({
     queryKey: ["catalog-products", query],
     queryFn: async () => {
-      const params = new URLSearchParams(query).toString();
-      const res = await axiosClient.get(`/products?${params}`);
+      const qs = buildProductQueryString(query);
+      const res = await axiosClient.get(`/products?${qs}`);
       return res.data;
     },
     keepPreviousData: true,
@@ -87,7 +108,7 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
         {isLoading
           ? new Array(8).fill(null).map((_, idx) => (
               <div key={idx} className="aspect-[3/4] rounded-xl bg-neutral-100 animate-pulse" />

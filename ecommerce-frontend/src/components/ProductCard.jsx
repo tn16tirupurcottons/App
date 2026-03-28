@@ -6,6 +6,7 @@ import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "./Toast";
 import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { isUuid } from "../utils/validation";
 
 export default function ProductCard({ product }) {
   const { user } = useContext(AuthContext);
@@ -18,6 +19,10 @@ export default function ProductCard({ product }) {
   const categoryName = product?.Category?.name || product?.category?.name || "";
   const image = getProductImage(product, categoryName);
   const finalPrice = Number(product.price || 0) - Number(product.discount || 0);
+  const discountPct =
+    product.price > 0 && product.discount > 0
+      ? Math.round((Number(product.discount) / Number(product.price)) * 100)
+      : 0;
 
   useEffect(() => {
     const validImage = image || FALLBACK_IMAGES.product;
@@ -31,7 +36,10 @@ export default function ProductCard({ product }) {
         navigate("/login");
         throw new Error("Please log in to save wishlist");
       }
-      return axiosClient.post("/wishlist", { productId: product.id });
+      if (!isUuid(product?.id)) {
+        throw new Error("This preview item can't be saved to your wishlist.");
+      }
+      return axiosClient.post("/wishlist", { productId: String(product.id).trim() });
     },
     onSuccess: (response) => {
       toast.success(response?.data?.message || "Saved to wishlist");
@@ -88,9 +96,9 @@ export default function ProductCard({ product }) {
           }}
           onLoad={() => setImageError(false)}
         />
-        {product.discount > 0 && (
+        {discountPct >= 1 && (
           <span className="absolute top-3 left-3 text-[9px] tracking-[0.2em] uppercase bg-neutral-900 text-white px-2 py-1 font-bold">
-            {Math.round((product.discount / product.price) * 100)}% off
+            {discountPct}% off
           </span>
         )}
       </div>
