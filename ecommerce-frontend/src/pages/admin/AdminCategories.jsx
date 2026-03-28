@@ -90,7 +90,7 @@ export default function AdminCategories() {
             />
             <button
               type="submit"
-              className="w-full bg-pink-600 text-white rounded-full py-2 font-semibold"
+              className="w-full bg-neutral-900 text-white rounded-full py-2 font-semibold hover:bg-neutral-800"
               disabled={createMutation.isLoading}
             >
               {createMutation.isLoading ? "Saving…" : "Create"}

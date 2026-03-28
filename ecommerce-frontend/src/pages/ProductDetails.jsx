@@ -9,9 +9,6 @@ import FullScreenImageViewer from "../components/FullScreenImageViewer";
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
-// Ensure full responsiveness
-const responsiveClasses = "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8";
-
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,16 +18,11 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState("");
 
-  const { data: product, isLoading, error, isError } = useQuery({
+  const { data: product, isLoading, isError } = useQuery({
     queryKey: ["product", id],
     queryFn: async () => {
-      try {
-        const res = await axiosClient.get(`/products/${id}`);
-        return res.data;
-      } catch (err) {
-        console.error("Product fetch error:", err);
-        throw err;
-      }
+      const res = await axiosClient.get(`/products/${id}`);
+      return res.data;
     },
     retry: 2,
   });
@@ -39,27 +31,16 @@ export default function ProductDetails() {
     if (!product) return [FALLBACK_IMAGE];
     const images = [];
     const categoryName = product?.Category?.name || product?.category?.name || "";
-    
-    // Get primary product image using utility function
     const primaryImage = getProductImage(product, categoryName);
-    if (primaryImage && !images.includes(primaryImage)) {
-      images.push(primaryImage);
-    }
-    
-    // Add gallery images if available
-    if (product.gallery && Array.isArray(product.gallery) && product.gallery.length > 0) {
-      product.gallery.forEach(img => {
-        if (img && !images.includes(img)) {
-          images.push(img);
-        }
+    if (primaryImage && !images.includes(primaryImage)) images.push(primaryImage);
+    if (product.gallery && Array.isArray(product.gallery)) {
+      product.gallery.forEach((img) => {
+        if (img && !images.includes(img)) images.push(img);
       });
     }
-    
-    // Add thumbnail if not already included
     if (product.thumbnail && !images.includes(product.thumbnail) && isValidImageUrl(product.thumbnail)) {
       images.unshift(product.thumbnail);
     }
-    
     return images.length > 0 ? images : [FALLBACK_IMAGE];
   }, [product]);
 
@@ -76,12 +57,8 @@ export default function ProductDetails() {
   }, [id]);
 
   useEffect(() => {
-    if (product?.sizes?.length) {
-      setSelectedSize(product.sizes[0]);
-    }
-    if (product?.colors?.length) {
-      setSelectedColor(product.colors[0]);
-    }
+    if (product?.sizes?.length) setSelectedSize(product.sizes[0]);
+    if (product?.colors?.length) setSelectedColor(product.colors[0]);
   }, [product]);
 
   const addToCart = useMutation({
@@ -99,18 +76,15 @@ export default function ProductDetails() {
       });
     },
     onSuccess: () => {
-      setFeedback("Added to bag! 🛍️");
+      setFeedback("Added to bag.");
       setTimeout(() => setFeedback(""), 3000);
-      // Invalidate cart query to refresh cart data
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
     onError: (err) => {
       if (err.response?.status === 401 || err.message === "AUTH_REQUIRED") {
         navigate("/login");
       } else {
-        setFeedback(
-          err.response?.data?.message || "Unable to add to bag right now."
-        );
+        setFeedback(err.response?.data?.message || "Unable to add to bag.");
         setTimeout(() => setFeedback(""), 5000);
       }
     },
@@ -132,20 +106,20 @@ export default function ProductDetails() {
       const message =
         err.message === "Please log in to save wishlist"
           ? err.message
-          : err.response?.data?.message || "Unable to save to wishlist";
+          : err.response?.data?.message || err.message || "Unable to save to wishlist";
       toast.error(message);
     },
   });
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-10 text-dark">
-        <div className="grid md:grid-cols-2 gap-10">
-          <div className="h-[480px] bg-light rounded-3xl animate-pulse" />
-          <div className="space-y-4">
-            <div className="h-8 bg-light rounded animate-pulse" />
-            <div className="h-4 bg-light rounded w-3/4 animate-pulse" />
-            <div className="h-6 bg-light rounded w-1/2 animate-pulse" />
+      <div className="max-w-6xl mx-auto px-0 py-4">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+          <div className="aspect-[3/4] bg-neutral-100 rounded-xl animate-pulse" />
+          <div className="space-y-6">
+            <div className="h-12 bg-neutral-100 rounded animate-pulse w-3/4" />
+            <div className="h-8 bg-neutral-100 rounded animate-pulse w-1/3" />
+            <div className="h-24 bg-neutral-100 rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -154,132 +128,110 @@ export default function ProductDetails() {
 
   if (isError || !product) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-dark">
-        <div className="card p-12">
-          <h2 className="text-2xl font-display mb-4 text-dark">Product Not Found</h2>
-          <p className="text-muted mb-6">
-            The product you're looking for doesn't exist or has been removed.
-          </p>
-          <Link
-            to="/catalog"
-            className="inline-block bg-primary text-white px-6 py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs hover:bg-primary/90"
-          >
-            Browse Catalog
-          </Link>
-        </div>
+      <div className="max-w-lg mx-auto py-24 text-center px-4">
+        <h2 className="text-3xl font-display uppercase tracking-[0.06em] text-neutral-900 mb-4">Not found</h2>
+        <p className="text-neutral-600 text-sm mb-8">This product is unavailable.</p>
+        <Link
+          to="/catalog"
+          className="inline-block bg-neutral-900 text-white px-8 py-3 text-xs font-bold uppercase tracking-[0.2em] hover:bg-neutral-800 transition duration-300 ease-in-out"
+        >
+          Back to shop
+        </Link>
       </div>
     );
   }
 
-  const finalPrice =
-    Number(product.price || 0) - Number(product.discount || 0);
+  const finalPrice = Number(product.price || 0) - Number(product.discount || 0);
 
-  const handleTouchStart = (e) => {
-    setTouchStart(e.touches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.touches[0].clientX);
-  };
-
+  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
+  const handleTouchMove = (e) => setTouchEnd(e.touches[0].clientX);
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && activeImage < gallery.length - 1) {
-      setActiveImage(activeImage + 1);
-    }
-    if (isRightSwipe && activeImage > 0) {
-      setActiveImage(activeImage - 1);
-    }
+    if (distance > 50 && activeImage < gallery.length - 1) setActiveImage(activeImage + 1);
+    if (distance < -50 && activeImage > 0) setActiveImage(activeImage - 1);
     setTouchStart(null);
     setTouchEnd(null);
   };
 
+  const sizeBtn = (isOn) =>
+    `min-w-[3rem] px-4 py-3 text-sm font-semibold border transition-all duration-200 ease-in-out rounded-lg ${
+      isOn
+        ? "border-neutral-900 bg-neutral-900 text-white"
+        : "border-neutral-200 text-neutral-700 hover:border-neutral-400 hover:text-neutral-900 bg-white"
+    }`;
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-10 text-dark pb-24 sm:pb-6 md:pb-0">
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-        {/* Image Gallery */}
-        <div className="w-full">
+    <div className="w-full max-w-6xl mx-auto pb-24 sm:pb-8 text-neutral-900">
+      <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 lg:items-start">
+        <div className="w-full lg:sticky lg:top-28 space-y-4">
           <div
-            className="rounded-3xl overflow-hidden border border-border bg-light relative cursor-pointer shadow-soft w-full"
+            className="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 cursor-zoom-in group"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onClick={() => setIsFullScreenOpen(true)}
-            style={{
-              aspectRatio: '1 / 1',
-              minHeight: '280px',
-              maxHeight: '90vh'
-            }}
           >
-            <img
-              src={gallery[activeImage] || FALLBACK_IMAGE}
-              alt={product.name || "Product"}
-              className="w-full h-full object-cover transition-opacity hover:opacity-90"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-                minHeight: '280px'
-              }}
-              onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
-            />
+            <div className="aspect-[3/4] sm:aspect-[4/5] max-h-[85vh]">
+              <img
+                src={gallery[activeImage] || FALLBACK_IMAGE}
+                alt={product.name || "Product"}
+                className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-[1.03]"
+                onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
+                loading="eager"
+                decoding="async"
+              />
+            </div>
             {product.discount > 0 && (
-              <span className="absolute top-4 left-4 text-[10px] tracking-[0.4em] uppercase bg-primary text-white px-2 py-1 rounded-full font-semibold">
-                {Math.round((product.discount / product.price) * 100)}% off
+              <span className="absolute top-4 left-4 text-[10px] tracking-[0.2em] uppercase bg-sky-400 text-black px-2 py-1 font-bold">
+                −{Math.round((product.discount / product.price) * 100)}%
               </span>
             )}
             {gallery.length > 1 && (
               <>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveImage(activeImage > 0 ? activeImage - 1 : gallery.length - 1);
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white/80 p-2 rounded-full shadow-lg transition md:block hidden"
-                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 text-neutral-900 p-2.5 border border-neutral-200 shadow-sm opacity-0 group-hover:opacity-100 transition duration-200 ease-in-out hidden sm:block"
+                  aria-label="Previous"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  ‹
                 </button>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveImage(activeImage < gallery.length - 1 ? activeImage + 1 : 0);
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white/80 p-2 rounded-full shadow-lg transition md:block hidden"
-                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 text-neutral-900 p-2.5 border border-neutral-200 shadow-sm opacity-0 group-hover:opacity-100 transition duration-200 ease-in-out hidden sm:block"
+                  aria-label="Next"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  ›
                 </button>
               </>
             )}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full md:hidden">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-[10px] uppercase tracking-widest px-3 py-1 sm:hidden">
               {activeImage + 1} / {gallery.length}
             </div>
           </div>
+
           {gallery.length > 1 && (
-            <div className="flex gap-2 md:gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {gallery.map((img, idx) => (
                 <button
                   key={`${img}-${idx}`}
+                  type="button"
                   onClick={() => setActiveImage(idx)}
-                  className={`h-16 w-16 md:h-20 md:w-20 flex-shrink-0 rounded-xl md:rounded-2xl overflow-hidden border-2 transition ${
-                    activeImage === idx
-                      ? "border-primary shadow-md ring-2 ring-primary/20"
-                      : "border-border opacity-60 hover:opacity-100 hover:border-primary/40"
+                  className={`flex-shrink-0 w-16 h-20 sm:w-20 sm:h-24 overflow-hidden border-2 transition duration-200 ease-in-out ${
+                    activeImage === idx ? "border-neutral-900" : "border-neutral-200 opacity-80 hover:opacity-100"
                   }`}
                 >
                   <img
                     src={img || FALLBACK_IMAGE}
-                    alt={`${product.name || "Product"} view ${idx + 1}`}
+                    alt=""
                     className="w-full h-full object-cover"
                     loading="lazy"
                     onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
@@ -290,67 +242,36 @@ export default function ProductDetails() {
           )}
         </div>
 
-        {/* Product Info */}
-        <div className="space-y-4 sm:space-y-6 w-full">
+        <div className="space-y-8 lg:sticky lg:top-28">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-muted">
-              {product.Category?.name || product.brand || "TN16 Collection"}
+            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
+              {product.Category?.name || product.brand || "Studio"}
             </p>
-            <h1 className="text-2xl md:text-3xl font-display mt-2 text-dark">
-              {product.name || "Product"}
+            <h1 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 leading-[1.05]">
+              {product.name}
             </h1>
           </div>
 
-          <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-semibold text-primary">
-              ₹{finalPrice.toFixed(0)}
-            </span>
+          <div className="flex flex-wrap items-baseline gap-4 border-b border-neutral-200 pb-8">
+            <span className="text-3xl sm:text-4xl font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
             {product.discount > 0 && (
               <>
-                <span className="text-lg text-muted line-through">
-                  ₹{Number(product.price || 0).toFixed(0)}
-                </span>
-                <span className="text-sm font-semibold text-dark/70">
-                  Save ₹{Number(product.discount || 0).toFixed(0)}
-                </span>
+                <span className="text-lg text-neutral-400 line-through tabular-nums">₹{Number(product.price || 0).toFixed(0)}</span>
+                <span className="text-xs uppercase tracking-widest text-neutral-500">Save ₹{Number(product.discount || 0).toFixed(0)}</span>
               </>
             )}
           </div>
 
           {product.description && (
-            <div>
-              <h3 className="text-sm font-semibold text-dark/70 mb-2">
-                Description
-              </h3>
-              <p className="text-dark/70 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
+            <p className="text-sm text-neutral-600 leading-relaxed max-w-prose">{product.description}</p>
           )}
 
-          {product.brand && (
-            <div className="text-sm text-dark/70">
-              <span className="font-semibold">Brand:</span> {product.brand}
-            </div>
-          )}
-
-          {/* Size Selection */}
-          {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && (
+          {product.sizes?.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-dark/70 mb-3">
-                Select Size <span className="text-muted font-normal">(Required)</span>
-              </p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Size</p>
               <div className="flex flex-wrap gap-2">
                 {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-5 py-2.5 rounded-full border-2 transition ${
-                      selectedSize === size
-                        ? "bg-primary text-white border-primary"
-                        : "border-border text-dark/70 hover:border-primary hover:text-primary"
-                    }`}
-                  >
+                  <button key={size} type="button" onClick={() => setSelectedSize(size)} className={sizeBtn(selectedSize === size)}>
                     {size}
                   </button>
                 ))}
@@ -358,23 +279,12 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Color Selection */}
-          {product.colors && Array.isArray(product.colors) && product.colors.length > 0 && (
+          {product.colors?.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-dark/70 mb-3">
-                Select Color <span className="text-muted font-normal">(Required)</span>
-              </p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Color</p>
               <div className="flex flex-wrap gap-2">
                 {product.colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-5 py-2.5 rounded-full border-2 transition ${
-                      selectedColor === color
-                        ? "bg-primary text-white border-primary"
-                        : "border-border text-dark/70 hover:border-primary hover:text-primary"
-                    }`}
-                  >
+                  <button key={color} type="button" onClick={() => setSelectedColor(color)} className={sizeBtn(selectedColor === color)}>
                     {color}
                   </button>
                 ))}
@@ -382,65 +292,54 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Quantity */}
           <div>
-            <label className="block text-sm font-semibold text-dark/70 mb-2">
-              Quantity
-            </label>
-            <div className="flex items-center gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Qty</p>
+            <div className="inline-flex items-center gap-0 border border-neutral-200 rounded-lg overflow-hidden w-fit bg-white">
               <button
+                type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary"
+                className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
               >
                 −
               </button>
-              <input
-                type="number"
-                min="1"
-                max={product.inventory || 5}
-                value={quantity}
-                onChange={(e) => {
-                  const val = Math.max(1, Math.min(product.inventory || 5, Number(e.target.value) || 1));
-                  setQuantity(val);
-                }}
-                className="w-20 border border-border bg-white rounded-full px-4 py-2 text-center font-semibold text-dark"
-              />
+              <span className="w-12 text-center font-semibold tabular-nums">{quantity}</span>
               <button
-                onClick={() => setQuantity(Math.min(product.inventory || 5, quantity + 1))}
-                className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary"
+                type="button"
+                onClick={() => setQuantity(Math.min(product.inventory || 99, quantity + 1))}
+                className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
               >
                 +
               </button>
             </div>
-            {product.inventory && (
-              <p className="text-xs text-muted mt-2">
-                {product.inventory} available in stock
-              </p>
+            {product.inventory != null && (
+              <p className="text-xs text-neutral-500 mt-2">{product.inventory} in stock</p>
             )}
           </div>
 
-          {/* Feedback Message */}
           {feedback && (
-            <div className={`p-3 rounded-lg text-sm font-semibold ${
-              feedback.includes("Added") 
-                ? "bg-green-50 text-green-700 border border-green-200" 
-                : "bg-red-50 text-red-700 border border-red-200"
-            }`}>
+            <div
+              className={`text-sm font-medium px-4 py-3 border ${
+                feedback.includes("Added") ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/30" : "border-red-500/40 text-red-300 bg-red-950/20"
+              }`}
+            >
               {feedback}
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-2 sm:gap-3 pt-4">
+          <div className="space-y-3 pt-2">
             <button
+              type="button"
               onClick={() => addToCart.mutate()}
-              disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
-              className="w-full bg-primary text-white px-4 sm:px-6 py-3 sm:py-4 rounded-full font-semibold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-transform"
+              disabled={
+                addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
+              }
+              className="w-full bg-neutral-900 text-white py-4 text-xs font-bold uppercase tracking-[0.3em] hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 ease-in-out active:scale-[0.99] rounded-lg"
             >
-              {addToCart.isLoading ? "Adding..." : "Add to Bag 🛍️"}
+              {addToCart.isLoading ? "Adding…" : "Add to cart"}
             </button>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={() => {
                   if (!user) {
                     navigate("/login");
@@ -450,40 +349,32 @@ export default function ProductDetails() {
                     onSuccess: () => navigate("/checkout"),
                   });
                 }}
-                disabled={addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)}
-                className="w-full border-2 border-primary text-primary px-3 sm:px-6 py-3 sm:py-4 rounded-full font-semibold text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/5 active:scale-95 transition-transform"
+                disabled={
+                  addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
+                }
+                className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-900 text-neutral-900 hover:bg-neutral-50 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
               >
-                Buy Now
+                Buy now
               </button>
               <button
+                type="button"
                 onClick={() => wishlistMutation.mutate()}
                 disabled={wishlistMutation.isPending}
-                className="w-full border border-border text-dark/70 px-3 sm:px-6 py-3 sm:py-4 rounded-full font-semibold text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:text-primary active:scale-95 transition-transform"
+                className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:border-neutral-400 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
               >
-                {wishlistMutation.isPending ? "Saving..." : "Save ❤️"}
+                {wishlistMutation.isPending ? "…" : "Wishlist"}
               </button>
             </div>
           </div>
 
-          {/* Additional Info */}
-          <div className="pt-6 border-t border-border space-y-3 text-sm text-dark/70">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">Delivery:</span>
-              <span>Free shipping on orders above ₹1499</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">Returns:</span>
-              <span>Easy 7-day returns</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">Origin:</span>
-              <span>Tirupur, Tamil Nadu</span>
-            </div>
-          </div>
+          <ul className="text-xs text-neutral-500 space-y-2 border-t border-neutral-200 pt-8 uppercase tracking-widest">
+            <li>Free ship · ₹1499+</li>
+            <li>Returns · 7 days</li>
+            <li>Ships from · Tirupur</li>
+          </ul>
         </div>
       </div>
 
-      {/* Full Screen Image Viewer */}
       <FullScreenImageViewer
         images={gallery}
         initialIndex={activeImage}

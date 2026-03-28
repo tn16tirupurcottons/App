@@ -32,7 +32,7 @@ export default function AdminProducts() {
       actions={
         <button
           onClick={() => navigate("/admin/create-product")}
-          className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold text-sm md:text-base transition shadow-lg"
+          className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold text-sm md:text-base transition shadow-lg"
         >
           + Add Product
         </button>
@@ -40,7 +40,7 @@ export default function AdminProducts() {
     >
       <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6 space-y-4 md:space-y-6">
         <input
-          className="w-full border-2 border-gray-200 rounded-full px-4 py-2 md:py-3 text-sm md:text-base focus:outline-none focus:border-pink-500 transition"
+          className="w-full border-2 border-gray-200 rounded-full px-4 py-2 md:py-3 text-sm md:text-base focus:outline-none focus:border-neutral-900 transition"
           placeholder="Search by name or SKU..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}

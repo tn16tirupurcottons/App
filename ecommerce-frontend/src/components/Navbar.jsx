@@ -1,680 +1,264 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import {
-  FaBars,
-  FaShoppingCart,
-  FaSearch,
-  FaTimes,
-  FaArrowRight,
-  FaChevronRight,
-} from "react-icons/fa";
-import MegaMenu from "./MegaMenu";
+import { FaBars, FaShoppingCart, FaSearch, FaTimes, FaChevronRight } from "react-icons/fa";
 import SearchBar from "./SearchBar";
-import { segmentThemes } from "../data/segments";
 import { useBrandTheme } from "../context/BrandThemeContext";
 
-const extraLinks = [
-  { label: "Home & Living", slug: "home" },
-  { label: "Beauty", slug: "beauty" },
-  { label: "Studio", slug: "studio" },
+const centerCategories = [
+  { label: "Men", segment: "men" },
+  { label: "Women", segment: "women" },
+  { label: "Kids", segment: "kids" },
+];
+
+const drawerLinks = [
+  ...centerCategories,
+  { label: "Dress & Fashion", segment: "genz" },
+  { label: "Shop all", href: "/catalog" },
+  { label: "Editions", href: "/editions" },
 ];
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const segmentParam = new URLSearchParams(location.search).get("segment");
   const { user, logout: logoutContext } = useContext(AuthContext);
   const { theme } = useBrandTheme();
-  const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
-  const [activeMenu, setActiveMenu] = useState(null);
+  const brand = import.meta.env.VITE_BRAND_NAME || "TNEXT";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const segments = Object.values(segmentThemes);
-  
-  // Check if an extraLink is active based on URL params
-  const isExtraLinkActive = (slug) => {
-    if (location.pathname === "/catalog") {
-      const categoryParam = searchParams.get("category");
-      return categoryParam === slug;
-    }
-    return false;
-  };
 
-  // Handle scroll to show/hide header
   useEffect(() => {
-    let ticking = false;
-    let lastKnownScrollY = window.scrollY;
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const scrollDifference = currentScrollY - lastKnownScrollY;
-          
-          // Always show and keep header visible when at the very top
-          if (currentScrollY <= 10) {
-            setIsHeaderVisible(true);
-          } 
-          // Show header immediately on ANY upward scroll
-          else if (scrollDifference < 0) {
-            // Any upward scroll movement shows the header immediately
-            setIsHeaderVisible(true);
-          } 
-          // Hide header when scrolling down (only after threshold)
-          else if (scrollDifference > 0 && currentScrollY > 100) {
-            // Hide if scrolling down and past 100px from top
-            setIsHeaderVisible(false);
-          }
-          // For zero movement or small down movements, maintain current state
-          
-          lastKnownScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    // Initialize scroll position
-    lastKnownScrollY = window.scrollY;
-    
-    // Set initial visibility - always show at top
-    if (window.scrollY <= 10) {
-      setIsHeaderVisible(true);
-    } else {
-      setIsHeaderVisible(false);
-    }
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      document.body.style.overflow = prev;
     };
-  }, []);
+  }, [mobileMenuOpen]);
 
-  // Logout handler with redirect
   const logout = () => {
     logoutContext();
     navigate("/");
-  };
-
-  const handleSegmentNavigate = (segmentKey) => {
-    navigate(`/catalog?segment=${segmentKey}`);
-    setActiveMenu(null);
     setMobileMenuOpen(false);
   };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b border-gray-200/50 shadow-lg transition-transform duration-200 ease-in-out ${
-        isHeaderVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
-      style={{
-        // Use theme-controlled header background, fallback to luxury light gradient
-        background:
-          theme.headerBackground ||
-          "linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f1f3f5 100%)",
-        borderColor: "rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <div 
-        className="hidden md:flex items-center justify-between px-6 py-1.5 text-[10px] tracking-[0.3em] uppercase border-b"
-        style={{ 
-          background: "rgba(0, 0, 0, 0.02)",
-          borderColor: "rgba(0, 0, 0, 0.1)",
-          color: theme.headerTextColor || "#0a0a0a"
-        }}
-      >
-        <span>{theme.headerPrimaryText || "TN16 · Luxury Cotton Studio"}</span>
-        <span>{theme.headerSecondaryText || "Worldwide shipping · curated edits"}</span>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="flex items-center justify-between gap-3 py-2.5">
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <button
-              className="md:hidden hover:opacity-80 transition flex items-center"
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-              aria-label="Open navigation menu"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <FaBars size={22} />
-            </button>
-            {/* Desktop: Logo and brand name - positioned left */}
-            <Link
-              to="/"
-              className="hidden md:flex items-center gap-3 flex-shrink-0"
-            >
-            {theme.logo ? (
-              <img 
-                src={theme.logo} 
-                alt={brand}
-                className="h-10 w-10 object-contain"
-                style={{ maxWidth: '40px', maxHeight: '40px' }}
-                onError={(e) => {
-                  // Fallback to text logo if image fails to load
-                  e.target.style.display = 'none';
-                  const fallback = e.target.parentElement?.querySelector('.logo-fallback');
-                  if (fallback) fallback.style.display = 'grid';
-                }}
-              />
-            ) : null}
-            <div 
-              className={`logo-fallback h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-            >
-              TN
-            </div>
-            <div className="text-left">
-              <p 
-                className="font-semibold text-base leading-tight"
-                style={{ color: theme.headerTextColor || "#0a0a0a" }}
-              >
-                {brand}
-              </p>
-              <p 
-                className="pill text-[9px]"
-                style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.7)" }}
-              >
-                Tirupur · Established MMXXV
-              </p>
-            </div>
-          </Link>
-          {/* Mobile: Only show logo */}
-          <Link
-            to="/"
-            className="md:hidden flex items-center flex-shrink-0"
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#E5E7EB] bg-white backdrop-blur-sm">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 md:h-[4.25rem] grid grid-cols-[auto_1fr_auto] md:grid-cols-3 items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            className="md:hidden p-2 -ml-2 text-neutral-800 hover:text-neutral-600 transition ease-in-out"
+            aria-label="Open menu"
+            onClick={() => {
+              setMobileMenuOpen(true);
+              setMobileSearchOpen(false);
+            }}
           >
+            <FaBars size={20} />
+          </button>
+          <Link to="/" className="flex items-center gap-2 min-w-0 group">
             {theme.logo ? (
-              <img 
-                src={theme.logo} 
+              <img
+                src={theme.logo}
                 alt={brand}
-                className="h-10 w-10 object-contain"
-                style={{ maxWidth: '40px', maxHeight: '40px' }}
+                className="h-9 w-9 object-contain shrink-0"
                 onError={(e) => {
-                  // Fallback to text logo if image fails to load
-                  e.target.style.display = 'none';
-                  const fallback = e.target.parentElement?.querySelector('.logo-fallback-mobile');
-                  if (fallback) fallback.style.display = 'grid';
+                  e.target.style.display = "none";
                 }}
               />
             ) : null}
-            <div 
-              className={`logo-fallback-mobile h-10 w-10 rounded-full border-2 border-white/30 font-display text-base tracking-[0.3em] grid place-items-center bg-white/10 backdrop-blur-sm ${theme.logo ? 'hidden' : ''}`}
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-            >
-              TN
-            </div>
+            <span className="font-display text-2xl sm:text-[1.75rem] font-bold text-[#000000] tracking-[0.12em] uppercase truncate group-hover:text-neutral-800 transition ease-in-out">
+              {brand.replace(/™|®/g, "").slice(0, 8)}
+            </span>
           </Link>
-          </div>
+        </div>
 
-          {/* Desktop: Search bar - centered */}
-          <div className="hidden md:flex flex-1 justify-center px-4">
+        <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-12" aria-label="Categories">
+          {centerCategories.map(({ label, segment }) => {
+            const active = location.pathname === "/catalog" && segmentParam === segment;
+            return (
+              <Link
+                key={segment}
+                to={`/catalog?segment=${segment}`}
+                className={`text-xs font-semibold uppercase tracking-[0.2em] transition duration-200 ease-in-out border-b-2 pb-1 ${
+                  active
+                    ? "text-[#000000] border-[#000000]"
+                    : "text-[#555555] border-transparent hover:text-[#000000] hover:border-[#E5E7EB]"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center justify-end gap-2 sm:gap-4">
+          <div className="hidden lg:block w-full max-w-[220px] xl:max-w-xs">
             <SearchBar
-              placeholder="Search pieces, collections, artisans"
-              className="w-full max-w-2xl"
-              style={{
-                color: theme.headerTextColor || "#0a0a0a",
-                borderColor: theme.headerTextColor ? `${theme.headerTextColor}20` : "rgba(10,10,10,0.2)",
-              }}
+              placeholder="Search products"
+              className="w-full"
+              variant="light"
             />
           </div>
-
-          {/* Desktop: Right side actions */}
-          <div 
-            className="hidden md:flex items-center gap-3 text-sm font-medium flex-shrink-0"
-            style={{ color: theme.headerTextColor || "#0a0a0a" }}
+          <button
+            type="button"
+            className="lg:hidden p-2 text-neutral-800 hover:text-neutral-600 transition ease-in-out"
+            aria-label="Search"
+            onClick={() => {
+              setMobileSearchOpen((v) => !v);
+              setMobileMenuOpen(false);
+            }}
           >
-            <Link
-              to="/cart"
-              aria-label="View cart"
-              className="flex items-center gap-2 hover:opacity-80 transition"
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-            >
-              <FaShoppingCart size={16} /> <span className="hidden lg:inline">Cart</span>
-            </Link>
+            <FaSearch size={18} />
+          </button>
+          <Link
+            to="/cart"
+            className="p-2 text-[#000000] hover:text-neutral-700 transition ease-in-out"
+            aria-label="Cart"
+          >
+            <FaShoppingCart size={18} />
+          </Link>
+          <div className="hidden sm:flex items-center gap-2">
             {user ? (
-              <div className="flex items-center gap-2">
+              <>
                 {user.role === "admin" && (
                   <Link
                     to="/admin"
-                    className="px-4 py-2 rounded-full border transition font-semibold text-xs backdrop-blur-sm"
-                    style={{ 
-                      backgroundColor: theme.headerTextColor ? `${theme.headerTextColor}10` : "rgba(10,10,10,0.1)",
-                      color: theme.headerTextColor || "#0a0a0a",
-                      borderColor: theme.headerTextColor ? `${theme.headerTextColor}30` : "rgba(10,10,10,0.3)"
-                    }}
+                    className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-700 border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-neutral-50 transition ease-in-out"
                   >
                     Admin
                   </Link>
                 )}
-                <span className="hidden lg:block" style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}>
-                  {user.name.split(" ")[0]}
+                <span className="text-xs text-[#555555] max-w-[4rem] truncate hidden xl:inline">
+                  {user.name?.split(" ")[0]}
                 </span>
                 <button
+                  type="button"
                   onClick={logout}
-                  className="px-4 py-2 rounded-full border transition backdrop-blur-sm"
-                  style={{ 
-                    borderColor: theme.headerTextColor ? `${theme.headerTextColor}30` : "rgba(10,10,10,0.3)",
-                    color: theme.headerTextColor || "#0a0a0a",
-                    backgroundColor: "transparent"
-                  }}
+                  className="px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-white bg-neutral-900 border border-neutral-900 rounded-full hover:bg-neutral-800 transition ease-in-out"
                 >
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link 
-                  to="/login" 
-                  className="hover:opacity-80 transition"
-                  style={{ color: theme.headerTextColor || "#0a0a0a" }}
+              <>
+                <Link
+                  to="/login"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-[#000000] hover:text-neutral-800 transition ease-in-out px-2"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 rounded-full bg-white text-gray-900 hover:bg-white/90 transition font-semibold shadow-lg"
+                  className="px-4 py-2 text-[10px] font-semibold uppercase tracking-widest bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition ease-in-out"
                 >
                   Join
                 </Link>
-              </div>
+              </>
             )}
           </div>
-
-          {/* Mobile: Cart and Search icons */}
-          <div className="md:hidden flex items-center gap-3 flex-shrink-0">
-            <Link
-              to="/cart"
-              aria-label="View cart"
-              className="flex items-center justify-center hover:opacity-80 transition"
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-              onClick={() => setMobileSearchOpen(false)}
-            >
-              <FaShoppingCart size={20} />
-            </Link>
-            <button
-              className="flex items-center justify-center hover:opacity-80 transition"
-              style={{ color: theme.headerTextColor || "#0a0a0a" }}
-              aria-label="Open search panel"
-              onClick={() => {
-                setMobileSearchOpen(true);
-                setMobileMenuOpen(false);
-              }}
-            >
-              <FaSearch size={18} />
-            </button>
-          </div>
         </div>
       </div>
 
-      <div
-        className="border-t backdrop-blur-md hidden md:block"
-        style={{
-          borderColor: theme.headerTextColor ? `${theme.headerTextColor}10` : "rgba(10,10,10,0.1)",
-          backgroundColor: theme.headerTextColor ? `${theme.headerTextColor}05` : "rgba(10,10,10,0.05)"
-        }}
-        onMouseLeave={() => setActiveMenu(null)}
-      >
-        <div 
-          className="max-w-7xl mx-auto px-4 flex flex-wrap items-center gap-5 py-2 text-sm font-semibold"
-          style={{ color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)" }}
-        >
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `pb-2 border-b-2 transition ${
-                isActive ? "" : "border-transparent hover:opacity-80"
-              }`
-            }
-            style={({ isActive }) => ({
-              color: theme.headerTextColor || "#0a0a0a",
-              borderBottomColor: isActive ? (theme.headerTextColor || "#0a0a0a") : "transparent"
-            })}
-          >
-            Home
-          </NavLink>
-          {segments.map((segment) => (
-            <button
-              key={segment.key}
-              onMouseEnter={() => setActiveMenu(segment.key)}
-              onFocus={() => setActiveMenu(segment.key)}
-              onClick={() => handleSegmentNavigate(segment.key)}
-              className={`relative pb-2 border-b-2 transition ${
-                activeMenu === segment.key
-                  ? "text-primary border-primary"
-                  : "border-transparent hover:border-primary/40 hover:text-primary"
-              }`}
-            >
-              {segment.label}
-            </button>
-          ))}
-          {extraLinks.map((link) => {
-            const isActive = isExtraLinkActive(link.slug);
-            const activeColor = theme.navActiveColor || theme.primaryColor || "#1d4ed8";
-            const activeBorderColor = theme.navActiveBorderColor || theme.primaryColor || "#1d4ed8";
-            
-            return (
-              <NavLink
-                key={link.slug}
-                to={`/catalog?category=${link.slug}`}
-                className="pb-2 border-b-2 transition"
-                style={{
-                  borderColor: isActive ? activeBorderColor : "transparent",
-                  color: isActive ? activeColor : undefined,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = `${activeBorderColor}40`;
-                    e.currentTarget.style.color = activeColor;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = "transparent";
-                    e.currentTarget.style.color = undefined;
-                  }
-                }}
-              >
-                {link.label}
-              </NavLink>
-            );
-          })}
-          <Link 
-            to="/editions"
-            className="ml-auto flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase transition hover:opacity-70"
-            style={{ 
-              color: theme.headerTextColor ? `${theme.headerTextColor}CC` : "rgba(10,10,10,0.8)"
-            }}
-          >
-            Editions <FaArrowRight size={10} />
-          </Link>
+      {mobileSearchOpen && (
+        <div className="lg:hidden border-t border-[#E5E7EB] bg-white px-4 py-3">
+          <SearchBar placeholder="Search catalog…" className="w-full" variant="light" showCloseButton autoFocus onClose={() => setMobileSearchOpen(false)} />
         </div>
-        <MegaMenu segment={segmentThemes[activeMenu]} />
-      </div>
-
-      {/* Mobile drawer - Myntra style */}
-      {mobileMenuOpen && (
-        <MobileDrawer
-          isOpen={mobileMenuOpen}
-          onClose={() => {
-            setMobileMenuOpen(false);
-            setMobileSearchOpen(false);
-          }}
-          segments={segments}
-          extraLinks={extraLinks}
-          onNavigate={(segmentKey) => handleSegmentNavigate(segmentKey)}
-          onLinkClick={() => {
-            setMobileMenuOpen(false);
-            setMobileSearchOpen(false);
-          }}
-          user={user}
-          logout={logout}
-        />
       )}
 
-      {/* Mobile search overlay - inside header with click-outside to close */}
-      {mobileSearchOpen && (
-        <>
-          {/* Backdrop overlay for click-outside detection */}
-          <div 
-            className="md:hidden fixed inset-0 bg-black/20 z-40 top-[130px]"
-            onClick={() => setMobileSearchOpen(false)}
-          />
-          {/* Search bar container */}
-          <div 
-            className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200/50 shadow-lg z-50 px-4 py-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <SearchBar
-              placeholder="Search TN16 studio"
-              className="w-full"
-              style={{ color: "#0a0a0a" }}
-              onClose={() => setMobileSearchOpen(false)}
-              showCloseButton={true}
-              autoFocus={true}
-            />
-          </div>
-        </>
+      {mobileMenuOpen && (
+        <MobileDrawer onClose={() => setMobileMenuOpen(false)} user={user} logout={logout} />
       )}
     </header>
   );
 }
 
-// Myntra-style Mobile Drawer Component
-function MobileDrawer({ isOpen, onClose, segments, extraLinks, onNavigate, onLinkClick, user, logout }) {
-  const drawerRef = useRef(null);
-  const overlayRef = useRef(null);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+function MobileDrawer({ onClose, user, logout }) {
   const navigate = useNavigate();
+  const overlayRef = useRef(null);
 
-  // Hide scrollbars but allow scrolling when menu is open
   useEffect(() => {
-    if (isOpen) {
-      // Add class to body to hide scrollbars but allow scrolling
-      document.body.classList.add("menu-open");
-      // Hide scrollbar for webkit browsers
-      const style = document.createElement("style");
-      style.id = "menu-scrollbar-hide";
-      style.textContent = `
-        body.menu-open {
-          overflow-y: scroll !important;
-          overflow-x: hidden !important;
-          -ms-overflow-style: none !important;
-          scrollbar-width: none !important;
-        }
-        body.menu-open::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-      `;
-      document.head.appendChild(style);
-    } else {
-      document.body.classList.remove("menu-open");
-      const style = document.getElementById("menu-scrollbar-hide");
-      if (style) {
-        style.remove();
-      }
-    }
-    return () => {
-      document.body.classList.remove("menu-open");
-      const style = document.getElementById("menu-scrollbar-hide");
-      if (style) {
-        style.remove();
-      }
-    };
-  }, [isOpen]);
+    const esc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [onClose]);
 
-  // Handle swipe to close
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.touches[0].clientX);
+  const go = (to) => {
+    navigate(to);
+    onClose();
   };
-
-  const onTouchMove = (e) => {
-    setTouchEnd(e.touches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    if (isLeftSwipe) {
-      onClose();
-    }
-  };
-
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   return (
-    <div
-      ref={overlayRef}
-      className="md:hidden fixed inset-0 z-50"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) {
-          onClose();
-        }
-      }}
-    >
-      {/* Backdrop - allows page scrolling behind */}
-      <div
-        className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
-      />
-      
-      {/* Drawer - Clean white background */}
-      <div
-        ref={drawerRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className={`absolute inset-y-0 left-0 w-[75vw] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-        style={{ backgroundColor: "#ffffff" }}
-      >
-        {/* Header - Clean white */}
-        <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between z-10" style={{ backgroundColor: "#ffffff" }}>
-          <h3 className="text-xl font-bold text-dark">Collections</h3>
-          <button
-            aria-label="Close navigation"
-            className="p-2 rounded-full hover:bg-light active:bg-light text-dark transition"
-            onClick={onClose}
-          >
+    <div className="md:hidden fixed inset-0 z-[60]" ref={overlayRef}>
+      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-label="Close menu" onClick={onClose} />
+      <div className="absolute top-0 left-0 h-full w-[min(88vw,380px)] bg-white border-r border-neutral-200 shadow-xl flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200">
+          <span className="font-display text-xl uppercase tracking-[0.15em] text-neutral-900">Menu</span>
+          <button type="button" className="p-2 text-neutral-500 hover:text-neutral-900" aria-label="Close" onClick={onClose}>
             <FaTimes size={20} />
           </button>
         </div>
-
-        {/* Scrollable Content - hide scrollbar, clean white */}
-        <div 
-          className="overflow-y-auto h-[calc(100vh-73px)] pb-24 scrollbar-hide"
-          style={{ 
-            backgroundColor: "#ffffff",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
-        >
-          <div className="px-6 py-4">
-            {/* Segments */}
-            {segments.map((segment) => (
+        <div className="flex-1 overflow-y-auto py-4 px-2">
+          {drawerLinks.map((item) => {
+            if (item.href) {
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => go(item.href)}
+                  className="w-full flex items-center justify-between px-4 py-4 text-left text-sm font-semibold uppercase tracking-widest text-neutral-800 border-b border-neutral-100 hover:bg-neutral-50 transition ease-in-out"
+                >
+                  {item.label}
+                  <FaChevronRight size={12} className="text-neutral-400" />
+                </button>
+              );
+            }
+            return (
               <button
-                key={segment.key}
-                onClick={() => onNavigate(segment.key)}
-                className="w-full flex items-center justify-between py-4 border-b border-border text-left hover:bg-light transition active:bg-light"
+                key={item.segment}
+                type="button"
+                onClick={() => go(`/catalog?segment=${item.segment}`)}
+                className="w-full flex items-center justify-between px-4 py-4 text-left text-sm font-semibold uppercase tracking-widest text-neutral-800 border-b border-neutral-100 hover:bg-neutral-50 transition ease-in-out"
               >
-                <div className="flex-1">
-                  <p className="font-semibold text-base text-dark">{segment.label}</p>
-                  <p className="text-xs text-muted mt-1">{segment.description}</p>
-                </div>
-                <FaChevronRight className="text-muted flex-shrink-0 ml-3" size={14} />
+                {item.label}
+                <FaChevronRight size={12} className="text-neutral-400" />
               </button>
-            ))}
-
-            {/* Extra Links */}
-            {extraLinks.map((link) => (
-              <NavLink
-                key={link.slug}
-                to={`/catalog?category=${link.slug}`}
-                onClick={onLinkClick}
-                className={({ isActive }) =>
-                  `flex items-center justify-between py-4 border-b border-border ${
-                    isActive ? "text-primary" : "text-dark"
-                  }`
-                }
-              >
-                <span className="font-semibold text-base">{link.label}</span>
-                <FaChevronRight className="text-muted" size={14} />
-              </NavLink>
-            ))}
-
-            {/* Account Section */}
-            <div className="mt-6 pt-6 border-t-2 border-border">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted mb-4 font-semibold">
-                Account
-              </p>
-              <NavLink
-                to="/wishlist"
-                onClick={onLinkClick}
-                className="flex items-center justify-between py-3 text-dark hover:bg-light transition active:bg-light"
-              >
-                <span className="font-medium">Wishlist</span>
-                <FaChevronRight className="text-muted" size={14} />
-              </NavLink>
-              <NavLink
-                to="/cart"
-                onClick={onLinkClick}
-                className="flex items-center justify-between py-3 text-dark hover:bg-light transition active:bg-light"
-              >
-                <span className="font-medium">Cart</span>
-                <FaChevronRight className="text-muted" size={14} />
-              </NavLink>
-            </div>
-
-            {/* Login/Logout Section - at the bottom (Mobile only - based on login status) */}
-            <div className="mt-6 pt-6 border-t-2 border-border">
-              {user ? (
-                <>
-                  {/* Logout button for logged-in users */}
-                  <button
-                    onClick={() => {
-                      logout();
-                      onLinkClick();
-                    }}
-                    className="w-full flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                  >
-                    <span className="font-semibold text-base">Logout</span>
-                    <FaChevronRight className="text-muted" size={14} />
+            );
+          })}
+          <div className="mt-6 px-4 space-y-1 border-t border-neutral-200 pt-6">
+            <button type="button" onClick={() => go("/wishlist")} className="block w-full text-left py-3 text-sm text-neutral-600 hover:text-neutral-900">
+              Wishlist
+            </button>
+            {!user ? (
+              <>
+                <button type="button" onClick={() => go("/login")} className="block w-full text-left py-3 text-sm text-[#000000] hover:text-neutral-800">
+                  Login
+                </button>
+                <button type="button" onClick={() => go("/register")} className="block w-full text-left py-3 text-sm text-[#000000] font-semibold">
+                  Join
+                </button>
+              </>
+            ) : (
+              <>
+                {user.role === "admin" && (
+                  <button type="button" onClick={() => go("/admin")} className="block w-full text-left py-3 text-sm text-neutral-600 hover:text-neutral-900">
+                    Admin
                   </button>
-                  {/* Admin Dashboard link - only for admins */}
-                  {user.role === "admin" && (
-                    <Link
-                      to="/admin"
-                      onClick={onLinkClick}
-                      className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                    >
-                      <span className="font-semibold text-base">Admin Dashboard</span>
-                      <FaChevronRight className="text-muted" size={14} />
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <>
-                  {/* Login and Join for non-logged-in users */}
-                  <Link
-                    to="/login"
-                    onClick={onLinkClick}
-                    className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                  >
-                    <span className="font-semibold text-base">Login</span>
-                    <FaChevronRight className="text-muted" size={14} />
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={onLinkClick}
-                    className="flex items-center justify-between py-4 text-dark hover:bg-light transition active:bg-light"
-                  >
-                    <span className="font-semibold text-base">Join</span>
-                    <FaChevronRight className="text-muted" size={14} />
-                  </Link>
-                </>
-              )}
-            </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    onClose();
+                  }}
+                  className="block w-full text-left py-3 text-sm text-neutral-600 hover:text-neutral-900"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

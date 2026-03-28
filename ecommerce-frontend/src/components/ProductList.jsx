@@ -30,10 +30,7 @@ export default function ProductList({ initialQuery = {} }) {
     },
   });
 
-  const categories = useMemo(
-    () => categoriesData?.items || [],
-    [categoriesData]
-  );
+  const categories = useMemo(() => categoriesData?.items || [], [categoriesData]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["catalog-products", query],
@@ -55,19 +52,22 @@ export default function ProductList({ initialQuery = {} }) {
     }));
   };
 
+  const inputClass =
+    "rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-200 transition duration-200 ease-in-out";
+
   return (
-    <div className="space-y-8 text-dark">
-      <div className="flex flex-wrap gap-3">
+    <div className="space-y-10 text-neutral-900">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <input
-          placeholder="Search silhouettes, fabrics, artisans"
+          placeholder="Search products…"
           value={query.search}
           onChange={(e) => handleChange("search", e.target.value)}
-          className="flex-1 min-w-[180px] rounded-full border border-border bg-light px-5 py-2 text-sm text-dark placeholder:text-muted focus:outline-none focus:border-primary"
+          className={`flex-1 min-w-0 sm:min-w-[200px] ${inputClass}`}
         />
         <select
           value={query.categorySlug}
           onChange={(e) => handleChange("categorySlug", e.target.value)}
-          className="rounded-full border border-border bg-light px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
+          className={`sm:w-48 ${inputClass}`}
         >
           <option value="">All categories</option>
           {categories.map((cat) => (
@@ -79,7 +79,7 @@ export default function ProductList({ initialQuery = {} }) {
         <select
           value={query.sort}
           onChange={(e) => handleChange("sort", e.target.value)}
-          className="rounded-full border border-border bg-light px-4 py-2 text-sm text-dark focus:outline-none focus:border-primary"
+          className={`sm:w-48 ${inputClass}`}
         >
           <option value="newest">Newest</option>
           <option value="price_asc">Price: Low → High</option>
@@ -87,61 +87,36 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      {/* Desktop: 6-8 products per row, Mobile: 4 visible with swipe */}
-      <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
         {isLoading
           ? new Array(8).fill(null).map((_, idx) => (
-              <div key={idx} className="h-80 rounded-[32px] bg-light animate-pulse" />
+              <div key={idx} className="aspect-[3/4] rounded-xl bg-neutral-100 animate-pulse" />
             ))
-          : products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          : products.map((product) => <ProductCard key={product.id} product={product} />)}
       </div>
 
-      {/* Mobile: 2 products visible at a time, scrollable */}
-      <div className="md:hidden overflow-hidden -mx-3 sm:-mx-4 px-3 sm:px-4">
-        <div 
-          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
-          style={{ 
-            scrollSnapType: "x mandatory",
-            WebkitOverflowScrolling: "touch"
-          }}
-        >
-          {isLoading
-            ? new Array(6).fill(null).map((_, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[calc(50%-0.75rem)] sm:w-[calc(50%-1rem)] snap-start">
-                  <div className="h-80 sm:h-96 rounded-2xl bg-light animate-pulse" />
-                </div>
-              ))
-            : products.map((product) => (
-                <div key={product.id} className="flex-shrink-0 w-[calc(50%-0.75rem)] sm:w-[calc(50%-1rem)] snap-start">
-                  <ProductCard product={product} />
-                </div>
-              ))}
-        </div>
-        {products.length > 2 && (
-          <p className="text-xs text-center text-muted mt-2">
-            Swipe to see more products →
-          </p>
-        )}
-      </div>
+      {!isLoading && products.length === 0 && (
+        <p className="text-center text-neutral-500 py-16 text-sm uppercase tracking-widest">Nothing here yet.</p>
+      )}
 
       {data?.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-3 text-dark/70">
+        <div className="flex justify-center items-center gap-4 text-zinc-400 pt-8">
           <button
+            type="button"
             disabled={query.page <= 1}
             onClick={() => handleChange("page", query.page - 1)}
-            className="px-4 py-2 rounded-full border border-border disabled:opacity-30 hover:border-primary hover:text-primary"
+            className="px-5 py-2 rounded-none border border-white/15 text-xs font-bold uppercase tracking-widest disabled:opacity-25 hover:border-sky-400 hover:text-sky-400 transition duration-200 ease-in-out"
           >
             Prev
           </button>
-          <span className="text-sm">
-            Page {data.page || 1} of {data.totalPages || 1}
+          <span className="text-xs tabular-nums">
+            {data.page || 1} / {data.totalPages || 1}
           </span>
           <button
+            type="button"
             disabled={(data.page || 1) >= (data.totalPages || 1)}
             onClick={() => handleChange("page", query.page + 1)}
-            className="px-4 py-2 rounded-full border border-border disabled:opacity-30 hover:border-primary hover:text-primary"
+            className="px-5 py-2 rounded-lg border border-neutral-200 text-xs font-bold uppercase tracking-widest disabled:opacity-25 hover:border-neutral-900 hover:text-neutral-900 transition duration-200 ease-in-out"
           >
             Next
           </button>

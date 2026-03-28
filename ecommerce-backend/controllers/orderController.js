@@ -215,14 +215,12 @@ export const placeOrder = async (req, res) => {
     }
     // Handle Razorpay
     else if (paymentMethod === "razorpay" || paymentMethod === "online") {
-      // Only require Razorpay details if Razorpay is actually being used
-      // If Razorpay details are missing, fallback to COD
+      // Security: Require all Razorpay details - no silent fallback
       if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        // Fallback to COD if Razorpay details are not provided
-        paymentMethod = "cod";
-        paymentStatus = "requires_payment";
-        verifiedPaymentId = `cod_${Date.now()}`;
-      } else {
+        return res.status(400).json({ 
+          message: "Razorpay payment details are required for online payment" 
+        });
+      }
 
       try {
         const verifiedPayment = await verifyRazorpayPayment(
@@ -230,6 +228,18 @@ export const placeOrder = async (req, res) => {
           razorpayPaymentId,
           razorpaySignature
         );
+        
+        // verifiedPayment.amount is already in rupees (see paymentService)
+        const paymentAmount = Number(verifiedPayment.amount);
+        const expectedAmount = Number(totals.total.toFixed(2));
+        if (Number.isNaN(paymentAmount) || Math.abs(paymentAmount - expectedAmount) > 0.01) {
+          console.error(
+            `[Security] Payment amount mismatch. Expected ₹${expectedAmount}, received ₹${paymentAmount}`
+          );
+          return res.status(400).json({
+            message: "Payment amount mismatch. Order cannot be processed.",
+          });
+        }
         
         if (verifiedPayment.status !== "authorized" && verifiedPayment.status !== "captured") {
           return res.status(400).json({ 
@@ -240,11 +250,11 @@ export const placeOrder = async (req, res) => {
         paymentStatus = verifiedPayment.captured ? "paid" : "processing";
         verifiedPaymentId = razorpayPaymentId;
       } catch (error) {
-        // If Razorpay verification fails, fallback to COD
-        paymentMethod = "cod";
-        paymentStatus = "requires_payment";
-        verifiedPaymentId = `cod_${Date.now()}`;
-      }
+        // Security: Do not silently fallback - reject invalid payments
+        console.error("[Security] Razorpay payment verification failed:", error.message);
+        return res.status(400).json({ 
+          message: "Payment verification failed. Please try again or use Cash on Delivery." 
+        });
       }
     }
     // Handle Stripe
@@ -256,6 +266,18 @@ export const placeOrder = async (req, res) => {
       try {
         const verifiedPayment = await verifyStripePayment(paymentIntentId);
         
+        // Security: Verify payment amount matches order total
+        // Stripe service already converts from cents to dollars, so compare in dollars
+        const paymentAmount = verifiedPayment.amount; // Already in dollars (converted by service)
+        const expectedAmount = totals.total; // Already in dollars
+        
+        if (Number.isNaN(paymentAmount) || Math.abs(paymentAmount - expectedAmount) > 0.01) {
+          console.error(`[Security] Stripe payment amount mismatch. Expected: ${expectedAmount}, Received: ${paymentAmount}`);
+          return res.status(400).json({ 
+            message: "Payment amount mismatch. Order cannot be processed." 
+          });
+        }
+        
         if (!["succeeded", "processing", "requires_capture"].includes(verifiedPayment.status)) {
           return res.status(400).json({ 
             message: `Payment not completed. Status: ${verifiedPayment.status}` 
@@ -263,9 +285,14 @@ export const placeOrder = async (req, res) => {
         }
 
         paymentStatus = verifiedPayment.status === "succeeded" ? "paid" : "processing";
+        verifiedPaymentId = paymentIntentId;
       } catch (error) {
+        // Security: Do not expose internal errors in production
+        console.error("[Security] Stripe payment verification failed:", error.message);
         return res.status(400).json({ 
-          message: `Payment verification failed: ${error.message}` 
+          message: process.env.NODE_ENV === "production" 
+            ? "Payment verification failed. Please try again." 
+            : `Payment verification failed: ${error.message}` 
         });
       }
     }

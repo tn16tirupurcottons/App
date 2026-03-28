@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,30 +6,36 @@
 
 @layer base {
   :root {
-    --color-primary: #1cd2ff;
-    --color-secondary: #9333ea;
-    --color-accent: #f97316;
+    --color-primary: #171717;
+    --color-secondary: #404040;
+    --color-accent: #737373;
     --background-color: #ffffff;
-    --surface-color: #f5f5f5;
-    --text-color: #111827;
-    --heading-font: "Playfair Display", serif;
-    --body-font: "Inter", system-ui, sans-serif;
-    --header-background: rgba(255, 255, 255, 0.95);
-    --container-radius: 24px;
+    --surface-color: #ffffff;
+    --surface-elevated: #f9fafb;
+    --text-color: #111111;
+    --text-muted: #6b7280;
+    --heading-font: "Bebas Neue", "Impact", sans-serif;
+    --body-font: "DM Sans", system-ui, sans-serif;
+    --header-background: rgba(255, 255, 255, 0.94);
+    --container-radius: 12px;
+    --border-subtle: rgba(15, 23, 42, 0.08);
+    --space-unit: 8px;
   }
 
   html {
     scroll-behavior: smooth;
     font-family: var(--body-font);
-    background: var(--background-color);
+    background: #ffffff;
+    overflow-x: hidden;
   }
 
   body {
     min-height: 100vh;
-    background: var(--background-color);
-    color: var(--text-color);
+    background: #ffffff;
+    color: #111111;
     font-family: var(--body-font);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   ::-webkit-scrollbar {
@@ -37,7 +43,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -51,8 +57,8 @@
 
   a,
   button {
-    transition: color 200ms ease, background-color 200ms ease,
-      border-color 200ms ease, transform 200ms ease;
+    transition: color 220ms ease-in-out, background-color 220ms ease-in-out,
+      border-color 220ms ease-in-out, transform 220ms ease-in-out, box-shadow 220ms ease-in-out;
   }
 }
 
@@ -69,16 +75,16 @@
   .card {
     border-radius: var(--container-radius);
     background: var(--surface-color);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   }
 
   .pill {
-    @apply uppercase tracking-wide text-xs text-muted;
+    @apply uppercase tracking-[0.2em] text-xs text-neutral-500;
   }
 
   .link {
-    @apply text-primary hover:text-secondary;
+    @apply text-neutral-900 underline-offset-4 hover:text-neutral-600 hover:underline;
   }
 }
 
@@ -94,21 +100,27 @@
 .bg-primary {
   background-color: var(--color-primary) !important;
 }
+
 .text-primary {
   color: var(--color-primary) !important;
 }
+
 .border-primary {
   border-color: var(--color-primary) !important;
 }
+
 .bg-secondary {
   background-color: var(--color-secondary) !important;
 }
+
 .text-secondary {
   color: var(--color-secondary) !important;
 }
+
 .heading-font {
   font-family: var(--heading-font);
 }
+
 .body-font {
   font-family: var(--body-font);
 }

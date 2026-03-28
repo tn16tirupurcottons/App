@@ -81,8 +81,8 @@ export default function BrandSettings() {
       <AdminLayout title="Brand Settings">
         <div className="card p-4 md:p-6">
           <div className="space-y-4">
-            <div className="h-32 bg-light rounded-xl animate-pulse" />
-            <div className="h-32 bg-light rounded-xl animate-pulse" />
+            <div className="h-32 bg-neutral-50 rounded-xl animate-pulse" />
+            <div className="h-32 bg-neutral-50 rounded-xl animate-pulse" />
           </div>
         </div>
       </AdminLayout>
@@ -109,7 +109,7 @@ export default function BrandSettings() {
         <button
           onClick={handleSave}
           disabled={saveMutation.isPending}
-          className="bg-primary text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-neutral-900 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-neutral-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saveMutation.isPending ? "Saving..." : "Save Settings"}
         </button>
@@ -117,11 +117,11 @@ export default function BrandSettings() {
     >
       <div className="card p-4 md:p-6 space-y-8">
         <section className="space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-dark">
+          <div className="border-b border-neutral-200 pb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-neutral-900">
               Brand Assets
             </h2>
-            <p className="text-sm text-muted mt-2">
+            <p className="text-sm text-neutral-600 mt-2">
               Upload brand-owned logos and hero visuals. Files sync to
               Cloudinary and update instantly across the storefront.
             </p>
@@ -135,7 +135,7 @@ export default function BrandSettings() {
               { label: "Hero Background", key: "heroBackground", max: 5 },
             ].map((field) => (
               <div key={field.key}>
-                <label className="block text-sm font-semibold text-dark mb-3">
+                <label className="block text-sm font-semibold text-neutral-900 mb-3">
                   {field.label}
                 </label>
                 <ImageUploader
@@ -150,8 +150,8 @@ export default function BrandSettings() {
                   maxSizeMB={field.max}
                 />
                 {assets[field.key] && (
-                  <div className="mt-3 p-3 bg-light rounded-xl border border-border">
-                    <p className="text-xs text-muted mb-2 font-medium">
+                  <div className="mt-3 p-3 bg-neutral-50 rounded-xl border border-neutral-200">
+                    <p className="text-xs text-neutral-600 mb-2 font-medium">
                       Preview
                     </p>
                     <img
@@ -171,11 +171,11 @@ export default function BrandSettings() {
         </section>
 
         <section className="space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-dark">
+          <div className="border-b border-neutral-200 pb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-neutral-900">
               Global Theme Controls
             </h2>
-            <p className="text-sm text-muted mt-2">
+            <p className="text-sm text-neutral-600 mt-2">
               Adjust luxury palette, typography, and spacing tokens. The main
               app updates live without a page refresh.
             </p>
@@ -184,7 +184,7 @@ export default function BrandSettings() {
           <div className="grid md:grid-cols-2 gap-6">
             {colorFields.map(({ key, label }) => (
               <div key={key}>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   {label}
                 </label>
                 <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, [key]: e.target.value }))
                     }
-                    className="w-14 h-14 rounded-xl border border-border cursor-pointer"
+                    className="w-14 h-14 rounded-xl border border-neutral-200 cursor-pointer"
                   />
                   <input
                     type="text"
@@ -202,21 +202,21 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, [key]: e.target.value }))
                     }
-                    className="flex-1 border border-border rounded-full px-4 py-2 text-sm"
+                    className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-sm"
                   />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="space-y-6 border-t border-border pt-6">
-            <div className="border-b border-border pb-4">
-              <h3 className="text-lg font-semibold text-dark">Hero Banner Styling</h3>
-              <p className="text-sm text-muted mt-1">Customize the hero banner text box appearance</p>
+          <div className="space-y-6 border-t border-neutral-200 pt-6">
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-lg font-semibold text-neutral-900">Hero Banner Styling</h3>
+              <p className="text-sm text-neutral-600 mt-1">Customize the hero banner text box appearance</p>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Text Box Background (CSS Gradient/Color)
                 </label>
                 <input
@@ -225,13 +225,13 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, heroBoxBackground: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6))"
                 />
-                <p className="text-xs text-muted mt-1">Use CSS gradient or rgba/rgb color</p>
+                <p className="text-xs text-neutral-600 mt-1">Use CSS gradient or rgba/rgb color</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Text Box Border Color
                 </label>
                 <input
@@ -240,12 +240,12 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, heroBoxBorder: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="rgba(255,255,255,0.2)"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Text Color
                 </label>
                 <input
@@ -254,21 +254,21 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, heroTextColor: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="#ffffff"
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-6 border-t border-border pt-6">
-            <div className="border-b border-border pb-4">
-              <h3 className="text-lg font-semibold text-dark">Navigation Active State Styling</h3>
-              <p className="text-sm text-muted mt-1">Customize the active link colors in the header navigation</p>
+          <div className="space-y-6 border-t border-neutral-200 pt-6">
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-lg font-semibold text-neutral-900">Navigation Active State Styling</h3>
+              <p className="text-sm text-neutral-600 mt-1">Customize the active link colors in the header navigation</p>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Active Link Color
                 </label>
                 <div className="flex items-center gap-3">
@@ -278,7 +278,7 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, navActiveColor: e.target.value }))
                     }
-                    className="w-14 h-14 rounded-xl border border-border cursor-pointer"
+                    className="w-14 h-14 rounded-xl border border-neutral-200 cursor-pointer"
                   />
                   <input
                     type="text"
@@ -286,14 +286,14 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, navActiveColor: e.target.value }))
                     }
-                    className="flex-1 border border-border rounded-full px-4 py-3 text-sm"
+                    className="flex-1 border border-neutral-200 rounded-full px-4 py-3 text-sm"
                     placeholder="#1d4ed8"
                   />
                 </div>
-                <p className="text-xs text-muted mt-1">Color for active navigation links</p>
+                <p className="text-xs text-neutral-600 mt-1">Color for active navigation links</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Active Border Color
                 </label>
                 <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, navActiveBorderColor: e.target.value }))
                     }
-                    className="w-14 h-14 rounded-xl border border-border cursor-pointer"
+                    className="w-14 h-14 rounded-xl border border-neutral-200 cursor-pointer"
                   />
                   <input
                     type="text"
@@ -311,14 +311,14 @@ export default function BrandSettings() {
                     onChange={(e) =>
                       setTheme((prev) => ({ ...prev, navActiveBorderColor: e.target.value }))
                     }
-                    className="flex-1 border border-border rounded-full px-4 py-3 text-sm"
+                    className="flex-1 border border-neutral-200 rounded-full px-4 py-3 text-sm"
                     placeholder="#1d4ed8"
                   />
                 </div>
-                <p className="text-xs text-muted mt-1">Border color for active navigation links</p>
+                <p className="text-xs text-neutral-600 mt-1">Border color for active navigation links</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Title Text Shadow (CSS)
                 </label>
                 <input
@@ -327,12 +327,12 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, heroTitleShadow: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="0 2px 8px rgba(0,0,0,0.5)"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Subtitle Text Shadow (CSS)
                 </label>
                 <input
@@ -341,21 +341,21 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, heroSubtitleShadow: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="0 1px 4px rgba(0,0,0,0.5)"
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-6 border-t border-border pt-6">
-            <div className="border-b border-border pb-4">
-              <h3 className="text-lg font-semibold text-dark">Header Text Content</h3>
-              <p className="text-sm text-muted mt-1">Edit the primary and secondary text displayed in the header</p>
+          <div className="space-y-6 border-t border-neutral-200 pt-6">
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-lg font-semibold text-neutral-900">Header Text Content</h3>
+              <p className="text-sm text-neutral-600 mt-1">Edit the primary and secondary text displayed in the header</p>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Header Primary Text
                 </label>
                 <input
@@ -364,12 +364,12 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, headerPrimaryText: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="TN16 · Luxury Cotton Studio"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-dark mb-2 block">
+                <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                   Header Secondary Text
                 </label>
                 <input
@@ -378,7 +378,7 @@ export default function BrandSettings() {
                   onChange={(e) =>
                     setTheme((prev) => ({ ...prev, headerSecondaryText: e.target.value }))
                   }
-                  className="w-full border border-border rounded-full px-4 py-3 text-sm"
+                  className="w-full border border-neutral-200 rounded-full px-4 py-3 text-sm"
                   placeholder="Worldwide shipping · curated edits"
                 />
               </div>
@@ -387,7 +387,7 @@ export default function BrandSettings() {
 
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-dark mb-2 block">
+              <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                 Heading Typeface
               </label>
               <select
@@ -395,7 +395,7 @@ export default function BrandSettings() {
                 onChange={(e) =>
                   setTheme((prev) => ({ ...prev, headingFont: e.target.value }))
                 }
-                className="w-full border border-border rounded-full px-4 py-3"
+                className="w-full border border-neutral-200 rounded-full px-4 py-3"
               >
                 <option value='"Playfair Display", serif'>
                   Playfair Display
@@ -407,7 +407,7 @@ export default function BrandSettings() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-dark mb-2 block">
+              <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                 Container Radius
               </label>
               <input
@@ -419,12 +419,12 @@ export default function BrandSettings() {
                     containerRadius: e.target.value,
                   }))
                 }
-                className="w-full border border-border rounded-full px-4 py-3"
+                className="w-full border border-neutral-200 rounded-full px-4 py-3"
                 placeholder="24px"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-dark mb-2 block">
+              <label className="text-sm font-semibold text-neutral-900 mb-2 block">
                 Body Typeface
               </label>
               <select
@@ -432,7 +432,7 @@ export default function BrandSettings() {
                 onChange={(e) =>
                   setTheme((prev) => ({ ...prev, bodyFont: e.target.value }))
                 }
-                className="w-full border border-border rounded-full px-4 py-3"
+                className="w-full border border-neutral-200 rounded-full px-4 py-3"
               >
                 <option value='"Inter", system-ui, sans-serif'>Inter</option>
                 <option value='"Sora", sans-serif'>Sora</option>
@@ -441,8 +441,8 @@ export default function BrandSettings() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-dashed border-border p-6 bg-white">
-            <p className="text-sm text-muted mb-4">
+          <div className="rounded-3xl border border-dashed border-neutral-200 p-6 bg-white">
+            <p className="text-sm text-neutral-600 mb-4">
               Live preview updates as you tweak controls.
             </p>
             <div
@@ -465,11 +465,11 @@ export default function BrandSettings() {
           </div>
         </section>
 
-        <div className="md:hidden pt-4 border-t border-border">
+        <div className="md:hidden pt-4 border-t border-neutral-200">
           <button
             onClick={handleSave}
             disabled={saveMutation.isPending}
-            className="w-full bg-primary text-white rounded-full py-3 font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition"
+            className="w-full bg-neutral-900 text-white rounded-full py-3 font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-800 transition"
           >
             {saveMutation.isPending ? "Saving..." : "Save Brand Settings"}
           </button>

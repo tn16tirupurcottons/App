@@ -1,47 +1,124 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
-const defaultTheme = {
-  primaryColor: "#19c7f3ff",
-  secondaryColor: "#9333ea",
-  accentColor: "#f97316",
-  backgroundColor: "#ffffff",
-  surfaceColor: "#f5f5f5",
-  textColor: "#111827",
-  headingFont: '"Playfair Display", serif',
-  bodyFont: '"Inter", system-ui, sans-serif',
-  // Luxury default header - light background with luxury black text
-  headerBackground:
-    "linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f1f3f5 100%)",
-  headerTextColor: "#0a0a0a", // Luxury black
-  headerPrimaryText: "TN16 · Luxury Cotton Studio",
-  headerSecondaryText: "Worldwide shipping · curated edits",
-  footerBackground: "#f8fafc",
-  footerTextColor: "#111827",
-  containerRadius: "24px",
-  logo: null, // Logo URL from admin settings
-  // Hero banner styling
-  heroBoxBackground: "linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.5))",
-  heroBoxBorder: "rgba(255,255,255,0.2)",
-  heroTextColor: "#ffffff",
-  heroTitleShadow: "0 2px 8px rgba(0,0,0,0.5)",
-  heroSubtitleShadow: "0 1px 4px rgba(0,0,0,0.5)",
+/**
+ * Default storefront: light, editorial. Dark API payloads are rejected for shell colors.
+ * Valid light payloads from `/theme/active` merge fully; otherwise safe accents + logo only.
+ */
+export const defaultLightTheme = {
+  primaryColor: "#171717",
+  secondaryColor: "#404040",
+  accentColor: "#737373",
+  backgroundColor: "#FFFFFF",
+  surfaceColor: "#FFFFFF",
+  textColor: "#111111",
+  headingFont: '"Bebas Neue", Impact, sans-serif',
+  bodyFont: '"DM Sans", system-ui, sans-serif',
+  headerBackground: "rgba(255, 255, 255, 0.94)",
+  headerTextColor: "#111111",
+  headerPrimaryText: "TNEXT",
+  headerSecondaryText: "Cotton studio · made in India",
+  footerBackground: "#FAFAFA",
+  footerTextColor: "#525252",
+  containerRadius: "12px",
+  logo: null,
+  heroBoxBackground:
+    "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 55%, rgba(241,245,249,0.9) 100%)",
+  heroBoxBorder: "rgba(15, 23, 42, 0.08)",
+  heroTextColor: "#0f172a",
+  heroTitleShadow: "none",
+  heroSubtitleShadow: "none",
 };
 
-// Fast Refresh compatible: context creation
+/** @deprecated use defaultLightTheme */
+export const defaultDarkTheme = defaultLightTheme;
+
+function normalizeHex(value) {
+  if (typeof value !== "string") return null;
+  let v = value.trim();
+  if (!v.startsWith("#")) v = `#${v}`;
+  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return null;
+  if (v.length === 4) {
+    const r = v[1];
+    const g = v[2];
+    const b = v[3];
+    v = `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return v.toLowerCase();
+}
+
+function relativeLuminance(hex) {
+  const n = normalizeHex(hex);
+  if (!n) return 1;
+  const r = parseInt(n.slice(1, 3), 16) / 255;
+  const g = parseInt(n.slice(3, 5), 16) / 255;
+  const b = parseInt(n.slice(5, 7), 16) / 255;
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+function isReasonableLogoUrl(logo) {
+  if (typeof logo !== "string" || logo.length < 8) return false;
+  return logo.startsWith("http://") || logo.startsWith("https://") || logo.startsWith("/");
+}
+
+function mergeSafeAccentsOnly(base, incoming) {
+  const t = { ...base };
+  if (isReasonableLogoUrl(incoming.logo)) t.logo = incoming.logo;
+  ["primaryColor", "secondaryColor", "accentColor"].forEach((key) => {
+    const hex = normalizeHex(incoming[key]);
+    if (hex && relativeLuminance(hex) < 0.92) t[key] = hex;
+  });
+  if (incoming.containerRadius && /^\d+px$/.test(String(incoming.containerRadius).trim())) {
+    t.containerRadius = incoming.containerRadius.trim();
+  }
+  if (typeof incoming.headerPrimaryText === "string" && incoming.headerPrimaryText.length < 80) {
+    t.headerPrimaryText = incoming.headerPrimaryText;
+  }
+  if (typeof incoming.headerSecondaryText === "string" && incoming.headerSecondaryText.length < 120) {
+    t.headerSecondaryText = incoming.headerSecondaryText;
+  }
+  return t;
+}
+
+/**
+ * Always keeps the light shell (backgrounds, header/footer text colors, hero defaults).
+ * `/theme/active` may only contribute: logo, accent hexes, radius, optional header copy strings.
+ * Never applies API background, text, or header colors (prevents white-on-white / dark overrides).
+ */
+export function mergeStorefrontTheme(apiSettings) {
+  const base = { ...defaultLightTheme };
+  const incoming = apiSettings && typeof apiSettings === "object" ? apiSettings : null;
+
+  if (!incoming) {
+    return { theme: base, apiAccepted: false, reason: "no_api", apiValid: false };
+  }
+
+  return {
+    theme: mergeSafeAccentsOnly(base, incoming),
+    apiAccepted: true,
+    reason: "forced_light_shell",
+    apiValid: false,
+  };
+}
+
 const BrandThemeContext = createContext({
-  theme: defaultTheme,
+  theme: defaultLightTheme,
+  themeMeta: { apiAccepted: false, reason: "initial", apiValid: false },
   refreshTheme: () => {},
 });
 
 const applyThemeToDocument = (theme) => {
   const root = document.documentElement;
+  const muted = relativeLuminance(theme.textColor) > 0.5 ? "#525252" : "#A1A1AA";
   root.style.setProperty("--color-primary", theme.primaryColor);
   root.style.setProperty("--color-secondary", theme.secondaryColor);
   root.style.setProperty("--color-accent", theme.accentColor);
   root.style.setProperty("--background-color", theme.backgroundColor);
   root.style.setProperty("--surface-color", theme.surfaceColor);
+  root.style.setProperty("--surface-elevated", theme.surfaceColor);
   root.style.setProperty("--text-color", theme.textColor);
+  root.style.setProperty("--text-muted", muted);
   root.style.setProperty("--heading-font", theme.headingFont);
   root.style.setProperty("--body-font", theme.bodyFont);
   root.style.setProperty("--header-background", theme.headerBackground);
@@ -56,7 +133,8 @@ const applyThemeToDocument = (theme) => {
   root.style.setProperty("--hero-text-color", theme.heroTextColor);
   root.style.setProperty("--hero-title-shadow", theme.heroTitleShadow);
   root.style.setProperty("--hero-subtitle-shadow", theme.heroSubtitleShadow);
-  // Set logo URL if available
+  const isLightBg = relativeLuminance(theme.backgroundColor) > 0.5;
+  root.style.setProperty("--border-subtle", isLightBg ? "rgba(15, 23, 42, 0.08)" : "rgba(255, 255, 255, 0.08)");
   if (theme.logo) {
     root.style.setProperty("--logo-url", `url(${theme.logo})`);
   } else {
@@ -64,28 +142,28 @@ const applyThemeToDocument = (theme) => {
   }
 };
 
-// Fast Refresh compatible: component export
 const BrandThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(defaultTheme);
+  const [theme, setTheme] = useState(defaultLightTheme);
+  const [themeMeta, setThemeMeta] = useState({ apiAccepted: false, reason: "initial", apiValid: false });
   const [loading, setLoading] = useState(false);
 
   const fetchTheme = async () => {
     setLoading(true);
+    applyThemeToDocument(defaultLightTheme);
     try {
       const res = await axiosClient.get("/theme/active");
       const incoming = res.data?.settings || {};
-      const merged = { ...defaultTheme, ...incoming };
+      const { theme: merged, apiAccepted, reason, apiValid } = mergeStorefrontTheme(incoming);
       setTheme(merged);
+      setThemeMeta({ apiAccepted, reason, apiValid: Boolean(apiValid) });
       applyThemeToDocument(merged);
     } catch (err) {
-      // Silently fail and use default theme - don't crash the app
-      // Only log in development
       if (import.meta.env.DEV) {
-        console.warn("Failed to load brand theme, using defaults:", err?.message || err);
+        console.warn("Brand theme API unavailable, using default light:", err?.message || err);
       }
-      // Always apply default theme even on error
-      setTheme(defaultTheme);
-      applyThemeToDocument(defaultTheme);
+      setTheme(defaultLightTheme);
+      setThemeMeta({ apiAccepted: false, reason: "network_error", apiValid: false });
+      applyThemeToDocument(defaultLightTheme);
     } finally {
       setLoading(false);
     }
@@ -99,21 +177,15 @@ const BrandThemeProvider = ({ children }) => {
   }, []);
 
   return (
-    <BrandThemeContext.Provider
-      value={{ theme, refreshTheme: fetchTheme, loading }}
-    >
+    <BrandThemeContext.Provider value={{ theme, themeMeta, refreshTheme: fetchTheme, loading }}>
       {children}
     </BrandThemeContext.Provider>
   );
 };
 
-// Hook for consuming the theme context
 function useBrandTheme() {
   return useContext(BrandThemeContext);
 }
 
-// Named exports
 export { BrandThemeProvider, useBrandTheme };
-// Default export
 export default BrandThemeProvider;
-

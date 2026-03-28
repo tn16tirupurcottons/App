@@ -275,7 +275,7 @@ export default function FullScreenImageViewer({
             e.preventDefault();
             onClose();
           }}
-          className="absolute top-4 right-4 z-[10000] bg-white text-gray-900 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 shadow-xl cursor-pointer flex items-center justify-center"
+          className="absolute top-4 right-4 z-[10000] bg-zinc-900 text-white border border-white/20 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 shadow-xl cursor-pointer flex items-center justify-center"
           aria-label="Close viewer"
           title="Close (Esc key)"
           style={{ 

@@ -33,11 +33,17 @@ export const getWishlist = async (req, res, next) => {
   }
 };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export const addWishlistItem = async (req, res, next) => {
   try {
-    const { productId } = req.body;
+    const productId = req.body?.productId != null ? String(req.body.productId).trim() : "";
     if (!productId) {
       return res.status(400).json({ message: "productId is required" });
+    }
+    if (!UUID_RE.test(productId)) {
+      return res.status(400).json({ message: "Invalid product id" });
     }
 
     const product = await Product.findByPk(productId);

@@ -27,16 +27,22 @@ const safeArray = (value) => {
 export const sendEmail = async ({ to, subject, html }) => {
   if (!sendgridKey || !sendgridFrom) {
     console.warn("[notifications] sendgrid missing configuration, skip email");
-    return;
+    return false; // Return false if not configured
   }
   const recipients = safeArray(to);
-  if (!recipients.length) return;
-  await sgMail.send({
-    to: recipients,
-    from: sendgridFrom,
-    subject,
-    html,
-  });
+  if (!recipients.length) return false;
+  try {
+    await sgMail.send({
+      to: recipients,
+      from: sendgridFrom,
+      subject,
+      html,
+    });
+    return true; // Success
+  } catch (error) {
+    console.error("[notifications] Email send failed:", error.message);
+    throw error; // Re-throw to be caught by caller
+  }
 };
 
 export const sendWhatsApp = async ({ to, body }) => {
@@ -62,9 +68,9 @@ export const sendWhatsApp = async ({ to, body }) => {
 export const sendSMS = async ({ to, body }) => {
   if (!twilioClient) {
     console.warn("[notifications] twilio missing configuration, skip sms");
-    return;
+    return false; // Return false if not configured
   }
-  if (!to) return;
+  if (!to) return false;
   
   // Format phone number: ensure it starts with +91
   let phoneNumber = to.toString().replace("whatsapp:", "").trim();
@@ -81,7 +87,7 @@ export const sendSMS = async ({ to, body }) => {
   
   if (!twilioFrom) {
     console.warn("[notifications] TWILIO_PHONE_NUMBER not configured, skip sms");
-    return;
+    return false; // Return false if phone number not configured
   }
   
   try {
@@ -91,8 +97,10 @@ export const sendSMS = async ({ to, body }) => {
       body,
     });
     console.log(`[notifications] SMS sent to ${phoneNumber}`);
+    return true; // Success
   } catch (err) {
     console.error(`[notifications] SMS failed to ${phoneNumber}:`, err.message);
+    throw err; // Re-throw to be caught by caller
   }
 };
 
@@ -159,13 +167,13 @@ export const notifyOrderPlaced = async ({
     ${summaryTable}
   `;
 
-  const shopName = process.env.SHOP_NAME || "TN16 Tirupur Cotton";
+  const shopName = process.env.SHOP_NAME || "TNEXT™";
   const customerSmsBody = `Hi ${user.name}, your order from ${shopName} (Order #${order.id.substring(0, 8)}) totaling ₹${order.total.toFixed(2)} is confirmed. We'll update you when it ships. Thank you for shopping with us!`;
 
   await Promise.allSettled([
     sendEmail({
       to: user.email,
-      subject: "Your TN16 order is confirmed",
+      subject: `Your ${shopName} order is confirmed`,
       html: customerHtml,
     }),
     // Send SMS to customer
@@ -179,7 +187,7 @@ export const notifyOrderPlaced = async ({
     }),
     sendEmail({
       to: process.env.ADMIN_NOTIFICATION_EMAILS,
-      subject: `New TN16 order ${order.id}`,
+      subject: `New ${shopName} order ${order.id}`,
       html: adminHtml,
     }),
     sendWhatsApp({
@@ -194,6 +202,7 @@ export const notifyOrderPlaced = async ({
 };
 
 export const sendPasswordResetNotice = async ({ user, resetUrl }) => {
+  const shopName = process.env.SHOP_NAME || "TNEXT™";
   const html = `
     <p>Hi ${user.name},</p>
     <p>We received a request to reset your password. Click the link below to continue.</p>
@@ -202,13 +211,13 @@ export const sendPasswordResetNotice = async ({ user, resetUrl }) => {
   `;
   await sendEmail({
     to: user.email,
-    subject: "Reset your TN16 password",
+    subject: `Reset your ${shopName} password`,
     html,
   });
   if (user.mobileNumber) {
     await sendWhatsApp({
       to: `whatsapp:${user.mobileNumber}`,
-      body: `Reset your TN16 password: ${resetUrl}`,
+      body: `Reset your ${shopName} password: ${resetUrl}`,
     });
   }
 };
@@ -221,7 +230,7 @@ export const notifyOrderStatusUpdate = async ({
   oldPaymentStatus,
   newPaymentStatus,
 }) => {
-  const shopName = process.env.SHOP_NAME || "TN16 Tirupur Cotton";
+  const shopName = process.env.SHOP_NAME || "TNEXT™";
   const orderIdShort = order.id.substring(0, 8);
 
   // Only notify if status actually changed
@@ -244,7 +253,7 @@ export const notifyOrderStatusUpdate = async ({
       failed: "has failed",
     };
 
-    emailSubject = `Your TN16 Order ${orderIdShort} - ${newStatus.toUpperCase()}`;
+    emailSubject = `Your ${shopName} Order ${orderIdShort} - ${newStatus.toUpperCase()}`;
     emailBody = `
       <h2>Order Status Update</h2>
       <p>Hi ${user.name},</p>
@@ -266,7 +275,7 @@ export const notifyOrderStatusUpdate = async ({
     };
 
     if (!statusChanged) {
-      emailSubject = `Your TN16 Order ${orderIdShort} - Payment Update`;
+      emailSubject = `Your ${shopName} Order ${orderIdShort} - Payment Update`;
       emailBody = `
         <h2>Payment Status Update</h2>
         <p>Hi ${user.name},</p>

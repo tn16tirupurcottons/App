@@ -26,28 +26,32 @@ axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const message = error.response?.data?.message || error.message;
+    const rawMessage = error.response?.data?.message || error.message || "Request failed";
+    const finalMessage =
+      status >= 500 ? "Server error. Please try again later." : rawMessage;
 
     if (status === 401) {
-      // Clear invalid token
       localStorage.removeItem("tn16_token");
-      // Redirect to login if not already there
       if (!window.location.pathname.includes("/login")) {
         window.location.href = "/login";
       }
     }
 
-    // Never log sensitive information
-    // Only log generic errors in development
     if (import.meta.env.DEV && status >= 500) {
-      console.error("API error:", status);
+      console.error("API error:", status, rawMessage);
     }
 
-    // Return sanitized error (don't expose internal details)
-    return Promise.reject({
+    // Preserve axios-like shape so callers using err.response?.data?.message still work
+    const normalized = Object.assign(new Error(finalMessage), {
+      isAxiosError: true,
       status,
-      message: status >= 500 ? "Server error. Please try again later." : message,
+      message: finalMessage,
+      response: {
+        status: status ?? 0,
+        data: { message: finalMessage },
+      },
     });
+    return Promise.reject(normalized);
   }
 );
 

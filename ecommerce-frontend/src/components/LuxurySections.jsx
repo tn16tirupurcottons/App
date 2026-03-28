@@ -2,118 +2,91 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { categoryStock, heroBackdrop, segmentVisuals, stockPhoto } from "../data/visualAssets";
 
-/**
- * Luxury Home Page Sections
- * Premium e-commerce sections similar to high-end brands like Aji/Mythra
- */
-
-// Luxury banner component with error handling
 export function LuxuryBanner({ image, title, subtitle, cta, link, className = "" }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
-  
-  const bannerImage = image || FALLBACK_IMAGES.banner;
-  
+  const bannerImage = image || heroBackdrop;
+
   return (
     <div
-      className={`relative overflow-hidden rounded-3xl group cursor-pointer ${className}`}
+      className={`relative overflow-hidden border border-neutral-200 rounded-2xl group cursor-pointer transition-all duration-300 ease-in-out hover:border-neutral-300 hover:shadow-lg ${className}`}
       onClick={() => link && navigate(link)}
+      role={link ? "button" : undefined}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
       <img
         src={bannerImage}
         alt={title || "Banner"}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-[1.03]"
         loading="lazy"
+        decoding="async"
         onError={(e) => {
           if (!imgError) {
             setImgError(true);
-            handleImageError(e, FALLBACK_IMAGES.banner);
+            handleImageError(e, heroBackdrop);
           }
         }}
       />
-      <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 sm:p-8 md:p-12 text-white">
-        <p className="text-xs sm:text-sm uppercase tracking-[0.3em] mb-2 opacity-90">
-          {subtitle}
-        </p>
-        <h3 className="text-2xl sm:text-3xl md:text-4xl font-display mb-4 leading-tight">
+      <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 sm:p-10 md:p-14 text-white">
+        <p className="text-[10px] uppercase tracking-[0.3em] mb-2 text-sky-400">{subtitle}</p>
+        <h3 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] mb-6 leading-none max-w-lg">
           {title}
         </h3>
         {cta && (
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/90 transition-all w-fit group-hover:translate-x-1">
+          <span className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-sky-400 transition-all duration-300 ease-in-out w-fit">
             {cta}
-            <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-          </button>
+            <FaArrowRight className="text-xs" />
+          </span>
         )}
       </div>
     </div>
   );
 }
 
-// Editor's Picks Section
 export function EditorsPicksSection() {
   const picks = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
-      title: "Luxury Cotton Collection",
-      category: "Editor's Choice",
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80",
-      title: "Artisan Crafted",
-      category: "Handpicked",
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=800&q=80",
-      title: "Premium Essentials",
-      category: "Must Have",
-    },
+    { id: 1, image: segmentVisuals.men.tiles[0], title: "Men's layers", category: "Pick" },
+    { id: 2, image: segmentVisuals.women.tiles[1], title: "Women's silhouettes", category: "Pick" },
+    { id: 3, image: segmentVisuals.genz.tiles[0], title: "Studio drop", category: "Pick" },
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      <div className="flex items-center justify-between mb-8">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
         <div>
-          <p className="pill text-muted mb-2">Curated</p>
-          <h2 className="text-3xl sm:text-4xl font-display text-dark">
-            Editor's Picks
-          </h2>
-          <p className="text-muted mt-2 text-sm sm:text-base">
-            Hand-selected pieces from our atelier
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Editorial</p>
+          <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em]">Three to watch</h2>
+          <p className="text-neutral-600 mt-3 text-sm max-w-md">Editorial framing. Quiet product focus.</p>
         </div>
         <Link
           to="/catalog"
-          className="hidden sm:flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted hover:text-primary transition"
+          className="hidden sm:inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-neutral-600 hover:text-neutral-900 transition ease-in-out"
         >
-          View All
+          Shop all
           <FaArrowRight />
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
         {picks.map((pick) => (
           <Link
             key={pick.id}
             to="/catalog"
-            className="group relative overflow-hidden rounded-3xl aspect-[4/5]"
+            className="group relative overflow-hidden aspect-[4/5] border border-neutral-200 rounded-xl transition-all duration-300 ease-in-out hover:border-neutral-300 hover:-translate-y-0.5 hover:shadow-md"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10" />
             <img
               src={pick.image || FALLBACK_IMAGES.men}
               alt={pick.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
               loading="lazy"
+              decoding="async"
               onError={(e) => handleImageError(e, FALLBACK_IMAGES.men)}
             />
-            <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
-              <p className="text-xs uppercase tracking-[0.3em] mb-2 opacity-90">
-                {pick.category}
-              </p>
-              <h3 className="text-xl font-display">{pick.title}</h3>
+            <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-white/90 mb-1">{pick.category}</p>
+              <h3 className="text-xl font-display uppercase tracking-[0.06em] text-white">{pick.title}</h3>
             </div>
           </Link>
         ))}
@@ -122,35 +95,30 @@ export function EditorsPicksSection() {
   );
 }
 
-// Seasonal Collections Section
 export function SeasonalCollectionsSection() {
   const collections = [
     {
       id: 1,
-      image: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1200&q=80",
-      title: "Spring Collection",
-      subtitle: "Fresh Arrivals",
-      link: "/catalog?category=spring",
+      image: stockPhoto("photo-1572804013309-6e6b7da0e1b5", 1400),
+      title: "Light layers",
+      subtitle: "Seasonal",
+      link: "/catalog",
     },
     {
       id: 2,
-      image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
-      title: "Summer Essentials",
-      subtitle: "Light & Breathable",
-      link: "/catalog?category=summer",
+      image: stockPhoto("photo-1620799140408-ed534d5b51d4", 1400),
+      title: "Core tees",
+      subtitle: "Essentials",
+      link: "/catalog",
     },
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      <div className="text-center mb-12">
-        <p className="pill text-muted mb-2">Collections</p>
-        <h2 className="text-3xl sm:text-4xl font-display text-dark mb-3">
-          Seasonal Collections
-        </h2>
-        <p className="text-muted text-sm sm:text-base max-w-2xl mx-auto">
-          Discover our carefully curated seasonal collections, each piece crafted with precision and luxury in mind
-        </p>
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="text-center mb-14 max-w-xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Capsules</p>
+        <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em] mb-3">Collections</h2>
+        <p className="text-neutral-600 text-sm">Seasonal edits and core staples.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {collections.map((collection) => (
@@ -159,9 +127,9 @@ export function SeasonalCollectionsSection() {
             image={collection.image}
             title={collection.title}
             subtitle={collection.subtitle}
-            cta="Explore Collection"
+            cta="Enter"
             link={collection.link}
-            className="aspect-[16/9]"
+            className="min-h-[280px] md:aspect-[16/9]"
           />
         ))}
       </div>
@@ -169,64 +137,42 @@ export function SeasonalCollectionsSection() {
   );
 }
 
-// Special Offers Section
 export function SpecialOffersSection() {
   const offers = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
-      title: "Limited Edition",
-      discount: "Up to 40% OFF",
-      link: "/catalog?featured=true",
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=800&q=80",
-      title: "New Arrivals",
-      discount: "Early Access",
-      link: "/catalog?sort=newest",
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80",
-      title: "Best Sellers",
-      discount: "Shop Now",
-      link: "/catalog?featured=true",
-    },
+    { id: 1, image: categoryStock.men, title: "Limited", discount: "Up to 40%", link: "/catalog?featured=true" },
+    { id: 2, image: categoryStock.women, title: "New in", discount: "Fresh grid", link: "/catalog?sort=newest" },
+    { id: 3, image: categoryStock.dressFashion, title: "Top moves", discount: "Restocked", link: "/catalog?featured=true" },
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      <div className="text-center mb-12">
-        <p className="pill text-muted mb-2">Exclusive</p>
-        <h2 className="text-3xl sm:text-4xl font-display text-dark mb-3">
-          Special Offers
-        </h2>
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
+      <div className="text-center mb-14">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Offers</p>
+        <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em]">Worth a look</h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {offers.map((offer) => (
           <Link
             key={offer.id}
             to={offer.link}
-            className="group relative overflow-hidden rounded-3xl aspect-[4/5]"
+            className="group relative overflow-hidden aspect-[4/5] border border-neutral-200 rounded-xl transition-all duration-300 ease-in-out hover:border-neutral-300 hover:shadow-md"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent z-10" />
             <img
               src={offer.image || FALLBACK_IMAGES.men}
               alt={offer.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
               loading="lazy"
+              decoding="async"
               onError={(e) => handleImageError(e, FALLBACK_IMAGES.men)}
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
-              <p className="text-xs uppercase tracking-[0.3em] mb-2 opacity-90">
-                {offer.discount}
-              </p>
-              <h3 className="text-2xl font-display mb-3">{offer.title}</h3>
-              <div className="flex items-center gap-2 text-sm font-semibold group-hover:translate-x-2 transition-transform">
-                Shop Now
+              <p className="text-[10px] uppercase tracking-[0.28em] text-white/90 mb-2">{offer.discount}</p>
+              <h3 className="text-2xl font-display uppercase tracking-[0.05em] mb-3">{offer.title}</h3>
+              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-white transition-colors">
+                Shop
                 <FaArrowRight />
-              </div>
+              </span>
             </div>
           </Link>
         ))}
@@ -235,87 +181,61 @@ export function SpecialOffersSection() {
   );
 }
 
-// Curated Looks Section
 export function CuratedLooksSection() {
   const looks = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
-      title: "Casual Elegance",
-      description: "Effortless style for everyday",
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1539533018447-63fc4c2f0f4e?auto=format&fit=crop&w=800&q=80",
-      title: "Formal Sophistication",
-      description: "Refined pieces for special occasions",
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
-      title: "Weekend Comfort",
-      description: "Relaxed luxury for your downtime",
-    },
-    {
-      id: 4,
-      image: "https://images.unsplash.com/photo-1539533018447-63fc4c2f0f4e?auto=format&fit=crop&w=800&q=80",
-      title: "Festive Glamour",
-      description: "Celebrate in style",
-    },
+    { id: 1, image: segmentVisuals.women.tiles[2], title: "Soft tailoring", description: "Dresses & sets." },
+    { id: 2, image: segmentVisuals.men.tiles[1], title: "Denim / shirts", description: "Daily uniform." },
+    { id: 3, image: segmentVisuals.kids.tiles[0], title: "Kids", description: "Play-grade cotton." },
+    { id: 4, image: segmentVisuals.genz.tiles[2], title: "Studio", description: "Contemporary line." },
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 bg-gradient-to-br from-gray-50 to-white rounded-3xl my-8">
-      <div className="text-center mb-12">
-        <p className="pill text-muted mb-2">Styling</p>
-        <h2 className="text-3xl sm:text-4xl font-display text-dark mb-3">
-          Curated Looks
-        </h2>
-        <p className="text-muted text-sm sm:text-base max-w-2xl mx-auto">
-          Get inspired by our stylist-curated looks and discover your perfect ensemble
-        </p>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-        {looks.map((look) => (
-          <Link
-            key={look.id}
-            to="/catalog"
-            className="group relative overflow-hidden rounded-2xl aspect-square"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
-            <img
-              src={look.image || FALLBACK_IMAGES.women}
-              alt={look.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              loading="lazy"
-              onError={(e) => handleImageError(e, FALLBACK_IMAGES.women)}
-            />
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
-              <h3 className="text-sm sm:text-base font-semibold mb-1">{look.title}</h3>
-              <p className="text-xs opacity-90">{look.description}</p>
-            </div>
-          </Link>
-        ))}
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="rounded-2xl border border-white/10 bg-zinc-950/50 px-4 py-12 sm:px-8 sm:py-16">
+        <div className="text-center mb-12 max-w-lg mx-auto">
+          <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 mb-2">Grid</p>
+          <h2 className="text-4xl sm:text-6xl font-display text-white uppercase tracking-[0.04em] mb-3">Looks</h2>
+          <p className="text-zinc-500 text-sm">Four moods. One brand.</p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {looks.map((look) => (
+            <Link
+              key={look.id}
+              to="/catalog"
+              className="group relative overflow-hidden aspect-square border border-white/10 transition-all duration-300 ease-in-out hover:border-white/30"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent z-10" />
+              <img
+                src={look.image || FALLBACK_IMAGES.women}
+                alt={look.title}
+                className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
+                onError={(e) => handleImageError(e, FALLBACK_IMAGES.women)}
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-white">{look.title}</h3>
+                <p className="text-[11px] text-white/75 mt-1">{look.description}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-// Main Hero Offer Banner
 export function HeroOfferBanner() {
-  const navigate = useNavigate();
-  
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <LuxuryBanner
-        image="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80"
-        title="Luxury Redefined"
-        subtitle="Premium Cotton Collection"
-        cta="Discover Now"
+        image={heroBackdrop}
+        title="Still made in Tirupur"
+        subtitle="Latest capsule"
+        cta="Shop now"
         link="/catalog"
-        className="aspect-[21/9]"
+        className="min-h-[220px] sm:min-h-[300px] md:aspect-[21/9]"
       />
     </section>
   );
 }
-

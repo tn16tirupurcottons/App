@@ -4,33 +4,33 @@ import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 import { useBrandTheme } from "../context/BrandThemeContext";
+import { heroBackdrop } from "../data/visualAssets";
 
 export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
   const { theme } = useBrandTheme();
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Hero banner styling from theme (with defaults)
-  const heroBoxBg = theme.heroBoxBackground || "linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.5))";
-  const heroBoxBorder = theme.heroBoxBorder || "rgba(255,255,255,0.2)";
-  const heroTextColor = theme.heroTextColor || "#ffffff";
-  const heroTitleShadow = theme.heroTitleShadow || "0 2px 8px rgba(0,0,0,0.5)";
-  const heroSubtitleShadow = theme.heroSubtitleShadow || "0 1px 4px rgba(0,0,0,0.5)";
+
+  const heroBoxBg =
+    theme.heroBoxBackground ||
+    "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.9) 55%, rgba(241,245,249,0.82) 100%)";
+  const heroBoxBorder = theme.heroBoxBorder || "rgba(15,23,42,0.08)";
+  const heroTextColor = theme.heroTextColor || "#0f172a";
+  const heroTitleShadow = theme.heroTitleShadow || "none";
+  const heroSubtitleShadow = theme.heroSubtitleShadow || "none";
 
   const { data } = useQuery({
     queryKey: ["banners", page, position, category],
     queryFn: async () => {
       try {
-        const res = await axiosClient.get(
-          `/admin/banners?page=${page}&position=${position}`
-        );
+        const res = await axiosClient.get(`/admin/banners?page=${page}&position=${position}`);
         const all = res.data.items || [];
         return all.filter(
           (b) =>
             b.isActive &&
             (b.page === page || b.page === "all") &&
             b.position === position &&
-            (category ? (b.segment === category || b.segment === "default") : true)
+            (category ? b.segment === category || b.segment === "default" : true)
         );
       } catch {
         return [];
@@ -38,7 +38,6 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     },
   });
 
-  // Group banners by segment/category for auto-sliding
   const bannersByCategory = useMemo(() => {
     return (data || []).reduce((acc, banner) => {
       const segment = banner.segment || "default";
@@ -48,18 +47,22 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     }, {});
   }, [data]);
 
-  // Get banners for Men, Women, Kids, Accessories in order
   const activeBanners = useMemo(() => {
     if (!data || data.length === 0) return [];
     const categoryOrder = ["men", "women", "kids", "accessories"];
     const categoryBanners = categoryOrder
-      .map(cat => (bannersByCategory[cat] || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)))
+      .map((cat) =>
+        (bannersByCategory[cat] || []).sort(
+          (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)
+        )
+      )
       .flat();
-    const defaultBanners = (bannersByCategory["default"] || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-    return [...categoryBanners, ...defaultBanners].slice(0, 20); // Allow more banners for category rotation
+    const defaultBanners = (bannersByCategory["default"] || []).sort(
+      (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)
+    );
+    return [...categoryBanners, ...defaultBanners].slice(0, 20);
   }, [bannersByCategory, data]);
 
-  // Ensure indices stay in range whenever data changes
   useEffect(() => {
     if (!activeBanners.length) {
       setCurrentBannerIndex(0);
@@ -72,7 +75,6 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     }
   }, [activeBanners.length, currentBannerIndex]);
 
-  // Rotate between banners and images with a single interval
   useEffect(() => {
     if (!activeBanners.length) return;
 
@@ -82,8 +84,8 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
         (banner?.images && banner.images.length > 0
           ? banner.images
           : banner?.image
-          ? [banner.image]
-          : []) || [];
+            ? [banner.image]
+            : []) || [];
 
       if (imgs.length > 1) {
         setCurrentImageIndex((prev) => {
@@ -98,23 +100,19 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
       }
     };
 
-    const interval = setInterval(tick, 3000);
+    const interval = setInterval(tick, 5000);
     return () => clearInterval(interval);
   }, [activeBanners, currentBannerIndex]);
 
-  // ✅ Safe currentBanner check
   const currentBanner =
-    activeBanners && activeBanners[currentBannerIndex]
-      ? activeBanners[currentBannerIndex]
-      : null;
+    activeBanners && activeBanners[currentBannerIndex] ? activeBanners[currentBannerIndex] : null;
 
-  // Fallback banner if no banners exist
   const fallbackBanner = {
-    title: "Welcome to TN16 Tirupur Cotton",
-    subtitle: "Premium Cotton Apparel Made in India",
-    image: FALLBACK_IMAGES.banner,
-    images: [FALLBACK_IMAGES.banner],
-    ctaLabel: "Shop Now",
+    title: "BUILT IN TIRUPUR. WORN EVERYWHERE.",
+    subtitle: "Premium cotton essentials — bold fits, factory‑direct. No noise, just product.",
+    image: heroBackdrop,
+    images: [heroBackdrop],
+    ctaLabel: "Shop now",
     ctaLink: "/catalog",
   };
 
@@ -122,64 +120,63 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
 
   const images =
     (displayBanner?.images && displayBanner.images.length > 0
-      ? displayBanner.images.filter(img => img) // Filter out empty/null images
+      ? displayBanner.images.filter((img) => img)
       : displayBanner?.image
-      ? [displayBanner.image]
-      : []) || [];
+        ? [displayBanner.image]
+        : []) || [];
 
-  const currentImage =
-    images[currentImageIndex] || images[0] || FALLBACK_IMAGES.banner;
+  const currentImage = images[currentImageIndex] || images[0] || heroBackdrop;
+  const showBannerDots = activeBanners.length > 1 && currentBanner;
+  const showImageDots = images.length > 1;
+  const totalDots = showBannerDots ? activeBanners.length : showImageDots ? images.length : 0;
+  const activeDot = showBannerDots ? currentBannerIndex : currentImageIndex;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl">
-      <div className="relative w-full" style={{ 
-        aspectRatio: "21/9",
-        height: "clamp(350px, 45vh, 650px)",
-        minHeight: "350px",
-        maxHeight: "650px"
-      }}>
+    <div className="relative w-full overflow-hidden border-y border-neutral-200 sm:rounded-2xl lg:rounded-3xl shadow-lg">
+      <div className="relative w-full min-h-[min(78vh,620px)] sm:min-h-[420px] md:min-h-[460px] lg:min-h-[520px] lg:aspect-[2.2/1] lg:max-h-[720px]">
         <img
           src={currentImage}
-          alt={displayBanner.title || "Banner"}
-          className="w-full h-full object-cover object-center transition-all duration-700 ease-in-out"
-          style={{ 
-            objectFit: "cover", 
-            objectPosition: "center",
-            width: "100%",
-            height: "100%"
-          }}
+          alt={displayBanner.title || "Hero"}
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 z-[1] w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out scale-105"
           onError={(e) => handleImageError(e, FALLBACK_IMAGES.banner)}
         />
-        {/* Subtle gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+        <div
+          className="absolute inset-0 z-[2] bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 z-[2] bg-gradient-to-r from-black/45 via-transparent to-transparent pointer-events-none sm:block"
+          aria-hidden
+        />
 
-        {/* Text Overlay - Fully Responsive */}
-        <div className="absolute inset-0 flex items-center justify-center md:justify-start px-4 sm:px-6 md:px-8 lg:px-12 z-10">
-          <div className="text-center md:text-left w-full max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl">
-            <div 
-              className="backdrop-blur-md rounded-xl sm:rounded-2xl p-5 sm:p-7 md:p-9 border shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+        <div className="absolute inset-0 z-[3] flex items-end sm:items-center justify-start px-5 py-12 sm:px-10 md:px-14 lg:px-20">
+          <div className="w-full max-w-3xl">
+            <div
+              className="rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-neutral-200/90 sm:max-w-xl transition-all duration-300 ease-in-out shadow-sm"
               style={{
                 background: heroBoxBg,
                 borderColor: heroBoxBorder,
               }}
             >
               {displayBanner.title && (
-                <h2 
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 sm:mb-3 md:mb-4 leading-tight" 
-                  style={{ 
+                <h2
+                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display leading-[0.95] mb-4 sm:mb-6 uppercase tracking-[0.04em]"
+                  style={{
                     color: heroTextColor,
-                    textShadow: heroTitleShadow
+                    textShadow: heroTitleShadow,
                   }}
                 >
                   {displayBanner.title}
                 </h2>
               )}
               {displayBanner.subtitle && (
-                <p 
-                  className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 leading-relaxed font-medium" 
-                  style={{ 
-                    color: `${heroTextColor}95`,
-                    textShadow: heroSubtitleShadow
+                <p
+                  className="text-sm sm:text-base md:text-lg mb-6 sm:mb-8 leading-relaxed max-w-md font-medium text-balance"
+                  style={{
+                    color: `${heroTextColor}cc`,
+                    textShadow: heroSubtitleShadow,
                   }}
                 >
                   {displayBanner.subtitle}
@@ -188,7 +185,7 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
               {displayBanner.ctaLabel && displayBanner.ctaLink && (
                 <Link
                   to={displayBanner.ctaLink}
-                  className="inline-block bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs hover:bg-gray-100 transition-all shadow-lg"
+                  className="inline-flex items-center justify-center min-w-[200px] bg-neutral-900 text-white px-8 py-3.5 rounded-full font-bold tracking-[0.25em] uppercase text-xs sm:text-sm hover:bg-neutral-800 transition-all duration-300 ease-in-out shadow-md active:scale-[0.98]"
                 >
                   {displayBanner.ctaLabel}
                 </Link>
@@ -197,34 +194,29 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
           </div>
         </div>
 
-        {/* Banner Indicators - Responsive */}
-        {activeBanners.length > 1 && currentBanner && (
-          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
-            {activeBanners.map((_, idx) => (
+        {totalDots > 0 && (
+          <div
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2 px-3 py-2 rounded-full bg-white/85 backdrop-blur-sm border border-neutral-200 shadow-sm"
+            role="tablist"
+            aria-label="Hero slides"
+          >
+            {Array.from({ length: totalDots }).map((_, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => {
-                  setCurrentBannerIndex(idx);
-                  setCurrentImageIndex(0);
+                  if (showBannerDots) {
+                    setCurrentBannerIndex(idx);
+                    setCurrentImageIndex(0);
+                  } else {
+                    setCurrentImageIndex(idx);
+                  }
                 }}
-                className={`h-1.5 sm:h-2 rounded-full transition-all ${
-                  idx === currentBannerIndex ? "w-6 sm:w-8 bg-white" : "w-1.5 sm:w-2 bg-white/50"
+                className={`rounded-full transition-all duration-300 ease-out ${
+                  idx === activeDot ? "w-8 h-2 bg-neutral-900" : "w-2 h-2 bg-neutral-300 hover:bg-neutral-500"
                 }`}
-                aria-label={`Go to banner ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Image indicators - Responsive */}
-        {images.length > 1 && (
-          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex gap-1 z-10">
-            {images.map((_, idx) => (
-              <div
-                key={idx}
-                className={`h-0.5 sm:h-1 rounded-full transition-all ${
-                  idx === currentImageIndex ? "w-3 sm:w-4 bg-white" : "w-0.5 sm:w-1 bg-white/50"
-                }`}
+                aria-label={`Slide ${idx + 1}`}
+                aria-current={idx === activeDot}
               />
             ))}
           </div>

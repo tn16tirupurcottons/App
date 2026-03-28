@@ -4,7 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { FaSearch, FaTimes } from "react-icons/fa";
 
-export default function SearchBar({ placeholder = "Search pieces, collections, artisans", className = "", style = {}, onClose, showCloseButton = false, autoFocus = false }) {
+export default function SearchBar({
+  placeholder = "Search pieces, collections, artisans",
+  className = "",
+  style = {},
+  onClose,
+  showCloseButton = false,
+  autoFocus = false,
+  variant = "light",
+}) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -119,10 +127,16 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
 
   let suggestionIndex = 0;
 
+  const shellClass =
+    "flex items-center gap-3 w-full rounded-full px-4 py-2.5 bg-[#FFFFFF] border border-[#E5E7EB] text-[#000000] focus-within:border-neutral-900 focus-within:ring-1 focus-within:ring-neutral-200 transition duration-200 ease-in-out";
+
   return (
     <div className={`relative ${className}`} style={style}>
-      <div className="flex items-center gap-2 w-full bg-black/5 backdrop-blur-md border rounded-full px-5 py-2 shadow-lg" style={{ borderColor: style.borderColor || "rgba(10,10,10,0.2)" }}>
-        <FaSearch style={{ color: style.color ? `${style.color}CC` : "rgba(10,10,10,0.7)" }} />
+      <div className={shellClass} style={style}>
+        <FaSearch
+          className="flex-shrink-0 text-[#555555]"
+          style={{ fontSize: "16px" }}
+        />
         <input
           ref={searchRef}
           type="text"
@@ -137,18 +151,14 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
             if (hasSuggestions) setShowSuggestions(true);
           }}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-sm focus:outline-none"
-          style={{ 
-            color: style.color || "#0a0a0a",
-          }}
+          className="flex-1 bg-transparent text-sm focus:outline-none text-[#000000] placeholder:text-[#555555]"
         />
         {showCloseButton && onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="flex-shrink-0 p-1 hover:opacity-70 transition"
-            style={{ color: style.color ? `${style.color}CC` : "rgba(10,10,10,0.7)" }}
+            className="flex-shrink-0 p-1 transition ease-in-out text-[#555555] hover:text-[#000000]"
           >
             <FaTimes size={16} />
           </button>
@@ -158,14 +168,14 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
       {showSuggestions && hasSuggestions && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-xl max-h-80 overflow-auto scrollbar-hide"
+          className="absolute z-50 w-full mt-2 rounded-2xl shadow-lg max-h-80 overflow-auto scrollbar-hide border border-[#E5E7EB] bg-white text-[#000000]"
           style={{
             maxHeight: "min(20rem, calc(100vh - 12rem))",
           }}
         >
           {suggestions.categories?.length > 0 && (
-            <div className="border-b border-gray-100">
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div className="border-b border-[#E5E7EB]">
+              <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#555555]">
                 Categories
               </div>
               {suggestions.categories.map((category) => {
@@ -175,11 +185,11 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
                     key={category.id}
                     type="button"
                     onClick={() => handleSuggestionClick(category, "category")}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-pink-50 transition flex items-center gap-2 ${
-                      index === highlightedIndex ? "bg-pink-100" : ""
+                    className={`w-full text-left px-4 py-3 text-sm transition ease-in-out flex items-center gap-2 text-[#000000] hover:bg-neutral-50 ${
+                      index === highlightedIndex ? "bg-neutral-100" : ""
                     }`}
                   >
-                    <span className="text-pink-600">📁</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
                     <span>{category.name}</span>
                   </button>
                 );
@@ -189,7 +199,7 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
 
           {suggestions.products?.length > 0 && (
             <div>
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#555555]">
                 Products
               </div>
               {suggestions.products.map((product) => {
@@ -199,21 +209,25 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
                     key={product.id}
                     type="button"
                     onClick={() => handleSuggestionClick(product, "product")}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-pink-50 transition flex items-center gap-3 ${
-                      index === highlightedIndex ? "bg-pink-100" : ""
+                    className={`w-full text-left px-4 py-3 text-sm transition ease-in-out flex items-center gap-3 text-[#000000] hover:bg-neutral-50 ${
+                      index === highlightedIndex ? "bg-neutral-100" : ""
                     }`}
                   >
                     <img
                       src={product.thumbnail || "/placeholder.png"}
                       alt={product.name}
-                      className="w-10 h-10 object-cover rounded-lg"
+                      className="w-10 h-10 object-cover rounded-lg bg-zinc-800"
                       onError={(e) => {
                         e.target.src = "/placeholder.png";
                       }}
                     />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{product.name}</div>
-                      <div className="text-xs text-gray-500">₹{product.price}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate text-[#000000]">
+                        {product.name}
+                      </div>
+                      <div className="text-xs text-[#555555]">
+                        ₹{product.price}
+                      </div>
                     </div>
                   </button>
                 );
@@ -221,13 +235,13 @@ export default function SearchBar({ placeholder = "Search pieces, collections, a
             </div>
           )}
 
-          <div className="border-t border-gray-100">
+          <div className="border-t border-[#E5E7EB]">
             <button
               type="button"
               onClick={() => handleSearch(searchQuery)}
-              className="w-full text-left px-4 py-3 text-sm font-semibold text-pink-600 hover:bg-pink-50 transition"
+              className="w-full text-left px-4 py-3 text-sm font-semibold transition ease-in-out text-[#000000] hover:bg-neutral-50"
             >
-              Search for "{searchQuery}"
+              Search for &quot;{searchQuery}&quot;
             </button>
           </div>
         </div>

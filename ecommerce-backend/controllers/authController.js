@@ -320,30 +320,86 @@ export const sendOtp = async (req, res, next) => {
 
     // Send OTP
     try {
+      let sent = false;
+      
       if (method === "email") {
-        await sendEmail({
+        sent = await sendEmail({
           to: identifier,
-          subject: "Your TN16 Registration OTP",
+          subject: "Your COTNEXT™ Registration OTP",
           html: `
-            <h2>Your OTP for TN16 Registration</h2>
+            <h2>Your OTP for TNEXT™ Registration</h2>
             <p>Your OTP is: <strong style="font-size:24px;letter-spacing:4px">${otp}</strong></p>
             <p>This OTP will expire in 10 minutes.</p>
             <p>If you didn't request this, please ignore this email.</p>
           `,
         });
-        console.log(`[OTP] Email OTP sent to ${identifier}`);
+        
+        if (sent) {
+          console.log(`[OTP] Email OTP sent to ${identifier}`);
+          res.json({ success: true, message: "OTP sent successfully to your email" });
+        } else {
+          // SendGrid not configured - provide dev fallback
+          if (process.env.NODE_ENV !== "production") {
+            console.log(`\n⚠️  [DEV MODE] Email OTP for ${identifier}: ${otp}`);
+            console.log(`⚠️  Configure SENDGRID_API_KEY and SENDGRID_FROM_EMAIL for email delivery\n`);
+            res.json({ 
+              success: true, 
+              message: "OTP generated (email service not configured - check server console)", 
+              devOtp: otp,
+              warning: "Email service not configured. OTP is logged in console for development."
+            });
+          } else {
+            return res.status(500).json({ 
+              message: "Email service not configured. Please contact support." 
+            });
+          }
+        }
       } else {
-        await sendSMS({
+        sent = await sendSMS({
           to: identifier,
-          body: `Your TN16 registration OTP is ${otp}. Valid for 10 minutes.`,
+          body: `Your TNEXT™ registration OTP is ${otp}. Valid for 10 minutes.`,
         });
-        console.log(`[OTP] SMS OTP sent to ${identifier}`);
+        
+        if (sent) {
+          console.log(`[OTP] SMS OTP sent to ${identifier}`);
+          res.json({ success: true, message: "OTP sent successfully to your mobile number" });
+        } else {
+          // Twilio not configured - provide dev fallback
+          if (process.env.NODE_ENV !== "production") {
+            console.log(`\n⚠️  [DEV MODE] SMS OTP for ${identifier}: ${otp}`);
+            console.log(`⚠️  Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER for SMS delivery\n`);
+            res.json({ 
+              success: true, 
+              message: "OTP generated (SMS service not configured - check server console)", 
+              devOtp: otp,
+              warning: "SMS service not configured. OTP is logged in console for development."
+            });
+          } else {
+            return res.status(500).json({ 
+              message: "SMS service not configured. Please contact support." 
+            });
+          }
+        }
       }
-      res.json({ success: true, message: "OTP sent successfully" });
     } catch (sendError) {
       console.error("[OTP] Failed to send OTP:", sendError);
-      // Still return success to prevent enumeration, but log the error
-      res.json({ success: true, message: "OTP sent successfully" });
+      // In development, still allow OTP to work by logging it
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`\n⚠️  [DEV MODE - ERROR FALLBACK] OTP for ${identifier}: ${otp}`);
+        console.log(`⚠️  Email/SMS service error: ${sendError.message}`);
+        console.log(`⚠️  Configure SENDGRID_API_KEY (for email) or TWILIO credentials (for SMS)\n`);
+        res.json({ 
+          success: true, 
+          message: "OTP generated (service error - check server console)", 
+          devOtp: otp,
+          warning: `Service error: ${sendError.message}. OTP is logged in console.`
+        });
+      } else {
+        // In production, return error if email/SMS fails
+        return res.status(500).json({ 
+          message: "Failed to send OTP. Please try again later or contact support." 
+        });
+      }
     }
   } catch (err) {
     next(err);
@@ -383,20 +439,24 @@ export const verifyOtpAndRegister = async (req, res, next) => {
 
     // Create user (mobileNumber is optional)
     const user = await User.create({ 
-      name, 
-      email, 
+      name: name.trim(), 
+      email: email.trim().toLowerCase(), 
       password, 
-      mobileNumber: mobileNumber || null 
+      mobileNumber: mobileNumber ? mobileNumber.replace(/^\+91/, "").replace(/\D/g, "") : null 
     });
 
     // Mark OTP as verified
     otpRecord.verified = true;
     await otpRecord.save();
 
+    // Issue tokens for automatic login after registration
+    const tokens = await issueTokensForUser(user, res);
+
     res.status(201).json({
       success: true,
       message: "Registration successful",
       user: toPublicUser(user),
+      ...tokens,
     });
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") {

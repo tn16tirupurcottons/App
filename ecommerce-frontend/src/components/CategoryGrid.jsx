@@ -1,84 +1,64 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { getCategoryImage, handleImageError } from "../utils/imageUtils";
+import { categoryStock } from "../data/visualAssets";
+import { getCategoryImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
 export default function CategoryGrid({ categories = [], loading = false }) {
   const fallback = [
-    {
-      id: "mens-shirts",
-      name: "Men's Shirts",
-      heroImage:
-        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
-      slug: "mens-shirts",
-    },
-    {
-      id: "women-kurtas",
-      name: "Women Kurtas",
-      heroImage:
-        "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?auto=format&fit=crop&w=800&q=80",
-      slug: "women-kurtas",
-    },
-    {
-      id: "kids-wear",
-      name: "Kids Wear",
-      heroImage:
-        "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=80",
-      slug: "kids-wear",
-    },
-    {
-      id: "athleisure",
-      name: "Athleisure",
-      heroImage:
-        "https://images.unsplash.com/photo-1484519332611-516457305ff6?auto=format&fit=crop&w=800&q=80",
-      slug: "athleisure",
-    },
+    { id: "mens-shirts", name: "Men", heroImage: categoryStock.men, slug: "mens-shirts" },
+    { id: "women-kurtas", name: "Women", heroImage: categoryStock.women, slug: "women-kurtas" },
+    { id: "kids-wear", name: "Kids", heroImage: categoryStock.kids, slug: "kids-wear" },
+    { id: "athleisure", name: "Athleisure", heroImage: categoryStock.athleisure, slug: "athleisure" },
   ];
 
   const list = categories.length ? categories : fallback;
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-14">
-      <div className="flex items-center justify-between mb-8">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
         <div>
-          <p className="pill text-muted">Catalogue</p>
-          <h2 className="text-3xl font-display text-dark tracking-wide mt-1">
-            Signature categories
+          <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">Shop by</p>
+          <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em] mt-2">
+            Categories
           </h2>
         </div>
         <Link
           to="/catalog"
-          className="text-xs uppercase tracking-[0.3em] text-muted hover:text-primary"
+          className="text-[10px] uppercase tracking-[0.28em] text-neutral-600 hover:text-neutral-900 transition duration-200 ease-in-out shrink-0"
         >
-          View all
+          View all →
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {(loading ? new Array(4).fill(null) : list).map((cat, idx) => (
           <Link
             to={`/catalog?category=${cat?.slug || cat?.id}`}
             key={cat?.id || idx}
-            className="relative rounded-3xl overflow-hidden border border-border shadow-soft group hover:shadow-medium transition-shadow"
+            className="group relative overflow-hidden border border-white/10 aspect-[4/5] flex flex-col bg-zinc-950 transition-all duration-300 ease-in-out hover:border-sky-400/40 hover:shadow-[0_24px_60px_rgba(0,0,0,0.6)] hover:-translate-y-1"
           >
             {loading ? (
-              <div className="w-full h-48 bg-light animate-pulse" />
+              <div className="w-full flex-1 min-h-[220px] bg-zinc-900 animate-pulse" />
             ) : (
               <>
                 <img
                   src={getCategoryImage(cat)}
                   alt={cat?.name || "Category"}
-                  className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                   loading="lazy"
-                  onError={(e) => handleImageError(e)}
+                  decoding="async"
+                  sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 25vw"
+                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.category)}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                <div className="absolute inset-x-4 bottom-4 text-white">
-                  <p className="text-lg font-semibold">{cat?.name}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                <div className="relative mt-auto p-6 text-white z-10 flex flex-col gap-4">
+                  <p className="text-xl sm:text-2xl font-display uppercase tracking-[0.06em]">{cat?.name}</p>
                   {cat?.description && (
-                    <p className="text-xs text-white/90 line-clamp-2">
-                      {cat.description}
-                    </p>
+                    <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{cat.description}</p>
                   )}
+                  <span className="inline-flex w-fit items-center text-[10px] uppercase tracking-[0.25em] font-bold px-5 py-2.5 bg-white text-neutral-900 border border-neutral-200 group-hover:bg-neutral-900 group-hover:text-white group-hover:border-neutral-900 transition-colors duration-300 ease-in-out rounded-full">
+                    Shop
+                  </span>
                 </div>
               </>
             )}

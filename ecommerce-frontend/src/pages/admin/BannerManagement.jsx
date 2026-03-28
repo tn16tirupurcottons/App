@@ -249,7 +249,7 @@ export default function BannerManagement() {
             <button
               type="submit"
               disabled={saveMutation.isLoading || !form.title || !form.images?.length}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+              className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg py-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
             >
               {saveMutation.isLoading ? "Saving..." : banner ? "Update Banner" : "Create Banner"}
             </button>
@@ -262,10 +262,10 @@ export default function BannerManagement() {
   if (isLoading) {
     return (
       <AdminLayout title="Banner Management">
-        <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4">
+        <div className="bg-white border border-neutral-200 rounded-3xl p-4 shadow-sm">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-white/10 rounded-xl animate-pulse" />
+              <div key={i} className="h-32 bg-neutral-200 rounded-xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -282,14 +282,14 @@ export default function BannerManagement() {
             setEditing(null);
             setShowForm(true);
           }}
-          className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold text-sm md:text-base transition shadow-lg flex items-center gap-2"
+          className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold text-sm md:text-base transition shadow-sm flex items-center gap-2"
         >
           <Plus size={18} />
           <span>New Banner</span>
         </button>
       }
     >
-      <div className="bg-graphite/80 border border-white/10 rounded-3xl p-4 md:p-6 space-y-4 text-white">
+      <div className="bg-white border border-neutral-200 rounded-3xl p-4 md:p-6 space-y-4 text-neutral-900 shadow-sm">
         {showForm && (
           <BannerForm
             banner={editing}
@@ -307,7 +307,7 @@ export default function BannerManagement() {
                 <p className="text-gray-500 mb-4">No banners yet</p>
                 <button
                   onClick={() => setShowForm(true)}
-                  className="bg-pink-600 text-white px-6 py-2 rounded-full font-semibold"
+                  className="bg-neutral-900 text-white px-6 py-2 rounded-full font-semibold hover:bg-neutral-800"
                 >
                   Create First Banner
                 </button>

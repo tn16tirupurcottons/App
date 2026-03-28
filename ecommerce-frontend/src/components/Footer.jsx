@@ -1,101 +1,88 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
-import { useBrandTheme } from "../context/BrandThemeContext";
+
+const BRAND_HIGHLIGHTS = [
+  "Premium Cotton",
+  "Clean Silhouettes",
+  "Conscious Production",
+];
 
 export default function Footer() {
-  const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
-  const theme = useBrandTheme();
+  const brand = import.meta.env.VITE_BRAND_NAME || "TNEXT";
+  const brandWordmark = brand.replace(/™|®/g, "");
+
+  const social = [
+    { icon: FaInstagram, href: "https://www.instagram.com/", label: "Instagram" },
+    { icon: FaFacebookF, href: "https://www.facebook.com/", label: "Facebook" },
+    { icon: FaWhatsapp, href: "https://wa.me/919597698343", label: "WhatsApp" },
+  ];
 
   return (
-    <footer 
-      className="mt-16 border-t w-full"
-      style={{
-        background: theme.footerBackground || "linear-gradient(to bottom, #f5f4f0 0%, #ebe9e3 100%)",
-        color: theme.footerTextColor || "#1a1a1a"
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
-        <div className="grid gap-8 sm:gap-10 md:gap-12 md:grid-cols-4 text-sm">
-          {/* Brand Section */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="space-y-1">
-              <h2 
-                className="text-2xl sm:text-3xl md:text-4xl font-serif leading-tight"
-                style={{ 
-                  fontFamily: '"Playfair Display", "Georgia", serif',
-                  color: theme.footerTextColor || "#1a1a1a",
-                  fontWeight: 600,
-                  letterSpacing: '0.02em'
-                }}
-              >
-                {brand.split(' ').slice(0, 2).join(' ')}
-              </h2>
-              <h3 
-                className="text-xl sm:text-2xl md:text-3xl font-serif leading-tight"
-                style={{ 
-                  fontFamily: '"Playfair Display", "Georgia", serif',
-                  color: theme.footerTextColor || "#1a1a1a",
-                  fontWeight: 400,
-                  letterSpacing: '0.02em'
-                }}
-              >
-                {brand.split(' ').slice(2).join(' ')}
-              </h3>
-            </div>
-            <p 
-              className="text-sm sm:text-base leading-relaxed"
-              style={{ 
-                color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)",
-                fontWeight: 300
-              }}
-            >
-              Curated Tirupur cotton capsules, crafted with slow luxury sensibility
-              and precise tailoring.
+    <footer className="mt-auto border-t border-neutral-200 bg-neutral-50 text-neutral-600">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-14 sm:py-20">
+        <div className="grid gap-12 sm:gap-14 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+          {/* Brand story — premium editorial block */}
+          <div className="lg:col-span-1 max-w-md">
+            <p className="font-display text-3xl sm:text-[2rem] font-bold text-neutral-900 tracking-[0.18em] uppercase leading-tight">
+              {brandWordmark}
             </p>
+            <p className="mt-3 text-[11px] sm:text-xs font-medium uppercase tracking-[0.28em] text-neutral-600">
+              Designed for everyday luxury.
+            </p>
+
+            <div className="mt-8 space-y-4 text-sm leading-[1.75] text-[#555555]">
+              <p>
+                {brandWordmark} is a modern cotton studio built on clean silhouettes, refined essentials,
+                and mindful craftsmanship.
+              </p>
+              <p>
+                We focus on timeless design, premium fabrics, and everyday comfort—crafted for those who
+                value simplicity with purpose.
+              </p>
+            </div>
+
+            <ul
+              className="mt-8 pt-8 border-t border-neutral-200/90 space-y-3"
+              aria-label="Brand pillars"
+            >
+              {BRAND_HIGHLIGHTS.map((line) => (
+                <li
+                  key={line}
+                  className="flex gap-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.22em] text-neutral-900"
+                >
+                  <span className="text-neutral-400 font-normal select-none" aria-hidden>
+                    ·
+                  </span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Index Section */}
           <div>
-            <p 
-              className="text-xs uppercase tracking-[0.4em] mb-5 sm:mb-6 font-semibold"
-              style={{ 
-                color: theme.footerTextColor || "#1a1a1a",
-                letterSpacing: '0.4em'
-              }}
-            >
-              INDEX
-            </p>
-            <ul className="space-y-3 sm:space-y-3.5">
+            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-4">Explore</p>
+            <ul className="space-y-3 text-sm text-[#555555]">
               <li>
-                <Link 
-                  to="/about" 
-                  className="block text-sm sm:text-base transition-colors duration-200 hover:opacity-70"
-                  style={{ 
-                    color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)"
-                  }}
+                <Link
+                  to="/about"
+                  className="hover:text-neutral-900 transition duration-200 ease-in-out"
                 >
-                  About the studio
+                  Studio
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/shipping" 
-                  className="block text-sm sm:text-base transition-colors duration-200 hover:opacity-70"
-                  style={{ 
-                    color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)"
-                  }}
+                <Link
+                  to="/shipping"
+                  className="hover:text-neutral-900 transition duration-200 ease-in-out"
                 >
                   Shipping & returns
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/membership" 
-                  className="block text-sm sm:text-base transition-colors duration-200 hover:opacity-70"
-                  style={{ 
-                    color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)"
-                  }}
+                <Link
+                  to="/membership"
+                  className="hover:text-neutral-900 transition duration-200 ease-in-out"
                 >
                   Membership
                 </Link>
@@ -103,127 +90,43 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
-            <p 
-              className="text-xs uppercase tracking-[0.4em] mb-5 sm:mb-6 font-semibold"
-              style={{ 
-                color: theme.footerTextColor || "#1a1a1a",
-                letterSpacing: '0.4em'
-              }}
+            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-4">Contact</p>
+            <a
+              href="mailto:tn16tirupurcotton@gmail.com"
+              className="text-sm text-[#555555] block hover:text-neutral-900 transition ease-in-out break-words"
             >
-              CONCIERGE
-            </p>
-            <div className="space-y-2">
-              <a 
-                href="mailto:tn16tirupurcotton@gmail.com"
-                className="block text-sm sm:text-base transition-colors duration-200 hover:opacity-70"
-                style={{ 
-                  color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)"
-                }}
-              >
-                tn16tirupurcotton@gmail.com
-              </a>
-              <a 
-                href="tel:+919597698343"
-                className="block text-sm sm:text-base transition-colors duration-200 hover:opacity-70"
-                style={{ 
-                  color: theme.footerTextColor ? `${theme.footerTextColor}DD` : "rgba(26, 26, 26, 0.85)"
-                }}
-              >
-                +91 95976 98343
-              </a>
-            </div>
+              tn16tirupurcotton@gmail.com
+            </a>
+            <a
+              href="tel:+919597698343"
+              className="text-sm text-[#555555] block mt-3 hover:text-neutral-900 transition ease-in-out"
+            >
+              +91 95976 98343
+            </a>
           </div>
 
-          {/* Social Links */}
           <div>
-            <p 
-              className="text-xs uppercase tracking-[0.4em] mb-5 sm:mb-6 font-semibold"
-              style={{ 
-                color: theme.footerTextColor || "#1a1a1a",
-                letterSpacing: '0.4em'
-              }}
-            >
-              CONNECT
-            </p>
-            <div className="flex items-center gap-3 sm:gap-4">
-              {[
-                { 
-                  icon: FaFacebookF, 
-                  link: "https://www.facebook.com/",
-                  label: "Facebook",
-                  brandColor: "#1877F2"
-                },
-                { 
-                  icon: FaInstagram, 
-                  link: "https://www.instagram.com/",
-                  label: "Instagram",
-                  brandColor: "#E4405F"
-                },
-                { 
-                  icon: FaWhatsapp, 
-                  link: "https://wa.me/919597698343",
-                  label: "WhatsApp",
-                  brandColor: "#25D366"
-                },
-              ].map((item, idx) => (
+            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-4">Social</p>
+            <div className="flex gap-3">
+              {social.map(({ icon: Icon, href, label }) => (
                 <a
-                  key={idx}
-                  href={item.link}
+                  key={label}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={item.label}
-                  className="group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border transition-all duration-300 hover:scale-110 active:scale-95"
-                  style={{ 
-                    borderColor: theme.footerTextColor ? `${theme.footerTextColor}30` : "rgba(26, 26, 26, 0.2)",
-                    backgroundColor: "transparent"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = item.brandColor;
-                    e.currentTarget.style.backgroundColor = `${item.brandColor}10`;
-                    const icon = e.currentTarget.querySelector('svg');
-                    if (icon) icon.style.color = item.brandColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = theme.footerTextColor ? `${theme.footerTextColor}30` : "rgba(26, 26, 26, 0.2)";
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    const icon = e.currentTarget.querySelector('svg');
-                    if (icon) icon.style.color = theme.footerTextColor || "#1a1a1a";
-                  }}
+                  aria-label={label}
+                  className="w-11 h-11 flex items-center justify-center border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-900 hover:text-neutral-900 transition duration-200 ease-in-out"
                 >
-                  <item.icon 
-                    size={18} 
-                    className="sm:w-5 sm:h-5"
-                    style={{ 
-                      color: theme.footerTextColor || "#1a1a1a",
-                      transition: "color 0.3s ease"
-                    }}
-                  />
+                  <Icon size={16} />
                 </a>
               ))}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom Strip */}
-      <div 
-        className="border-t py-4 sm:py-5 text-center"
-        style={{ 
-          borderColor: theme.footerTextColor ? `${theme.footerTextColor}15` : "rgba(26, 26, 26, 0.1)"
-        }}
-      >
-        <p 
-          className="text-xs sm:text-sm"
-          style={{ 
-            color: theme.footerTextColor ? `${theme.footerTextColor}AA` : "rgba(26, 26, 26, 0.7)",
-            fontWeight: 300,
-            letterSpacing: '0.05em'
-          }}
-        >
-          © {new Date().getFullYear()} {brand} · All rights reserved
-        </p>
+      <div className="border-t border-neutral-200 py-6 text-center text-[10px] sm:text-[11px] tracking-[0.2em] text-neutral-500 uppercase">
+        © {new Date().getFullYear()} {brandWordmark} · All rights reserved
       </div>
     </footer>
   );

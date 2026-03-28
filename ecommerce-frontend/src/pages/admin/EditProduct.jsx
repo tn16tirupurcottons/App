@@ -173,7 +173,7 @@ export default function EditProduct() {
               <label className="block text-sm font-semibold text-gray-700">
                 Category *
                 <select
-                  className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm mt-1 focus:outline-none focus:border-pink-500"
+                  className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm mt-1 focus:outline-none focus:border-neutral-900"
                   value={form.categoryId}
                   onChange={(e) => {
                     handleChange("categoryId", e.target.value);
@@ -252,7 +252,7 @@ export default function EditProduct() {
                   type="checkbox"
                   checked={form.isFeatured}
                   onChange={(e) => handleChange("isFeatured", e.target.checked)}
-                  className="w-4 h-4 text-pink-600 rounded focus:ring-pink-500"
+                  className="w-4 h-4 text-neutral-900 rounded focus:ring-neutral-900"
                 />
                 <span>Featured Product</span>
               </label>
@@ -265,7 +265,7 @@ export default function EditProduct() {
               Description *
             </label>
             <textarea
-              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition"
+              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-neutral-900 transition"
               rows="4"
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
@@ -300,7 +300,7 @@ export default function EditProduct() {
             </button>
             <button
               type="submit"
-              className="flex-1 bg-pink-600 hover:bg-pink-700 text-white rounded-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+              className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
               disabled={
                 saving ||
                 !form.name ||
@@ -327,7 +327,7 @@ function Input({ label, className = "", ...rest }) {
       <span className="block mb-1.5">{label}</span>
       <input
         {...rest}
-        className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-pink-500 transition"
+        className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-neutral-900 transition"
       />
     </label>
   );

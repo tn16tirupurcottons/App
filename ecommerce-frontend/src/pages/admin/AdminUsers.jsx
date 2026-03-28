@@ -68,7 +68,7 @@ export default function AdminUsers() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email"
-            className="w-full border border-border bg-white rounded-full px-4 py-2 text-sm text-dark placeholder:text-muted focus:outline-none focus:border-primary"
+            className="w-full border border-neutral-200 bg-white rounded-full px-4 py-2 text-sm text-neutral-900 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-900"
           />
         </div>
       }
@@ -81,7 +81,7 @@ export default function AdminUsers() {
             Unable to load users.
           </div>
         ) : data.length === 0 ? (
-          <div className="p-6 text-center text-muted">No users yet.</div>
+          <div className="p-6 text-center text-neutral-600">No users yet.</div>
         ) : (
           <>
             {/* Mobile Card View */}
@@ -89,24 +89,24 @@ export default function AdminUsers() {
               {data.map((user) => (
                 <div key={user.id} className="card p-4 space-y-3">
                   <div>
-                    <p className="font-semibold text-dark text-base">{user.name}</p>
-                    <p className="text-muted text-sm">{user.email}</p>
+                    <p className="font-semibold text-neutral-900 text-base">{user.name}</p>
+                    <p className="text-neutral-600 text-sm">{user.email}</p>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <span className="text-muted">Role: </span>
-                      <span className="font-medium text-dark capitalize">{user.role}</span>
+                      <span className="text-neutral-600">Role: </span>
+                      <span className="font-medium text-neutral-900 capitalize">{user.role}</span>
                     </div>
                     <div>
-                      <span className="text-muted">Orders: </span>
-                      <span className="font-medium text-dark">{user.orderCount || 0}</span>
+                      <span className="text-neutral-600">Orders: </span>
+                      <span className="font-medium text-neutral-900">{user.orderCount || 0}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2 border-t border-border">
+                  <div className="flex gap-2 pt-2 border-t border-neutral-200">
                     <button
                       onClick={() => handleRoleToggle(user)}
                       disabled={roleMutation.isPending}
-                      className="flex-1 px-3 py-2 rounded-full border border-primary bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wide hover:bg-primary hover:text-white transition disabled:opacity-50"
+                      className="flex-1 px-3 py-2 rounded-full border border-neutral-900 bg-white text-neutral-900 text-xs font-semibold uppercase tracking-wide hover:bg-neutral-900 hover:text-white transition disabled:opacity-50"
                     >
                       {user.role === "admin" ? "Demote" : "Promote"}
                     </button>
@@ -126,7 +126,7 @@ export default function AdminUsers() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-muted uppercase text-xs tracking-[0.3em] border-b-2 border-border bg-light">
+                  <tr className="text-left text-neutral-600 uppercase text-xs tracking-[0.3em] border-b-2 border-neutral-200 bg-neutral-50">
                     <th className="p-4 font-semibold">Name</th>
                     <th className="p-4 font-semibold">Role</th>
                     <th className="p-4 font-semibold">Orders</th>
@@ -135,25 +135,25 @@ export default function AdminUsers() {
                 </thead>
                 <tbody>
                   {data.map((user) => (
-                    <tr key={user.id} className="border-b border-border hover:bg-light transition">
+                    <tr key={user.id} className="border-b border-neutral-200 hover:bg-neutral-50 transition">
                       <td className="p-4">
-                        <p className="font-semibold text-dark">{user.name}</p>
-                        <p className="text-muted text-xs mt-1">{user.email}</p>
+                        <p className="font-semibold text-neutral-900">{user.name}</p>
+                        <p className="text-neutral-600 text-xs mt-1">{user.email}</p>
                       </td>
                       <td className="p-4">
-                        <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-xs capitalize">
+                        <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-900 font-medium text-xs capitalize">
                           {user.role}
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="font-medium text-dark">{user.orderCount || 0}</span>
+                        <span className="font-medium text-neutral-900">{user.orderCount || 0}</span>
                       </td>
                       <td className="p-4">
                         <div className="flex flex-wrap gap-2 justify-end">
                           <button
                             onClick={() => handleRoleToggle(user)}
                             disabled={roleMutation.isPending}
-                            className="px-4 py-2 rounded-full border border-primary bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wide hover:bg-primary hover:text-white transition disabled:opacity-50"
+                            className="px-4 py-2 rounded-full border border-neutral-900 bg-white text-neutral-900 text-xs font-semibold uppercase tracking-wide hover:bg-neutral-900 hover:text-white transition disabled:opacity-50"
                           >
                             {user.role === "admin" ? "Demote" : "Promote"}
                           </button>
@@ -182,7 +182,7 @@ function Skeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((row) => (
-        <div key={row} className="h-14 bg-light rounded-2xl animate-pulse" />
+        <div key={row} className="h-14 bg-neutral-50 rounded-2xl animate-pulse" />
       ))}
     </div>
   );

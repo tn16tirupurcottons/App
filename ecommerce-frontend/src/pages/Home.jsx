@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
 import BannerCarousel from "../components/BannerCarousel";
 import axiosClient from "../api/axiosClient";
-import { heroSlides, segmentThemes } from "../data/segments";
+import { segmentThemes } from "../data/segments";
+import { categoryStock } from "../data/visualAssets";
+import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 import {
   EditorsPicksSection,
   SeasonalCollectionsSection,
@@ -13,7 +15,6 @@ import {
   CuratedLooksSection,
   HeroOfferBanner,
 } from "../components/LuxurySections";
-import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
 const fallbackFilters = [
   { label: "Men's Shirts", slug: "mens-shirts" },
@@ -30,16 +31,16 @@ const fallbackProducts = [
     price: 1899,
     discount: 200,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.men,
     Category: { name: "Men" },
   },
   {
     id: "fallback-2",
-    name: "Zari Pinstripe Kurta Set",
+    name: "Two-piece Kurta Set",
     price: 2499,
     discount: 0,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.women,
     Category: { name: "Women" },
   },
   {
@@ -48,7 +49,7 @@ const fallbackProducts = [
     price: 1299,
     discount: 150,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.kids,
     Category: { name: "Kids" },
   },
   {
@@ -57,25 +58,25 @@ const fallbackProducts = [
     price: 1699,
     discount: 100,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1484519332611-516457305ff6?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.athleisure,
     Category: { name: "Athleisure" },
   },
   {
     id: "fallback-5",
-    name: "Premium Cotton T-Shirt",
+    name: "Premium Cotton Tee",
     price: 899,
     discount: 100,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.men,
     Category: { name: "Men" },
   },
   {
     id: "fallback-6",
-    name: "Elegant Saree Collection",
+    name: "Cotton Dress",
     price: 3499,
     discount: 300,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.women,
     Category: { name: "Women" },
   },
   {
@@ -84,16 +85,16 @@ const fallbackProducts = [
     price: 999,
     discount: 100,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1539533018447-63fc4c2f0f4e?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.kids,
     Category: { name: "Kids" },
   },
   {
     id: "fallback-8",
-    name: "Activewear Collection",
+    name: "Activewear Pullover",
     price: 1599,
     discount: 200,
     brand: "TN16",
-    thumbnail: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80",
+    thumbnail: categoryStock.athleisure,
     Category: { name: "Athleisure" },
   },
 ];
@@ -103,9 +104,9 @@ const FilterChip = ({ label, active, slug, navigate }) => {
     e.preventDefault();
     e.stopPropagation();
     if (slug) {
-      navigate(`/catalog?category=${slug}`);
+      navigate(`/?category=${encodeURIComponent(slug)}`);
     } else {
-      navigate("/catalog");
+      navigate("/");
     }
   };
 
@@ -113,10 +114,10 @@ const FilterChip = ({ label, active, slug, navigate }) => {
     <button
       type="button"
       onClick={handleClick}
-      className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm tracking-[0.3em] uppercase transition border cursor-pointer ${
+      className={`shrink-0 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm tracking-[0.2em] uppercase transition-all duration-300 ease-in-out border cursor-pointer ${
         active
-          ? "bg-primary text-white border-primary shadow-soft"
-          : "bg-transparent text-muted border-border hover:text-primary hover:border-primary hover:shadow-soft"
+          ? "bg-neutral-900 text-white border-neutral-900 font-semibold shadow-sm"
+          : "bg-white text-neutral-600 border-neutral-200 hover:text-neutral-900 hover:border-neutral-400"
       }`}
     >
       {label}
@@ -132,8 +133,8 @@ const coupons = [
 
 export default function Home() {
   const navigate = useNavigate();
-  const [activeCategorySlug, setActiveCategorySlug] = useState("");
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [searchParams] = useSearchParams();
+  const activeCategorySlug = searchParams.get("category") || "";
 
   const { data: categoryResponse, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
@@ -172,43 +173,31 @@ export default function Home() {
     !productsLoading && !products.length ? fallbackProducts : products;
   const segmentOrder = ["men", "women", "kids", "genz"];
 
-  useEffect(() => {
-    const timer = setInterval(
-      () => setActiveSlide((prev) => (prev + 1) % heroSlides.length),
-      6000
-    );
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentSlide = heroSlides[activeSlide];
-
   return (
-    <div className="bg-white text-dark w-full min-h-screen overflow-x-hidden">
-      {/* Hero carousel - Full Screen, Modern, Luxury, Fully Responsive, Not Square, Curved Edges */}
-      {/* AppLayout handles top padding for fixed header, add small responsive gap for visual spacing */}
-      <section className="w-full max-w-[98%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 pt-2 sm:pt-3 md:pt-4 relative overflow-hidden">
+    <div className="text-zinc-100 w-full min-h-screen overflow-x-hidden">
+      <section className="relative w-screen max-w-[100vw] left-1/2 -translate-x-1/2 px-0 pt-2 sm:pt-3 md:pt-4">
         <BannerCarousel page="home" position="hero" />
       </section>
 
-      {/* Offer slab */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {coupons.map((coupon) => (
           <div
             key={coupon.code}
-            className="card p-5 flex items-center justify-between"
+            className="rounded-2xl border border-neutral-200 bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-all duration-300 ease-in-out hover:border-neutral-300 hover:shadow-md shadow-sm"
           >
             <div>
-              <p className="pill text-muted">Privilege</p>
-              <p className="text-dark font-semibold mt-2">{coupon.text}</p>
+              <p className="pill text-neutral-500">Promos</p>
+              <p className="text-neutral-900 font-medium mt-2 text-sm sm:text-base">{coupon.text}</p>
             </div>
-            <span className="text-primary tracking-[0.4em] font-semibold">{coupon.code}</span>
+            <span className="text-neutral-700 tracking-[0.25em] text-xs font-bold shrink-0 font-mono">
+              {coupon.code}
+            </span>
           </div>
         ))}
       </section>
 
-      {/* Category filter pills */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
           <FilterChip
             label="All Fits"
             active={!activeCategorySlug}
@@ -242,33 +231,33 @@ export default function Home() {
       })}
 
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <p className="pill text-muted">Featured</p>
-            <h2 className="text-2xl sm:text-3xl font-display text-dark">
-              Featured cotton drops
+            <p className="pill text-zinc-500">Featured</p>
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-display text-white uppercase tracking-[0.04em]">
+              New drops
             </h2>
           </div>
           <Link
             to="/catalog"
-            className="text-xs uppercase tracking-[0.3em] text-muted hover:text-primary"
+            className="text-xs uppercase tracking-[0.25em] text-zinc-500 hover:text-sky-400 transition-colors duration-300 ease-in-out"
           >
-            View catalog →
+            View all →
           </Link>
         </div>
 
         {isError && (
-          <div className="p-4 bg-red-500/10 text-red-300 rounded-2xl border border-red-500/30">
+          <div className="p-4 bg-red-50 text-red-800 rounded-2xl border border-red-200 text-sm">
             Failed to load apparel picks. Please try again.
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
           {productsLoading
             ? new Array(8).fill(null).map((_, idx) => (
                 <div
                   key={idx}
-                  className="h-80 bg-light rounded-[32px] animate-pulse"
+                  className="h-72 sm:h-80 bg-zinc-800 rounded-2xl sm:rounded-3xl animate-pulse"
                 ></div>
               ))
             : displayProducts.map((product) => (
@@ -276,43 +265,47 @@ export default function Home() {
               ))}
 
           {!productsLoading && !products.length && (
-            <div className="col-span-full text-center text-muted">
-              Showing curated TN16 looks while live inventory syncs.
+            <div className="col-span-full text-center text-neutral-500 text-sm">
+              Showing curated picks while live inventory syncs.
             </div>
           )}
         </div>
       </section>
 
-      {/* Luxury Sections - Added below Signature Categories */}
       <EditorsPicksSection />
       <SeasonalCollectionsSection />
       <SpecialOffersSection />
       <CuratedLooksSection />
       <HeroOfferBanner />
 
-      <section className="max-w-7xl mx-auto px-4 pb-20 grid md:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <h3 className="text-xl font-display text-dark">Craft from Tirupur</h3>
-          <p className="text-muted mt-3 text-sm sm:text-base leading-relaxed">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-8 sm:p-10 transition-all duration-300 ease-in-out hover:border-white/20">
+          <h3 className="text-3xl sm:text-4xl font-display text-white uppercase tracking-[0.06em]">
+            Tirupur craft
+          </h3>
+          <p className="text-zinc-400 mt-4 text-sm sm:text-base leading-relaxed">
             Every TN16 weave passes breathable cotton checks, azo-free dyes and
             festival-ready finishing.
           </p>
-          <ul className="mt-5 space-y-2 text-sm text-dark/70">
-            <li>• Hypoallergenic cotton blends for humid climates</li>
-            <li>• Visual storytelling with atelier curation</li>
-            <li>• Rapid dispatch with eco packaging</li>
+          <ul className="mt-6 space-y-3 text-sm text-zinc-300 border-t border-white/10 pt-6">
+            <li className="flex gap-2"><span className="text-sky-400">—</span> Hypoallergenic blends for humid climates</li>
+            <li className="flex gap-2"><span className="text-sky-400">—</span> Atelier-grade curation</li>
+            <li className="flex gap-2"><span className="text-sky-400">—</span> Fast dispatch · eco packaging</li>
           </ul>
         </div>
-        <div className="rounded-[32px] border border-border bg-gradient-to-br from-primary/10 to-secondary/10 p-6 shadow-medium">
-          <h3 className="text-xl font-display text-dark">TN16 Tirupur Cotton</h3>
-          <p className="text-dark/80 mt-3 text-sm sm:text-base">
-            New arrivals drop every Thursday. Get early access as an insider.
+        <div className="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-zinc-900 to-black p-8 sm:p-10 transition-all duration-300 ease-in-out hover:border-sky-400/40 hover:shadow-glow">
+          <h3 className="text-3xl sm:text-4xl font-display text-white uppercase tracking-[0.06em]">
+            Insider access
+          </h3>
+          <p className="text-zinc-400 mt-4 text-sm sm:text-base">
+            New arrivals weekly. Join for drops and codes.
           </p>
           <button
+            type="button"
             onClick={() => navigate("/register")}
-            className="mt-6 bg-primary text-white px-5 py-3 rounded-full tracking-[0.3em] uppercase text-xs hover:bg-primary/90"
+            className="mt-8 w-full sm:w-auto bg-white text-black px-8 py-3 rounded-none tracking-[0.25em] uppercase text-xs font-bold hover:bg-sky-400 transition-all duration-300 ease-in-out active:scale-[0.98]"
           >
-            Join Insider Club
+            Join
           </button>
         </div>
       </section>
@@ -322,48 +315,81 @@ export default function Home() {
 
 function SegmentBand({ segment, flip }) {
   const navigate = useNavigate();
+  const tiles = segment.tiles?.filter(Boolean) || [];
+
   return (
-    <section className="max-w-7xl mx-auto px-4 py-8">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div
-        className={`card flex flex-col md:flex-row gap-4 md:gap-8 overflow-hidden ${
-          flip ? "md:flex-row-reverse" : ""
+        className={`card flex flex-col lg:flex-row gap-0 lg:gap-6 overflow-hidden transition-all duration-300 ease-out hover:shadow-md ${
+          flip ? "lg:flex-row-reverse" : ""
         }`}
       >
-        <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
-          <p className="pill text-muted">{segment.label} Edit</p>
-          <h3 className="text-2xl font-display mt-3 text-dark">{segment.description}</h3>
-          <div className="mt-6 flex flex-wrap gap-3">
+        <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center flex-1 min-w-0 bg-white">
+          <p className="pill text-neutral-500">{segment.label} edit</p>
+          <h3 className="text-2xl sm:text-3xl md:text-4xl font-display mt-4 text-neutral-900 uppercase tracking-[0.04em] leading-tight">
+            {segment.description}
+          </h3>
+          <div className="mt-8 flex flex-wrap gap-3">
             <button
+              type="button"
               onClick={() => navigate(`/catalog?segment=${segment.key}`)}
-              className="px-5 py-2 rounded-full bg-primary text-white text-sm tracking-[0.3em] hover:bg-primary/90"
+              className="px-6 py-3 rounded-full bg-neutral-900 text-white text-xs sm:text-sm tracking-[0.2em] font-bold uppercase hover:bg-neutral-800 transition-all duration-300 ease-in-out active:scale-[0.98]"
             >
               Shop {segment.label}
             </button>
             <button
+              type="button"
               onClick={() =>
                 navigate(`/catalog?segment=${segment.key}&view=studio`)
               }
-              className="px-5 py-2 rounded-full border border-border text-sm tracking-[0.2em] text-dark/70 hover:text-primary hover:border-primary"
+              className="px-6 py-3 rounded-full border border-neutral-300 text-xs sm:text-sm tracking-[0.15em] text-neutral-700 hover:text-neutral-900 hover:border-neutral-900 transition-all duration-300 ease-in-out bg-white"
             >
-              Explore looks
+              Explore
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 p-3 md:p-5 flex-1">
-          {segment.tiles?.map((tile, idx) => (
-            <div
-              key={tile || idx}
-              className="rounded-2xl overflow-hidden border border-border"
-            >
-              <img
-                src={tile || FALLBACK_IMAGES.default}
-                alt={`${segment.label} ${idx + 1}`}
-                className="w-full h-40 sm:h-48 object-cover"
-                loading="lazy"
-                onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
-              />
-            </div>
-          ))}
+        <div className="flex-1 min-h-[280px] sm:min-h-[320px] lg:min-h-0 p-3 sm:p-5 lg:max-w-[52%]">
+          <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full min-h-[260px] sm:min-h-[300px]">
+            {tiles[0] && (
+              <div className="row-span-2 rounded-xl overflow-hidden border border-white/10 shadow-medium group">
+                <img
+                  src={tiles[0]}
+                  alt={`${segment.label} spotlight`}
+                  className="w-full h-full object-cover min-h-[200px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width:1024px) 50vw, 400px"
+                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
+                />
+              </div>
+            )}
+            {tiles[1] && (
+              <div className="rounded-2xl overflow-hidden border border-black/[0.08] shadow-soft group">
+                <img
+                  src={tiles[1]}
+                  alt={`${segment.label} detail`}
+                  className="w-full h-full object-cover min-h-[120px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width:1024px) 50vw, 240px"
+                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
+                />
+              </div>
+            )}
+            {tiles[2] && (
+              <div className="rounded-xl overflow-hidden border border-neutral-200 shadow-sm group bg-neutral-50">
+                <img
+                  src={tiles[2]}
+                  alt={`${segment.label} look`}
+                  className="w-full h-full object-cover min-h-[120px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width:1024px) 50vw, 240px"
+                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>

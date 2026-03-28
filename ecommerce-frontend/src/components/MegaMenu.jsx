@@ -27,14 +27,21 @@ export default function MegaMenu({ segment }) {
             </ul>
           </div>
         ))}
-        <div className="hidden lg:flex flex-col justify-between rounded-2xl overflow-hidden border border-border shadow-soft">
+        <div className="hidden lg:flex flex-col justify-between rounded-2xl overflow-hidden border border-border shadow-soft bg-white">
           <div
-            className="h-32 bg-cover bg-center"
-            style={{ backgroundImage: `url(${segment.banner})` }}
-          />
-          <div className="p-4 bg-light">
+            className="h-32 bg-cover bg-center relative"
+            style={{ 
+              backgroundImage: `url(${segment.backgroundImage || segment.banner})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.15
+            }}
+          >
+            <div className="absolute inset-0 bg-white" />
+          </div>
+          <div className="p-4 bg-white">
             <p className="text-xs uppercase tracking-[0.4em] text-muted">
-              {segment.label} Drop
+              {segment.label} Collection
             </p>
             <p className="text-dark font-semibold mt-2">
               {segment.description}

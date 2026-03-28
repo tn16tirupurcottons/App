@@ -4,28 +4,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#36c1f8ff",
-        secondary: "#7c3aed",
-        accent: "#f59e0b",
-        dark: "#1a1818ff",
-        light: "#f5d6d6ff",
-        muted: "#3a3439ff",
-        border: "#ebeff5ff",
+        primary: "#171717",
+        secondary: "#404040",
+        accent: "#737373",
+        dark: "#171717",
+        light: "#f4f4f5",
+        muted: "#6b7280",
+        border: "rgba(15,23,42,0.1)",
       },
       fontFamily: {
-        display: ['"Playfair Display"', "serif"],
-        sans: ['"Inter"', "system-ui", "sans-serif"],
+        display: ['"Bebas Neue"', "Impact", "sans-serif"],
+        sans: ['"DM Sans"', "system-ui", "sans-serif"],
       },
       boxShadow: {
-        soft: "0 2px 8px rgba(0, 0, 0, 0.08)",
-        medium: "0 4px 16px rgba(0, 0, 0, 0.12)",
-        large: "0 8px 24px rgba(0, 0, 0, 0.16)",
+        soft: "0 4px 24px rgba(15, 23, 42, 0.06)",
+        medium: "0 12px 40px rgba(15, 23, 42, 0.08)",
+        large: "0 24px 64px rgba(15, 23, 42, 0.1)",
+        glow: "0 0 40px rgba(15, 23, 42, 0.06)",
       },
       letterSpacing: {
         wide: "0.1em",
+        display: "0.04em",
       },
-
-      // ADD THIS ↓↓↓
       container: {
         center: false,
         padding: "0rem",
