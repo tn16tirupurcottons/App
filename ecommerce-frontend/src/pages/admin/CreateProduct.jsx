@@ -26,6 +26,7 @@ export default function CreateProduct() {
   const toast = useToast();
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [imageUrlDraft, setImageUrlDraft] = useState("");
 
   const { data: categories = [] } = useQuery({
     queryKey: ["adminCategories"],
@@ -259,6 +260,32 @@ export default function CreateProduct() {
               maxImages={10}
               maxSizeMB={5}
             />
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:items-center">
+              <input
+                type="url"
+                value={imageUrlDraft}
+                onChange={(e) => setImageUrlDraft(e.target.value)}
+                placeholder="Or paste image URL and add"
+                className="flex-1 min-w-0 border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-neutral-900"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const u = imageUrlDraft.trim();
+                  if (!u) return;
+                  if (form.gallery.includes(u)) {
+                    toast.info("URL already in gallery");
+                    return;
+                  }
+                  handleChange("gallery", [...form.gallery, u]);
+                  setImageUrlDraft("");
+                  toast.success("Image URL added");
+                }}
+                className="shrink-0 rounded-full border-2 border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-900 hover:text-white transition"
+              >
+                Add URL
+              </button>
+            </div>
           </div>
 
           {/* Submit Button */}

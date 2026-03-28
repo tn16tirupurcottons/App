@@ -3,6 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import ProductList from "../components/ProductList";
 import { segmentThemes } from "../data/segments";
 import { normalizeCategorySlug } from "../utils/validation";
+import { useBrandTheme } from "../context/BrandThemeContext";
+import { resolveCategoryBannerUrl } from "../utils/imageAssetsConfig";
+import SafeImage from "../components/SafeImage";
 
 const segmentToCategorySlug = {
   men: "mens-shirts",
@@ -18,6 +21,7 @@ const segmentToCategorySlug = {
  * @param {string} [props.embeddedCategorySlug] — rare override
  */
 export default function Catalog({ embeddedSegment = null, embeddedCategorySlug = null }) {
+  const { imageAssets } = useBrandTheme();
   const [searchParams] = useSearchParams();
   const segment = embeddedSegment ?? searchParams.get("segment");
   const categorySlugFromSegment = segment ? segmentToCategorySlug[segment] : null;
@@ -44,20 +48,32 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
 
   const brand = import.meta.env.VITE_BRAND_NAME || "Studio";
 
-  const primaryBannerSrc = segmentTheme
-    ? segmentTheme.backgroundImage || segmentTheme.banner
-    : "";
+  const adminBannerOverride = segmentTheme
+    ? resolveCategoryBannerUrl(imageAssets, segmentTheme.key || segment)
+    : resolveCategoryBannerUrl(imageAssets, categoryFromUrl);
+
+  const primaryBannerSrc = adminBannerOverride
+    ? adminBannerOverride
+    : segmentTheme
+      ? segmentTheme.backgroundImage || segmentTheme.banner
+      : "";
   const alternateBannerSrc =
-    segmentTheme && segmentTheme.banner !== primaryBannerSrc ? segmentTheme.banner : "";
+    segmentTheme && !adminBannerOverride && segmentTheme.banner !== primaryBannerSrc
+      ? segmentTheme.banner
+      : "";
   const tileFallbackSrc = segmentTheme?.tiles?.[0] || "";
 
   const [bannerSrc, setBannerSrc] = useState(primaryBannerSrc);
 
   useEffect(() => {
+    if (adminBannerOverride) {
+      setBannerSrc(adminBannerOverride);
+      return;
+    }
     if (segmentTheme) {
       setBannerSrc(segmentTheme.backgroundImage || segmentTheme.banner);
     }
-  }, [segment, segmentTheme?.backgroundImage, segmentTheme?.banner, segmentTheme]);
+  }, [segment, adminBannerOverride, segmentTheme?.backgroundImage, segmentTheme?.banner, segmentTheme]);
 
   const titleSegmentLabel = segmentTheme?.label;
   const headingText = searchParams.get("query")
@@ -75,14 +91,11 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
           className="relative isolate overflow-hidden rounded-2xl border border-[#E5E7EB] shadow-sm min-h-[220px] sm:min-h-[280px] md:min-h-[320px]"
           aria-label={`${segmentTheme.label} collection banner`}
         >
-          <img
+          <SafeImage
             src={bannerSrc}
             alt=""
-            width={1600}
-            height={900}
-            decoding="async"
-            loading="lazy"
-            className="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none"
+            seed={segmentTheme?.key || "catalog-banner"}
+            className="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none min-h-[220px]"
             onError={() => {
               if (alternateBannerSrc && bannerSrc !== alternateBannerSrc) {
                 setBannerSrc(alternateBannerSrc);

@@ -38,6 +38,7 @@ const CreateProduct = lazy(() => import("./pages/admin/CreateProduct"));
 const EditProduct = lazy(() => import("./pages/admin/EditProduct"));
 const BannerManagement = lazy(() => import("./pages/admin/BannerManagement"));
 const BrandSettings = lazy(() => import("./pages/admin/BrandSettings"));
+const ImageManagement = lazy(() => import("./pages/admin/ImageManagement"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 
@@ -263,6 +264,17 @@ export default function App() {
                     <ProtectedRoute adminOnly={true}>
                       <Suspense fallback={<LoadingFallback />}>
                         <BrandSettings />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin/images"
+                  element={
+                    <ProtectedRoute adminOnly={true}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ImageManagement />
                       </Suspense>
                     </ProtectedRoute>
                   }

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
+import { normalizeImageAssets } from "../utils/imageAssetsConfig";
+import { DEFAULT_IMAGE_ASSETS } from "../config/imageAssets.defaults";
 
 /**
  * Default storefront: light, editorial. Dark API payloads are rejected for shell colors.
@@ -102,9 +104,12 @@ export function mergeStorefrontTheme(apiSettings) {
   };
 }
 
+const defaultImageAssetsNormalized = normalizeImageAssets(DEFAULT_IMAGE_ASSETS);
+
 const BrandThemeContext = createContext({
   theme: defaultLightTheme,
   themeMeta: { apiAccepted: false, reason: "initial", apiValid: false },
+  imageAssets: defaultImageAssetsNormalized,
   refreshTheme: () => {},
 });
 
@@ -145,6 +150,7 @@ const applyThemeToDocument = (theme) => {
 const BrandThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultLightTheme);
   const [themeMeta, setThemeMeta] = useState({ apiAccepted: false, reason: "initial", apiValid: false });
+  const [imageAssets, setImageAssets] = useState(defaultImageAssetsNormalized);
   const [loading, setLoading] = useState(false);
 
   const fetchTheme = async () => {
@@ -157,12 +163,15 @@ const BrandThemeProvider = ({ children }) => {
       setTheme(merged);
       setThemeMeta({ apiAccepted, reason, apiValid: Boolean(apiValid) });
       applyThemeToDocument(merged);
+      const tokens = incoming.themeTokens && typeof incoming.themeTokens === "object" ? incoming.themeTokens : {};
+      setImageAssets(normalizeImageAssets(tokens.imageAssets));
     } catch (err) {
       if (import.meta.env.DEV) {
         console.warn("Brand theme API unavailable, using default light:", err?.message || err);
       }
       setTheme(defaultLightTheme);
       setThemeMeta({ apiAccepted: false, reason: "network_error", apiValid: false });
+      setImageAssets(defaultImageAssetsNormalized);
       applyThemeToDocument(defaultLightTheme);
     } finally {
       setLoading(false);
@@ -177,7 +186,7 @@ const BrandThemeProvider = ({ children }) => {
   }, []);
 
   return (
-    <BrandThemeContext.Provider value={{ theme, themeMeta, refreshTheme: fetchTheme, loading }}>
+    <BrandThemeContext.Provider value={{ theme, themeMeta, imageAssets, refreshTheme: fetchTheme, loading }}>
       {children}
     </BrandThemeContext.Provider>
   );

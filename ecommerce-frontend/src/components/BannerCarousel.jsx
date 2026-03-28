@@ -7,7 +7,7 @@ import { useBrandTheme } from "../context/BrandThemeContext";
 import { heroBackdrop } from "../data/visualAssets";
 
 export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
-  const { theme } = useBrandTheme();
+  const { theme, imageAssets } = useBrandTheme();
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -107,11 +107,18 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
   const currentBanner =
     activeBanners && activeBanners[currentBannerIndex] ? activeBanners[currentBannerIndex] : null;
 
+  const adminHero = imageAssets?.home?.hero?.trim();
+  const promoExtras = [imageAssets?.home?.promo1, imageAssets?.home?.promo2].filter((u) => u && String(u).trim());
+
   const fallbackBanner = {
     title: "BUILT IN TIRUPUR. WORN EVERYWHERE.",
     subtitle: "Premium cotton essentials — bold fits, factory‑direct. No noise, just product.",
-    image: heroBackdrop,
-    images: [heroBackdrop],
+    image: adminHero || heroBackdrop,
+    images: adminHero
+      ? [adminHero, ...promoExtras].filter(Boolean)
+      : promoExtras.length
+        ? [...promoExtras, heroBackdrop]
+        : [heroBackdrop],
     ctaLabel: "Shop now",
     ctaLink: "/catalog",
   };
@@ -125,7 +132,7 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
         ? [displayBanner.image]
         : []) || [];
 
-  const currentImage = images[currentImageIndex] || images[0] || heroBackdrop;
+  const currentImage = images[currentImageIndex] || images[0] || adminHero || heroBackdrop;
   const showBannerDots = activeBanners.length > 1 && currentBanner;
   const showImageDots = images.length > 1;
   const totalDots = showBannerDots ? activeBanners.length : showImageDots ? images.length : 0;

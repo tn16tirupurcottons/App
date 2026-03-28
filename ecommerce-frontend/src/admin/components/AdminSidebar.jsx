@@ -7,6 +7,7 @@ import {
   X,
   LogOut,
   Image,
+  Images,
   Settings,
   Users,
   Shield,
@@ -28,6 +29,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { name: "Customers", icon: Users, path: "/admin/customers" },
     { name: "Team & Roles", icon: Shield, path: "/admin/users" },
     { name: "Banners", icon: Image, path: "/admin/banners" },
+    { name: "Images", icon: Images, path: "/admin/images" },
     { name: "Settings", icon: Settings, path: "/admin/brand-settings" },
   ];
 

@@ -2,9 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { categoryStock } from "../data/visualAssets";
-import { getCategoryImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { getCategoryImage } from "../utils/imageUtils";
+import { useBrandTheme } from "../context/BrandThemeContext";
+import { resolveCategoryBannerUrl } from "../utils/imageAssetsConfig";
+import SafeImage from "./SafeImage";
 
 export default function CategoryGrid({ categories = [], loading = false }) {
+  const { imageAssets } = useBrandTheme();
   const fallback = [
     { id: "mens-shirts", name: "Men", heroImage: categoryStock.men, slug: "mens-shirts" },
     { id: "women-kurtas", name: "Women", heroImage: categoryStock.women, slug: "women-kurtas" },
@@ -42,14 +46,14 @@ export default function CategoryGrid({ categories = [], loading = false }) {
               <div className="w-full flex-1 min-h-[220px] bg-zinc-900 animate-pulse" />
             ) : (
               <>
-                <img
-                  src={getCategoryImage(cat)}
+                <SafeImage
+                  src={
+                    resolveCategoryBannerUrl(imageAssets, cat?.slug) || getCategoryImage(cat)
+                  }
                   alt={cat?.name || "Category"}
+                  seed={cat?.slug || cat?.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
-                  loading="lazy"
-                  decoding="async"
                   sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 25vw"
-                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.category)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                 <div className="relative mt-auto p-6 text-white z-10 flex flex-col gap-4">
