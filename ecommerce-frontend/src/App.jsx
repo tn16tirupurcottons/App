@@ -12,6 +12,7 @@ import Cart from "./pages/Cart";
 import Catalog from "./pages/Catalog";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import OrdersHub from "./pages/OrdersHub";
 
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -64,6 +65,7 @@ export default function App() {
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/orders" element={<OrdersHub />} />
 
                 <Route
                   path="/wishlist"

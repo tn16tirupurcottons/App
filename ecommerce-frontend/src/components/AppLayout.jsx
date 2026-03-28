@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import Navbar from "./Navbar";
+import Header from "./Header";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
 import "../admin/admin.css";
@@ -27,11 +27,13 @@ export default function AppLayout() {
     <div
       className={`w-full min-h-screen flex flex-col ${pageBackground} text-neutral-900 overflow-x-hidden transition-colors duration-300`}
     >
-      <Navbar />
+      <Header />
       <main
         className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 ${
-          isHomePage ? "pt-[4.25rem] md:pt-20" : "pt-[4.25rem] md:pt-20"
-        } min-h-[calc(100vh-8rem)] sm:min-h-[calc(100vh-6rem)] pb-24 sm:pb-10 md:pb-12`}
+          isHomePage
+            ? "pt-[7.75rem] md:pt-[4.75rem] lg:pt-[6.75rem] xl:pt-[6.75rem]"
+            : "pt-[7.75rem] md:pt-[4.75rem] lg:pt-[6.75rem] xl:pt-[6.75rem]"
+        } min-h-[calc(100vh-8rem)] sm:min-h-[calc(100vh-6rem)] pb-24 sm:pb-10 md:pb-12 overflow-x-hidden`}
       >
         {isHomePage ? (
           <Outlet />

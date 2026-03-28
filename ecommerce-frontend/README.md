@@ -19,4 +19,4 @@ Key scripts:
 - `npm run lint` – ESLint + React rules
 - `npm run test` – Vitest + Testing Library smoke tests
 
-The app expects `VITE_API_BASE_URL` (default `http://localhost:5000/api`) and `VITE_STRIPE_PUBLIC_KEY` for checkout. Update `src/api/axiosClient.js` if you deploy the backend to a different domain.
+The app expects `VITE_API_BASE_URL` (use `/api` behind Nginx or the Vite dev proxy) and `VITE_STRIPE_PUBLIC_KEY` for checkout.

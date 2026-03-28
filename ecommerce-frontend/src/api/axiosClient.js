@@ -1,18 +1,14 @@
 import axios from "axios";
 
-// Base URL from environment variable or fallback
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
-const axiosClient = axios.create({
-  baseURL,
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach token if exists
-axiosClient.interceptors.request.use(
+API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("tn16_token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -21,8 +17,7 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Global response error handling
-axiosClient.interceptors.response.use(
+API.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
@@ -41,7 +36,6 @@ axiosClient.interceptors.response.use(
       console.error("API error:", status, rawMessage);
     }
 
-    // Preserve axios-like shape so callers using err.response?.data?.message still work
     const normalized = Object.assign(new Error(finalMessage), {
       isAxiosError: true,
       status,
@@ -55,4 +49,4 @@ axiosClient.interceptors.response.use(
   }
 );
 
-export default axiosClient;
+export default API;

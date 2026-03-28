@@ -128,7 +128,7 @@ export default function SearchBar({
   let suggestionIndex = 0;
 
   const shellClass =
-    "flex items-center gap-3 w-full rounded-full px-4 py-2.5 bg-[#FFFFFF] border border-[#E5E7EB] text-[#000000] focus-within:border-neutral-900 focus-within:ring-1 focus-within:ring-neutral-200 transition duration-200 ease-in-out";
+    "flex items-center gap-3 w-full rounded-full px-4 py-2.5 sm:py-3 bg-white border border-neutral-200 text-neutral-900 shadow-sm shadow-neutral-900/5 focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-900/10 focus-within:shadow-md transition-all duration-300 ease-out";
 
   return (
     <div className={`relative ${className}`} style={style}>
