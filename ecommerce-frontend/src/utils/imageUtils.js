@@ -3,15 +3,19 @@
  */
 import { categoryStock, heroBackdrop, stockPhoto } from "../data/visualAssets";
 
+/** Stable placeholder when CDN/API image fails (Lorem Picsum, royalty-free). */
+export const PICSUM_PRODUCT = (seed = "tnext") =>
+  `https://picsum.photos/seed/${encodeURIComponent(String(seed))}/600/800`;
+
 export const FALLBACK_IMAGES = {
-  product: categoryStock.men,
+  product: "https://picsum.photos/600/800",
   men: categoryStock.men,
   women: categoryStock.women,
   kids: categoryStock.kids,
   accessories: categoryStock.accessories,
   banner: heroBackdrop,
   category: stockPhoto("photo-1558769132-cb1aea458c5e", 1000),
-  default: categoryStock.men,
+  default: "https://picsum.photos/600/800",
 };
 
 export function getProductImage(product, category = null) {
@@ -46,7 +50,7 @@ export function getProductImage(product, category = null) {
   if (productName.includes("women") || brandName.includes("women")) return FALLBACK_IMAGES.women;
   if (productName.includes("kid") || brandName.includes("kid")) return FALLBACK_IMAGES.kids;
 
-  return FALLBACK_IMAGES.product;
+  return PICSUM_PRODUCT(product.id || product.name || "product");
 }
 
 export function getCategoryImage(category) {
@@ -98,10 +102,11 @@ export function isValidImageUrl(url) {
   }
 }
 
-export function handleImageError(event, fallbackUrl = FALLBACK_IMAGES.default) {
+export function handleImageError(event, fallbackUrl = FALLBACK_IMAGES.product) {
   if (event && event.target) {
-    if (event.target.src !== fallbackUrl) {
-      event.target.src = fallbackUrl;
+    const next = fallbackUrl || FALLBACK_IMAGES.product;
+    if (event.target.src !== next) {
+      event.target.src = next;
       event.target.onerror = null;
     }
   }

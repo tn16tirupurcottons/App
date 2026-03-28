@@ -7,9 +7,7 @@ import {
 } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { useToast } from "../components/Toast";
-import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
-
-const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
+import { getProductImage, handleImageError, PICSUM_PRODUCT } from "../utils/imageUtils";
 
 export default function Wishlist() {
   const toast = useToast();
@@ -137,7 +135,7 @@ function WishlistItem({ item, onRemove, isRemoving }) {
           alt={product?.name || "Wishlist product"}
           className="w-24 h-24 object-cover rounded-2xl border border-border"
           loading="lazy"
-          onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
+          onError={(e) => handleImageError(e, PICSUM_PRODUCT(product?.id || "wl"))}
         />
         <div className="flex-1 text-left">
           <p className="text-xs uppercase tracking-[0.4em] text-muted">

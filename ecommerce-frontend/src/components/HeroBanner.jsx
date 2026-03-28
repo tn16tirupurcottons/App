@@ -33,13 +33,13 @@ export default function HeroBanner() {
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center lg:justify-start items-stretch sm:items-center">
             <Link
-              to="/catalog?segment=men"
+              to="/men"
               className="w-full sm:w-auto text-center bg-neutral-900 hover:bg-neutral-800 text-white px-6 py-3.5 sm:py-3 rounded-full font-semibold text-sm shadow-soft transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] min-h-12 inline-flex items-center justify-center"
             >
               Shop menswear
             </Link>
             <Link
-              to="/catalog?segment=women"
+              to="/women"
               className="w-full sm:w-auto text-center bg-white text-neutral-900 px-6 py-3.5 sm:py-3 rounded-full font-semibold text-sm border border-neutral-200 hover:border-neutral-400 transition-all duration-300 ease-out min-h-12 inline-flex items-center justify-center"
             >
               Explore womenswear

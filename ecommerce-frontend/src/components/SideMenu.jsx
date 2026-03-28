@@ -17,9 +17,10 @@ const linkClass =
   "w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium text-neutral-800 rounded-xl hover:bg-neutral-100 transition-colors duration-200";
 
 const segmentLinks = [
-  { label: "Men", to: "/catalog?segment=men" },
-  { label: "Women", to: "/catalog?segment=women" },
-  { label: "Kids", to: "/catalog?segment=kids" },
+  { label: "Men", to: "/men" },
+  { label: "Women", to: "/women" },
+  { label: "Kids", to: "/kids" },
+  { label: "Accessories", to: "/accessories" },
 ];
 
 /**

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
+import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { FaSearch, FaTimes } from "react-icons/fa";
 
 export default function SearchBar({
@@ -116,7 +117,7 @@ export default function SearchBar({
     if (type === "product") {
       navigate(`/product/${item.id}`);
     } else if (type === "category") {
-      navigate(`/catalog?category=${item.slug}`);
+      navigate(getShopPathForCategorySlug(item.slug));
     } else {
       handleSearch(item.name || item);
     }

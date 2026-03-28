@@ -89,6 +89,34 @@ export const segmentThemes = {
       },
     ],
   },
+  accessories: {
+    key: "accessories",
+    label: "Accessories",
+    primary: "#1e293b",
+    accent: "#64748b",
+    banner: visuals.accessories.banner,
+    backgroundImage: visuals.accessories.backgroundImage,
+    description: "Belts, bags, caps & finishing touches for every fit.",
+    tiles: visuals.accessories.tiles,
+    menuColumns: [
+      {
+        title: "Wear",
+        links: ["Caps", "Scarves", "Socks", "Belts"],
+      },
+      {
+        title: "Carry",
+        links: ["Totes", "Crossbody", "Backpacks", "Pouches"],
+      },
+      {
+        title: "Jewellery",
+        links: ["Chains", "Studs", "Bracelets", "Rings"],
+      },
+      {
+        title: "Seasonal",
+        links: ["Gift sets", "Limited drops", "Care kits"],
+      },
+    ],
+  },
   genz: {
     key: "genz",
     label: "Dress & Fashion",

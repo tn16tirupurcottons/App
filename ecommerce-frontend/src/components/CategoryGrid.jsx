@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { categoryStock } from "../data/visualAssets";
 import { getCategoryImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 
@@ -33,7 +34,7 @@ export default function CategoryGrid({ categories = [], loading = false }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {(loading ? new Array(4).fill(null) : list).map((cat, idx) => (
           <Link
-            to={`/catalog?category=${cat?.slug || cat?.id}`}
+            to={getShopPathForCategorySlug(cat?.slug || cat?.id)}
             key={cat?.id || idx}
             className="group relative overflow-hidden border border-white/10 aspect-[4/5] flex flex-col bg-zinc-950 transition-all duration-300 ease-in-out hover:border-sky-400/40 hover:shadow-[0_24px_60px_rgba(0,0,0,0.6)] hover:-translate-y-1"
           >

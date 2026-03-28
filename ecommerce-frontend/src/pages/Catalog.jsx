@@ -9,24 +9,38 @@ const segmentToCategorySlug = {
   women: "women-kurtas",
   kids: "kids-wear",
   genz: "genz",
+  accessories: "accessories",
 };
 
-export default function Catalog() {
+/**
+ * @param {object} props
+ * @param {string} [props.embeddedSegment] — from /men, /women, … (overrides URL)
+ * @param {string} [props.embeddedCategorySlug] — rare override
+ */
+export default function Catalog({ embeddedSegment = null, embeddedCategorySlug = null }) {
   const [searchParams] = useSearchParams();
-  const segment = searchParams.get("segment");
+  const segment = embeddedSegment ?? searchParams.get("segment");
   const categorySlugFromSegment = segment ? segmentToCategorySlug[segment] : null;
+
+  const categoryFromUrl = normalizeCategorySlug(
+    embeddedCategorySlug ?? searchParams.get("category") ?? ""
+  );
 
   const initialQuery = useMemo(
     () => ({
       search: searchParams.get("query") || "",
       categorySlug: normalizeCategorySlug(
-        searchParams.get("category") || categorySlugFromSegment || ""
+        categoryFromUrl || categorySlugFromSegment || ""
       ),
     }),
-    [searchParams, categorySlugFromSegment]
+    [searchParams, categorySlugFromSegment, categoryFromUrl]
   );
 
-  const segmentTheme = segment ? segmentThemes[segment] : null;
+  const segmentTheme = useMemo(() => {
+    if (segment && segmentThemes[segment]) return segmentThemes[segment];
+    if (!segment && categoryFromUrl === "accessories") return segmentThemes.accessories;
+    return null;
+  }, [segment, categoryFromUrl]);
 
   const brand = import.meta.env.VITE_BRAND_NAME || "Studio";
 
@@ -43,7 +57,16 @@ export default function Catalog() {
     if (segmentTheme) {
       setBannerSrc(segmentTheme.backgroundImage || segmentTheme.banner);
     }
-  }, [segment, segmentTheme?.backgroundImage, segmentTheme?.banner]);
+  }, [segment, segmentTheme?.backgroundImage, segmentTheme?.banner, segmentTheme]);
+
+  const titleSegmentLabel = segmentTheme?.label;
+  const headingText = searchParams.get("query")
+    ? `Results · “${searchParams.get("query")}”`
+    : titleSegmentLabel
+      ? `Shop ${titleSegmentLabel}`
+      : categoryFromUrl
+        ? `Shop ${categoryFromUrl.replace(/-/g, " ")}`
+        : "All products";
 
   return (
     <div className="w-full space-y-12 sm:space-y-16 text-neutral-900">
@@ -88,14 +111,10 @@ export default function Catalog() {
 
       <div>
         <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
-          {segmentTheme ? `${segmentTheme.label}` : "Catalog"}
+          {titleSegmentLabel || (categoryFromUrl ? categoryFromUrl.replace(/-/g, " ") : "Catalog")}
         </p>
         <h2 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 mt-2">
-          {searchParams.get("query")
-            ? `Results · “${searchParams.get("query")}”`
-            : segmentTheme
-              ? `Shop ${segmentTheme.label}`
-              : "All products"}
+          {headingText}
         </h2>
         <p className="text-neutral-600 mt-4 text-sm max-w-2xl leading-relaxed">
           {searchParams.get("query")

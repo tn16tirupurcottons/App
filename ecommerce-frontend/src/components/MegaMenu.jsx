@@ -1,4 +1,5 @@
 import React from "react";
+import { getSegmentShopPath } from "../utils/catalogRoutes";
 
 export default function MegaMenu({ segment }) {
   if (!segment) return null;
@@ -16,12 +17,9 @@ export default function MegaMenu({ segment }) {
             <ul className="space-y-2">
               {col.links.map((link) => (
                 <li key={link}>
-                  <a
-                    href={`/catalog?segment=${segment.key}`}
-                    className="hover:text-primary"
-                  >
+                  <Link to={getSegmentShopPath(segment.key)} className="hover:text-primary">
                     {link}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

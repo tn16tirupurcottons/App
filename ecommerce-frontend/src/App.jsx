@@ -63,6 +63,10 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/men" element={<Catalog embeddedSegment="men" />} />
+                <Route path="/women" element={<Catalog embeddedSegment="women" />} />
+                <Route path="/kids" element={<Catalog embeddedSegment="kids" />} />
+                <Route path="/accessories" element={<Catalog embeddedSegment="accessories" />} />
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/orders" element={<OrdersHub />} />

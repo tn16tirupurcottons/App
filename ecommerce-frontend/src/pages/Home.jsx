@@ -5,6 +5,7 @@ import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
 import BannerCarousel from "../components/BannerCarousel";
 import axiosClient from "../api/axiosClient";
+import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { segmentThemes } from "../data/segments";
 import { categoryStock } from "../data/visualAssets";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
@@ -103,11 +104,7 @@ const FilterChip = ({ label, active, slug, navigate }) => {
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (slug) {
-      navigate(`/catalog?category=${encodeURIComponent(slug)}`);
-    } else {
-      navigate("/catalog");
-    }
+    navigate(slug ? getShopPathForCategorySlug(slug) : "/catalog");
   };
 
   return (
@@ -332,7 +329,17 @@ function SegmentBand({ segment, flip }) {
           <div className="mt-8 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => navigate(`/catalog?segment=${segment.key}`)}
+              onClick={() =>
+                navigate(
+                  segment.key === "men"
+                    ? "/men"
+                    : segment.key === "women"
+                      ? "/women"
+                      : segment.key === "kids"
+                        ? "/kids"
+                        : `/catalog?segment=${segment.key}`
+                )
+              }
               className="px-6 py-3 rounded-full bg-neutral-900 text-white text-xs sm:text-sm tracking-[0.2em] font-bold uppercase hover:bg-neutral-800 transition-all duration-300 ease-in-out active:scale-[0.98]"
             >
               Shop {segment.label}

@@ -5,7 +5,7 @@ import { FaHeart } from "react-icons/fa";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "./Toast";
-import { getProductImage, handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { getProductImage, PICSUM_PRODUCT } from "../utils/imageUtils";
 import { isUuid } from "../utils/validation";
 
 export default function ProductCard({ product }) {
@@ -25,7 +25,7 @@ export default function ProductCard({ product }) {
       : 0;
 
   useEffect(() => {
-    const validImage = image || FALLBACK_IMAGES.product;
+    const validImage = image || PICSUM_PRODUCT(product?.id || "card");
     setCurrentImage(validImage);
     setImageError(false);
   }, [image, product?.id]);
@@ -79,7 +79,7 @@ export default function ProductCard({ product }) {
           />
         </button>
         <img
-          src={currentImage || image || FALLBACK_IMAGES.product}
+          src={currentImage || image || PICSUM_PRODUCT(product?.id || "card")}
           alt={product.name || "Product"}
           className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-[1.06]"
           loading="lazy"
@@ -88,7 +88,7 @@ export default function ProductCard({ product }) {
           onError={(e) => {
             if (!imageError) {
               setImageError(true);
-              const fallback = FALLBACK_IMAGES.product;
+              const fallback = PICSUM_PRODUCT(product?.id || "fallback");
               setCurrentImage(fallback);
               e.target.src = fallback;
               e.target.onerror = null;

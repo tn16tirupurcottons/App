@@ -65,6 +65,15 @@ export const segmentVisuals = {
       stockPhoto("photo-1558769132-cb1aea458c5e", 900, 78),
     ],
   },
+  accessories: {
+    banner: stockPhoto("photo-1558769132-cb1aea458c5e", 1600, 80),
+    backgroundImage: stockPhoto("photo-1558769132-cb1aea458c5e", 1600, 80),
+    tiles: [
+      stockPhoto("photo-1558769132-cb1aea458c5e", 900, 78),
+      stockPhoto("photo-1523381210434-271e8be1f52b", 900, 78),
+      stockPhoto("photo-1445205170230-053b83016050", 900, 78),
+    ],
+  },
 };
 
 /** Hero carousel slides when not using CMS banners */
