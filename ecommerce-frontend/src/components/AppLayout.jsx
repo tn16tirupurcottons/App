@@ -31,8 +31,8 @@ export default function AppLayout() {
       <main
         className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 ${
           isHomePage
-            ? "pt-[7.75rem] md:pt-[4.75rem] lg:pt-[6.75rem] xl:pt-[6.75rem]"
-            : "pt-[7.75rem] md:pt-[4.75rem] lg:pt-[6.75rem] xl:pt-[6.75rem]"
+            ? "pt-[7.75rem] md:pt-[4.25rem] lg:pt-[4.25rem]"
+            : "pt-[7.75rem] md:pt-[4.25rem] lg:pt-[4.25rem]"
         } min-h-[calc(100vh-8rem)] sm:min-h-[calc(100vh-6rem)] pb-24 sm:pb-10 md:pb-12 overflow-x-hidden`}
       >
         {isHomePage ? (
