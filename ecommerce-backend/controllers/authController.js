@@ -336,7 +336,7 @@ export const sendOtp = async (req, res, next) => {
     const rawEmail = method === "email" ? identifier : emailFromBody;
     const normalizedEmail = normalizeEmail(rawEmail);
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address" });
+      return res.status(400).json({ message: "Invalid email address" });
     }
 
     // Mobile validation (mock only; no paid SMS).
@@ -352,6 +352,12 @@ export const sendOtp = async (req, res, next) => {
         return res.status(400).json({ message: "Invalid mobile number" });
       }
       mobileDigits = cleaned;
+    }
+
+    // OTP send gatekeeper: block already-registered emails before OTP generation.
+    const existingUser = await User.findOne({ where: { email: normalizedEmail } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     const key = otpEmailKey(normalizedEmail); // rate-limit + verify attempts per email
@@ -503,7 +509,7 @@ export const sendOtp = async (req, res, next) => {
 </html>`;
 
     try {
-      console.log("OTP will be sent to:", normalizedEmail);
+      console.log("OTP sending to:", normalizedEmail);
       await transporter.verify();
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -515,7 +521,7 @@ export const sendOtp = async (req, res, next) => {
     } catch (mailError) {
       console.error("MAIL ERROR:", mailError);
       return res.status(500).json({
-        message: "Failed to send OTP. Try again later.",
+        message: "Failed to send OTP",
         error: mailError.message,
       });
     }
@@ -524,7 +530,7 @@ export const sendOtp = async (req, res, next) => {
   } catch (err) {
     console.error("OTP ERROR:", err);
     return res.status(500).json({
-      message: "Failed to send OTP. Try again later.",
+      message: "Failed to send OTP",
       error: err.message,
     });
   }
@@ -540,7 +546,7 @@ export const verifyOtpAndRegister = async (req, res, next) => {
 
     const normalizedEmail = normalizeEmail(email);
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address" });
+      return res.status(400).json({ message: "Invalid email address" });
     }
 
     const otpInput = String(otp).trim();

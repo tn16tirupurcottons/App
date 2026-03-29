@@ -10,6 +10,22 @@ const toPublicUser = (user) => ({
   joinedAt: user.createdAt,
 });
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const checkEmailAvailability = async (req, res, next) => {
+  try {
+    const normalizedEmail = String(req.query?.email || "").trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
+    const existing = await User.findOne({ where: { email: normalizedEmail } });
+    return res.json({ exists: Boolean(existing) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const getMe = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id);
@@ -28,9 +44,8 @@ export const updateProfile = async (req, res, next) => {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address" });
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Invalid email address" });
     }
 
     const duplicate = await User.findOne({ where: { email: normalizedEmail } });

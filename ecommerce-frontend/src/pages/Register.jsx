@@ -22,6 +22,8 @@ export default function Register() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [verificationError, setVerificationError] = useState("");
   const [otpRetryAfter, setOtpRetryAfter] = useState(0);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
   const COOLDOWN_KEY = "otpCooldownUntil";
   const otpInputRef = useRef(null);
 
@@ -116,6 +118,11 @@ export default function Register() {
           setSubmitting(false);
           return;
         }
+        if (emailExists) {
+          setErrors({ email: "Email already registered" });
+          setSubmitting(false);
+          return;
+        }
 
         // Production-grade: OTP delivery is via free email (mobile is mock-only).
         const method = "email";
@@ -155,9 +162,8 @@ export default function Register() {
         const retryAfter = Number(err.response?.data?.retryAfter || 0);
         if (retryAfter > 0) startCooldown(retryAfter);
         setErrors({
-          general: err.response?.data?.message || err.message || "Failed to send OTP. Please try again.",
+          general: err.response?.data?.message || err.message || "Failed to send OTP",
         });
-        toast.error(err.response?.data?.message || err.message || "Failed to send OTP");
       } finally {
         setOtpLoading(false);
         setSubmitting(false);
@@ -251,7 +257,7 @@ export default function Register() {
       console.log("API error:", err.response?.data);
       const retryAfter = Number(err.response?.data?.retryAfter || 0);
       if (retryAfter > 0) startCooldown(retryAfter);
-      toast.error(err.response?.data?.message || err.message || "Failed to resend OTP");
+      setVerificationError(err.response?.data?.message || err.message || "Failed to resend OTP");
     } finally {
       setOtpLoading(false);
     }
@@ -262,6 +268,35 @@ export default function Register() {
     setOtpSent(false);
     setVerificationError("");
     otpFormik.resetForm();
+  };
+
+  const handleEmailBlur = async (e) => {
+    detailsFormik.handleBlur(e);
+    const normalizedEmail = String(detailsFormik.values.email || "")
+      .trim()
+      .toLowerCase();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setEmailExists(false);
+      return;
+    }
+    try {
+      setEmailChecking(true);
+      const res = await axiosClient.get(
+        `/users/check-email?email=${encodeURIComponent(normalizedEmail)}`
+      );
+      const exists = Boolean(res.data?.exists);
+      setEmailExists(exists);
+      if (exists) {
+        detailsFormik.setFieldError("email", "Email already registered");
+      } else if (detailsFormik.errors.email === "Email already registered") {
+        detailsFormik.setFieldError("email", undefined);
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || "Unable to verify email";
+      detailsFormik.setFieldError("email", msg);
+    } finally {
+      setEmailChecking(false);
+    }
   };
 
   return (
@@ -288,7 +323,7 @@ export default function Register() {
                     name="name"
                     value={detailsFormik.values.name}
                     onChange={detailsFormik.handleChange}
-                    onBlur={detailsFormik.handleBlur}
+                    onBlur={handleEmailBlur}
                     className="w-full border border-border bg-white rounded-full px-4 py-3 text-dark focus:outline-none focus:border-primary"
                     placeholder="Your full name"
                   />
@@ -344,6 +379,9 @@ export default function Register() {
                 {detailsFormik.touched.email && detailsFormik.errors.email && (
                   <p className="text-red-600 text-xs mt-1">{detailsFormik.errors.email}</p>
                 )}
+                {!detailsFormik.errors.email && emailChecking ? (
+                  <p className="text-xs mt-1 text-neutral-500">Checking email...</p>
+                ) : null}
               </div>
               <div>
                 <label className="text-sm font-semibold mb-2 block">
@@ -383,7 +421,13 @@ export default function Register() {
 
               <button
                 type="submit"
-                disabled={detailsFormik.isSubmitting || otpLoading || otpRetryAfter > 0}
+                disabled={
+                  detailsFormik.isSubmitting ||
+                  otpLoading ||
+                  otpRetryAfter > 0 ||
+                  emailChecking ||
+                  emailExists
+                }
                 className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
               >
                 {otpLoading
