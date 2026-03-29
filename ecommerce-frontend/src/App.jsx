@@ -74,6 +74,7 @@ export default function App() {
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/orders" element={<OrdersHub />} />
+                <Route path="/track-order" element={<OrdersHub />} />
 
                 <Route
                   path="/profile"

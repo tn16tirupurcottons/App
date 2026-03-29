@@ -13,6 +13,26 @@ import { sendPasswordResetNotice, sendSMS } from "../services/notificationServic
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
 const REFRESH_COOKIE = "tn16_refresh_token";
+const OTP_EXPIRY_MS = 10 * 60 * 1000;
+const OTP_COOLDOWN_MS = 60 * 1000;
+const OTP_WINDOW_MS = 10 * 60 * 1000;
+const OTP_MAX_REQUESTS_PER_WINDOW = 5;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;
+
+// In-memory OTP limiter state (per identifier + method).
+// key -> { lastOtpSentAt: number, requestCount: number, windowStart: number }
+const otpRequestState = new Map();
+// key -> { attempts: number, expiresAt: number }
+const otpVerifyState = new Map();
+
+const normalizeOtpIdentifier = (identifier, method) => {
+  const raw = String(identifier || "").trim();
+  if (method === "email") return raw.toLowerCase();
+  return raw.replace(/^\+91/, "").replace(/\D/g, "");
+};
+
+const otpStateKey = (identifier, method) =>
+  `${method}:${normalizeOtpIdentifier(identifier, method)}`;
 
 export const toPublicUser = (user) => ({
   id: user.id,
@@ -304,46 +324,58 @@ export const sendOtp = async (req, res, next) => {
       return res.status(400).json({ message: "method must be 'email' or 'mobile'" });
     }
 
-    const now = new Date();
-    const otpWindowMs = 10 * 60 * 1000; // 10 minutes
-    const otpResendCooldownMs = 60 * 1000; // 60 seconds
+    const normalizedIdentifier = normalizeOtpIdentifier(identifier, method);
+    const key = otpStateKey(normalizedIdentifier, method);
+    const nowMs = Date.now();
+    let state = otpRequestState.get(key) || {
+      lastOtpSentAt: 0,
+      requestCount: 0,
+      windowStart: nowMs,
+    };
 
-    // Rate limit: max 5 OTP requests per identifier (email) per 10 minutes.
-    // (Requirement: per email. We still key by `identifier` to cover both email + mobile safely.)
-    const rateLimitWindowStart = new Date(Date.now() - otpWindowMs);
-    const requestsCount = await OtpToken.count({
-      where: {
-        identifier,
-        method,
-        createdAt: { [Op.gte]: rateLimitWindowStart },
-      },
-    });
-    if (requestsCount >= 5) {
+    // Reset request window if 10 minutes passed.
+    if (nowMs - state.windowStart > OTP_WINDOW_MS) {
+      state = {
+        lastOtpSentAt: 0,
+        requestCount: 0,
+        windowStart: nowMs,
+      };
+    }
+
+    // Strict resend cooldown based on LAST successful OTP sent timestamp.
+    if (state.lastOtpSentAt && nowMs - state.lastOtpSentAt < OTP_COOLDOWN_MS) {
+      const retryAfter = Math.ceil(
+        (OTP_COOLDOWN_MS - (nowMs - state.lastOtpSentAt)) / 1000
+      );
+      console.log("[otp-cooldown]", {
+        identifier: normalizedIdentifier,
+        lastOtpSentAt: new Date(state.lastOtpSentAt).toISOString(),
+        now: new Date(nowMs).toISOString(),
+        retryAfter,
+      });
       return res.status(429).json({
-        message: "Too many OTP requests. Please try again later.",
+        message: "Too many OTP requests. Please wait 60 seconds.",
+        retryAfter,
       });
     }
 
-    // Resend cooldown: prevent re-sending within 60 seconds for the same identifier.
-    const lastOtp = await OtpToken.findOne({
-      where: { identifier, method },
-      order: [["createdAt", "DESC"]],
-    });
-    if (lastOtp?.createdAt) {
-      const elapsed = Date.now() - lastOtp.createdAt.getTime();
-      if (elapsed < otpResendCooldownMs) {
-        const secondsLeft = Math.ceil((otpResendCooldownMs - elapsed) / 1000);
-        return res.status(429).json({
-          message: `Please wait ${secondsLeft}s before requesting a new OTP.`,
-        });
-      }
+    // Max requests per rolling 10 min window.
+    if (state.requestCount >= OTP_MAX_REQUESTS_PER_WINDOW) {
+      const retryAfter = Math.max(
+        1,
+        Math.ceil((OTP_WINDOW_MS - (nowMs - state.windowStart)) / 1000)
+      );
+      return res.status(429).json({
+        message: "Too many OTP requests. Try again after some time.",
+        retryAfter,
+      });
     }
 
     // Generate 6-digit OTP (never store plaintext).
     const otp = Math.floor(100000 + Math.random() * 900000)
       .toString()
       .padStart(6, "0");
-    const expiresAt = new Date(Date.now() + otpWindowMs);
+    const expiresAt = new Date(nowMs + OTP_EXPIRY_MS);
 
     // SHA256 hash, then truncate to fit existing DB column size.
     const hashedOtpFull = crypto.createHash("sha256").update(otp).digest("hex");
@@ -351,16 +383,15 @@ export const sendOtp = async (req, res, next) => {
 
     // Expire older OTPs (keep records for rate limit window).
     await OtpToken.update(
-      { expiresAt: now },
-      { where: { identifier, method, verified: false } }
+      { expiresAt: new Date(nowMs) },
+      { where: { identifier: normalizedIdentifier, method, verified: false } }
     );
 
     await OtpToken.create({
       hashedOtp,
-      identifier,
+      identifier: normalizedIdentifier,
       method,
       expiresAt,
-      failedAttempts: 0,
       verified: false,
     });
 
@@ -368,43 +399,40 @@ export const sendOtp = async (req, res, next) => {
     if (method === "email") {
       const { EMAIL_USER, EMAIL_PASS } = process.env;
       if (!EMAIL_USER || !EMAIL_PASS) {
-        return res
-          .status(500)
-          .json({ message: "Email service not configured. Please contact support." });
+        throw new Error("Email service not configured");
       }
 
       const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
+        service: "gmail",
         auth: {
           user: EMAIL_USER,
           pass: EMAIL_PASS,
         },
+        tls: {
+          // Dev TLS interoperability fix; keep strict in production.
+          rejectUnauthorized: process.env.NODE_ENV === "production",
+        },
       });
 
       try {
+        console.log("Sending OTP to:", normalizedIdentifier);
+        await transporter.verify();
         await transporter.sendMail({
           from: EMAIL_USER,
-          to: identifier,
-          subject: "Your TNEXT™ Registration OTP",
-          html: `
-            <div style="font-family: Arial, sans-serif; color: #111827;">
-              <h2>Your OTP for TNEXT™ Registration</h2>
-              <p>Your OTP is: <strong style="font-size:24px;letter-spacing:4px">${otp}</strong></p>
-              <p>This OTP will expire in 10 minutes.</p>
-              <p>If you didn't request this, please ignore this email.</p>
-            </div>
-          `,
+          to: normalizedIdentifier,
+          subject: "Your OTP",
+          text: `Your OTP is ${otp}`,
         });
-      } catch (sendError) {
+      } catch (mailError) {
+        console.error("MAIL ERROR:", mailError);
         return res.status(500).json({
-          message: "Failed to send OTP. Please try again later or contact support.",
+          message: "Email sending failed",
+          error: mailError.message,
         });
       }
     } else {
       const sent = await sendSMS({
-        to: identifier,
+        to: normalizedIdentifier,
         body: `Your TNEXT™ registration OTP is ${otp}. Valid for 10 minutes.`,
       });
       if (!sent) {
@@ -414,10 +442,23 @@ export const sendOtp = async (req, res, next) => {
       }
     }
 
+    // Update limiter state only on successful send.
+    state.lastOtpSentAt = nowMs;
+    state.requestCount += 1;
+    if (!state.windowStart) state.windowStart = nowMs;
+    otpRequestState.set(key, state);
+
+    // Reset verify-attempt state for latest OTP.
+    otpVerifyState.set(key, { attempts: 0, expiresAt: nowMs + OTP_EXPIRY_MS });
+
     // Never return OTP in API responses.
-    res.json({ success: true, message: "OTP sent successfully." });
+    res.json({ success: true, message: "OTP sent successfully.", retryAfter: 60 });
   } catch (err) {
-    next(err);
+    console.error("OTP ERROR:", err);
+    return res.status(500).json({
+      message: "Failed to send OTP",
+      error: err.message,
+    });
   }
 };
 
@@ -434,12 +475,15 @@ export const verifyOtpAndRegister = async (req, res, next) => {
     }
 
     const method = identifier.includes("@") ? "email" : "mobile";
+    const normalizedIdentifier = normalizeOtpIdentifier(identifier, method);
+    const key = otpStateKey(normalizedIdentifier, method);
     const now = new Date();
+    const nowMs = now.getTime();
 
     // Load most recent active OTP token.
     const otpRecord = await OtpToken.findOne({
       where: {
-        identifier,
+        identifier: normalizedIdentifier,
         method,
         verified: false,
         expiresAt: { [Op.gt]: now },
@@ -455,25 +499,35 @@ export const verifyOtpAndRegister = async (req, res, next) => {
     const hashedOtpFull = crypto.createHash("sha256").update(otpInput).digest("hex");
     const hashedOtp = hashedOtpFull.slice(0, 6);
 
-    if (otpRecord.hashedOtp !== hashedOtp) {
-      const nextFailed = (otpRecord.failedAttempts || 0) + 1;
-      otpRecord.failedAttempts = nextFailed;
-      if (nextFailed >= 5) {
-        otpRecord.expiresAt = now;
-      }
-      await otpRecord.save();
+    let verifyState = otpVerifyState.get(key) || {
+      attempts: 0,
+      expiresAt: otpRecord.expiresAt.getTime(),
+    };
+    if (nowMs > verifyState.expiresAt) {
+      verifyState = { attempts: 0, expiresAt: otpRecord.expiresAt.getTime() };
+    }
+    if (verifyState.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+      return res.status(429).json({
+        message: "Too many invalid OTP attempts. Please request a new OTP.",
+      });
+    }
 
-      if (nextFailed >= 5) {
+    if (otpRecord.hashedOtp !== hashedOtp) {
+      verifyState.attempts += 1;
+      otpVerifyState.set(key, verifyState);
+      if (verifyState.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+        otpRecord.expiresAt = now;
+        await otpRecord.save();
         return res.status(429).json({
           message: "Too many invalid OTP attempts. Please request a new OTP.",
         });
       }
-
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     // Delete OTP after successful verification.
     await otpRecord.destroy();
+    otpVerifyState.delete(key);
 
     // Check if email already exists (enforce one account per email)
     const emailExists = await User.findOne({ where: { email } });

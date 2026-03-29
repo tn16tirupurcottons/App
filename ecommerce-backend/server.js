@@ -8,10 +8,17 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import { execSync } from "child_process";
+import nodemailer from "nodemailer";
 dotenv.config();
+process.on("uncaughtException", (error) => {
+  console.error("UNCAUGHT EXCEPTION:", error);
+});
+process.on("unhandledRejection", (error) => {
+  console.error("UNHANDLED REJECTION:", error);
+});
 
 // Database Sync
-import { syncDB } from "./models/index.js";
+import { syncDB, sequelize } from "./models/index.js";
 
 // User Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -19,6 +26,7 @@ import productRoutes from "./routes/productRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import usersRoutes from "./routes/usersRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import themeRoutes from "./routes/themeRoutes.js";
@@ -132,9 +140,7 @@ app.use(sanitizeInput);
 // API REQUEST LOGGING (method + URL for /api/auth — helps debug 405/proxy issues)
 // ---------------------------
 app.use((req, _res, next) => {
-  if (req.originalUrl.startsWith("/api/auth")) {
-    console.log(`[auth] ${req.method} ${req.originalUrl}`);
-  }
+  console.log("Incoming request:", req.method, req.url);
   next();
 });
 
@@ -172,6 +178,60 @@ app.use("/api/auth/request-password-reset", authLimiter);
 app.get("/", (req, res) => {
   res.status(200).json({ message: "📦 E-commerce backend running..." });
 });
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ success: true, message: "Backend is running" });
+});
+app.get("/api/health/deps", async (_req, res) => {
+  let db = "fail";
+  let smtp = "fail";
+  let error = null;
+
+  // DB check
+  try {
+    await sequelize.authenticate();
+    db = "ok";
+  } catch (dbError) {
+    error = dbError?.message || String(dbError);
+  }
+
+  // SMTP check (verify only, no real email)
+  try {
+    const { EMAIL_USER, EMAIL_PASS } = process.env;
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      throw new Error("Email service not configured");
+    }
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: process.env.NODE_ENV === "production",
+      },
+    });
+    await transporter.verify();
+    smtp = "ok";
+  } catch (smtpError) {
+    console.error("SMTP VERIFY ERROR:", smtpError);
+    error = error || smtpError?.message || String(smtpError);
+  }
+
+  if (db === "ok" && smtp === "ok") {
+    return res.status(200).json({
+      success: true,
+      db,
+      smtp,
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    db,
+    smtp,
+    error,
+  });
+});
 
 // ---------------------------
 // USER ROUTES
@@ -181,6 +241,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/users", usersRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/theme", themeRoutes);
@@ -299,19 +360,20 @@ const freePortIfInUse = (port) => {
   });
 };
 
-syncDB()
-  .then(async () => {
+const startServer = async () => {
+  try {
+    await syncDB();
     console.log("✅ Database synced successfully!");
     await bootstrapCatalog().catch((error) =>
       console.error("❌ Catalog bootstrap failed:", error?.message || error)
     );
-    
-    // Try to free port before starting
+
     await freePortIfInUse(PORT);
-    
-    const server = app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
+
+    const server = app.listen(PORT, () => {
+      console.log("Server running on port", PORT);
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
     server.on("error", (err) => {
       if (err.code === "EADDRINUSE") {
         console.error(`\n❌ Port ${PORT} is still in use after cleanup attempt.`);
@@ -322,7 +384,9 @@ syncDB()
         throw err;
       }
     });
-  })
-  .catch((err) => {
-    console.error("❌ Database Sync Error:", err);
-  });
+  } catch (err) {
+    console.error("❌ Server startup error:", err);
+  }
+};
+
+startServer();

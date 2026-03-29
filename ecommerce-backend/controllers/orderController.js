@@ -395,6 +395,25 @@ export const getOrders = async (req, res) => {
   }
 };
 
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.findAll({
+      where: { userId: req.user.id },
+      include: [
+        {
+          model: OrderItem,
+          include: [{ model: Product }],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+    const items = orders.map((order) => order.get({ plain: true }));
+    return res.json({ success: true, items });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({

@@ -30,11 +30,6 @@ const OtpToken = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
     },
-    failedAttempts: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    },
     verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

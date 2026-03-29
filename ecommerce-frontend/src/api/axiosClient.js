@@ -29,8 +29,14 @@ API.interceptors.response.use(
       error.message ||
       "Request failed";
 
+    const requestUrl = String(error.config?.url || "");
+    const preserveServerMessage =
+      requestUrl.includes("/auth/send-otp") || requestUrl.includes("/auth/verify-otp-register");
+
     const finalMessage =
-      status >= 500 ? "Server error. Please try again later." : String(rawMessage);
+      status >= 500 && !preserveServerMessage
+        ? "Server error. Please try again later."
+        : String(rawMessage);
 
     if (status === 401) {
       localStorage.removeItem("tn16_token");

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { AuthContext } from "../context/AuthContext";
@@ -18,6 +18,38 @@ export default function Register() {
   const [otpIdentifier, setOtpIdentifier] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [verificationError, setVerificationError] = useState("");
+  const [otpRetryAfter, setOtpRetryAfter] = useState(0);
+  const COOLDOWN_KEY = "otpCooldownUntil";
+
+  const startCooldown = (seconds) => {
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    const until = Date.now() + safeSeconds * 1000;
+    localStorage.setItem(COOLDOWN_KEY, String(until));
+    setOtpRetryAfter(safeSeconds);
+  };
+
+  useEffect(() => {
+    const untilRaw = localStorage.getItem(COOLDOWN_KEY);
+    if (!untilRaw) return;
+    const untilMs = Number(untilRaw);
+    if (!Number.isFinite(untilMs)) return;
+    const remaining = Math.max(0, Math.ceil((untilMs - Date.now()) / 1000));
+    setOtpRetryAfter(remaining);
+  }, []);
+
+  useEffect(() => {
+    if (otpRetryAfter <= 0) return;
+    const timer = setInterval(() => {
+      const untilRaw = localStorage.getItem(COOLDOWN_KEY);
+      const untilMs = Number(untilRaw || 0);
+      const remaining = Math.max(0, Math.ceil((untilMs - Date.now()) / 1000));
+      setOtpRetryAfter(remaining);
+      if (remaining <= 0) {
+        localStorage.removeItem(COOLDOWN_KEY);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpRetryAfter]);
 
   // Step 1: User Details Form
   const detailsFormik = useFormik({
@@ -49,6 +81,10 @@ export default function Register() {
         .required("Password is required"),
     }),
     onSubmit: async (values, { setSubmitting, setErrors }) => {
+      if (otpLoading || otpRetryAfter > 0) {
+        setSubmitting(false);
+        return;
+      }
       try {
         // Determine OTP method: prefer email if both provided
         const method = values.email ? "email" : "mobile";
@@ -76,14 +112,18 @@ export default function Register() {
         toast.success(
           res.data.message || `OTP sent to your ${method === "email" ? "email" : "mobile number"}`
         );
+        startCooldown(res.data?.retryAfter ?? 60);
 
         // Store form values for final registration
         localStorage.setItem("pendingRegistration", JSON.stringify(values));
       } catch (err) {
+        console.log("API error:", err.response?.data);
+        const retryAfter = Number(err.response?.data?.retryAfter || 0);
+        if (retryAfter > 0) startCooldown(retryAfter);
         setErrors({
-          general: err.response?.data?.message || "Failed to send OTP. Please try again.",
+          general: err.response?.data?.message || err.message || "Failed to send OTP. Please try again.",
         });
-        toast.error(err.response?.data?.message || "Failed to send OTP");
+        toast.error(err.response?.data?.message || err.message || "Failed to send OTP");
       } finally {
         setOtpLoading(false);
         setSubmitting(false);
@@ -151,6 +191,7 @@ export default function Register() {
   });
 
   const handleResendOtp = async () => {
+    if (otpLoading || otpRetryAfter > 0) return;
     try {
       setOtpLoading(true);
       setVerificationError("");
@@ -160,8 +201,12 @@ export default function Register() {
       });
 
       toast.success(res.data.message || "OTP resent successfully");
+      startCooldown(res.data?.retryAfter ?? 60);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to resend OTP");
+      console.log("API error:", err.response?.data);
+      const retryAfter = Number(err.response?.data?.retryAfter || 0);
+      if (retryAfter > 0) startCooldown(retryAfter);
+      toast.error(err.response?.data?.message || err.message || "Failed to resend OTP");
     } finally {
       setOtpLoading(false);
     }
@@ -285,10 +330,16 @@ export default function Register() {
 
               <button
                 type="submit"
-                disabled={detailsFormik.isSubmitting || otpLoading}
+                disabled={detailsFormik.isSubmitting || otpLoading || otpRetryAfter > 0}
                 className="w-full bg-primary text-white py-3 rounded-full font-semibold tracking-[0.3em] uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
               >
-                {otpLoading ? "Sending OTP..." : detailsFormik.isSubmitting ? "Processing..." : "Send OTP"}
+                {otpLoading
+                  ? "Sending OTP..."
+                  : otpRetryAfter > 0
+                    ? `Resend OTP in ${otpRetryAfter}s`
+                    : detailsFormik.isSubmitting
+                      ? "Processing..."
+                      : "Send OTP"}
               </button>
 
               <p className="text-center text-sm text-muted">
@@ -363,10 +414,10 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={handleResendOtp}
-                  disabled={otpLoading}
+                  disabled={otpLoading || otpRetryAfter > 0}
                   className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {otpLoading ? "Sending..." : "Resend OTP"}
+                  {otpLoading ? "Sending..." : otpRetryAfter > 0 ? `Resend OTP in ${otpRetryAfter}s` : "Resend OTP"}
                 </button>
                 <p className="text-xs text-muted mt-2">
                   OTP is valid for 10 minutes
