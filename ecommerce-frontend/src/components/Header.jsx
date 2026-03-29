@@ -53,6 +53,10 @@ export default function Header({ onOpenMenu }) {
     navigate("/");
   };
 
+  const openMenu = () => {
+    if (typeof onOpenMenu === "function") onOpenMenu();
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] border-b border-[#E5E7EB] bg-white backdrop-blur-sm pointer-events-auto">
       {/* Mobile: menu + brand + actions, then full-width search */}
@@ -62,7 +66,7 @@ export default function Header({ onOpenMenu }) {
             type="button"
             className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
             aria-label="Open menu"
-            onClick={onOpenMenu}
+            onClick={openMenu}
           >
             <FaBars size={20} />
           </button>
@@ -167,7 +171,7 @@ export default function Header({ onOpenMenu }) {
           type="button"
           className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
           aria-label="Open menu"
-          onClick={onOpenMenu}
+          onClick={openMenu}
         >
           <FaBars size={20} />
         </button>
