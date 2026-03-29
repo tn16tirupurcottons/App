@@ -44,9 +44,18 @@ export default function Login() {
         // Always redirect to home page after login (for both admin and regular users)
         navigate("/");
       } catch (err) {
+        if (import.meta.env.DEV) {
+          console.error("Login failed:", err.status ?? err.response?.status, err.message);
+        }
         const errorMessage =
           err.response?.data?.message ||
+          err.message ||
           "Login failed. Please check your credentials.";
+        if ((err.status === 405 || err.response?.status === 405) && import.meta.env.DEV) {
+          console.error(
+            "Expected POST /api/auth/login with JSON. Check Nginx: proxy /api to Node without stripping the path."
+          );
+        }
         setErrors({ general: errorMessage });
       } finally {
         setSubmitting(false);

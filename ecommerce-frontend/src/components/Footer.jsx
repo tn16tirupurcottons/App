@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { BRAND_NAME } from "@/config/brand";
 
 const BRAND_HIGHLIGHTS = [
   "Premium Cotton",
@@ -9,8 +10,7 @@ const BRAND_HIGHLIGHTS = [
 ];
 
 export default function Footer() {
-  const brand = import.meta.env.VITE_BRAND_NAME || "TNEXT";
-  const brandWordmark = brand.replace(/™|®/g, "");
+  const brandWordmark = BRAND_NAME.replace(/™|®/g, "");
 
   const social = [
     { icon: FaInstagram, href: "https://www.instagram.com/", label: "Instagram" },

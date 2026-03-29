@@ -1,21 +1,21 @@
 import React, { useState } from "react";
-
-const picsum = (seed) =>
-  `https://picsum.photos/seed/${encodeURIComponent(String(seed || "x"))}/600/800`;
+import { useAppImages } from "../context/AppImagesContext";
 
 /**
- * Never shows a broken image: falls back to Lorem Picsum on error.
+ * Image with graceful fallback — uses managed GLOBAL_FALLBACK_IMAGE when src fails.
  */
 export default function SafeImage({
   src,
   alt = "",
   className = "",
-  seed = "img",
+  seed: _seed,
   onError: onErrorProp,
   ...rest
 }) {
+  const { getImage } = useAppImages();
   const [useFallback, setUseFallback] = useState(false);
-  const displaySrc = useFallback || !src ? picsum(seed) : src;
+  const fb = getImage("GLOBAL_FALLBACK_IMAGE");
+  const displaySrc = useFallback || !src ? fb : src;
 
   return (
     <img

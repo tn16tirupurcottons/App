@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   // JWT is sent via Authorization; omit credentials to avoid CORS edge cases with wildcard origins.
   withCredentials: false,
   headers: {
@@ -39,8 +39,20 @@ API.interceptors.response.use(
       }
     }
 
-    if (import.meta.env.DEV && status >= 500) {
-      console.error("API error:", status, rawMessage);
+    if (import.meta.env.DEV) {
+      const cfg = error.config;
+      const fullUrl = `${cfg?.baseURL ?? ""}${cfg?.url ?? ""}`;
+      if (status === 405 || status === 404) {
+        console.error(
+          "API routing error:",
+          status,
+          (cfg?.method || "GET").toUpperCase(),
+          fullUrl,
+          rawMessage
+        );
+      } else if (status >= 500) {
+        console.error("API error:", status, rawMessage);
+      }
     }
 
     const normalized = Object.assign(new Error(finalMessage), {

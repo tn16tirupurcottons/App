@@ -9,6 +9,7 @@ import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { segmentThemes } from "../data/segments";
 import { categoryStock } from "../data/visualAssets";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
+import { useSegmentTiles } from "../hooks/useSegmentTiles";
 import {
   EditorsPicksSection,
   SeasonalCollectionsSection,
@@ -312,7 +313,8 @@ export default function Home() {
 
 function SegmentBand({ segment, flip }) {
   const navigate = useNavigate();
-  const tiles = segment.tiles?.filter(Boolean) || [];
+  const dynamicTiles = useSegmentTiles(segment.key);
+  const tiles = dynamicTiles.filter(Boolean).length ? dynamicTiles : segment.tiles?.filter(Boolean) || [];
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -355,14 +357,14 @@ function SegmentBand({ segment, flip }) {
             </button>
           </div>
         </div>
-        <div className="flex-1 min-h-[280px] sm:min-h-[320px] lg:min-h-0 p-3 sm:p-5 lg:max-w-[52%]">
-          <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full min-h-[260px] sm:min-h-[300px]">
+        <div className="flex-1 min-h-[280px] sm:min-h-[320px] lg:min-h-0 p-3 sm:p-5 lg:max-w-[52%] flex flex-col min-h-0">
+          <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full min-h-[260px] sm:min-h-[300px] flex-1 min-h-0 [grid-template-rows:1fr_1fr]">
             {tiles[0] && (
-              <div className="row-span-2 rounded-xl overflow-hidden border border-white/10 shadow-medium group">
+              <div className="row-span-2 col-start-1 rounded-xl overflow-hidden border border-white/10 shadow-medium group min-h-0">
                 <img
                   src={tiles[0]}
                   alt={`${segment.label} spotlight`}
-                  className="w-full h-full object-cover min-h-[200px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   loading="lazy"
                   decoding="async"
                   sizes="(max-width:1024px) 50vw, 400px"
@@ -371,11 +373,11 @@ function SegmentBand({ segment, flip }) {
               </div>
             )}
             {tiles[1] && (
-              <div className="rounded-2xl overflow-hidden border border-black/[0.08] shadow-soft group">
+              <div className="col-start-2 row-start-1 rounded-2xl overflow-hidden border border-black/[0.08] shadow-soft group min-h-0">
                 <img
                   src={tiles[1]}
                   alt={`${segment.label} detail`}
-                  className="w-full h-full object-cover min-h-[120px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   loading="lazy"
                   decoding="async"
                   sizes="(max-width:1024px) 50vw, 240px"
@@ -384,11 +386,11 @@ function SegmentBand({ segment, flip }) {
               </div>
             )}
             {tiles[2] && (
-              <div className="rounded-xl overflow-hidden border border-neutral-200 shadow-sm group bg-neutral-50">
+              <div className="col-start-2 row-start-2 rounded-xl overflow-hidden border border-neutral-200 shadow-sm group bg-neutral-50 min-h-0">
                 <img
                   src={tiles[2]}
                   alt={`${segment.label} look`}
-                  className="w-full h-full object-cover min-h-[120px] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   loading="lazy"
                   decoding="async"
                   sizes="(max-width:1024px) 50vw, 240px"

@@ -12,7 +12,7 @@ const items = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden rounded-t-2xl border border-neutral-200/90 border-b-0 bg-white/95 backdrop-blur-lg shadow-[0_-8px_32px_-4px_rgba(0,0,0,0.12)]"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden rounded-t-2xl border border-neutral-200/90 border-b-0 bg-white/95 backdrop-blur-lg shadow-[0_-8px_32px_-4px_rgba(0,0,0,0.12)]"
       aria-label="Mobile navigation"
     >
       <div className="flex justify-around items-stretch max-w-lg mx-auto px-1 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">

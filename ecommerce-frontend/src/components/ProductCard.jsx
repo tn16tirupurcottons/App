@@ -5,7 +5,8 @@ import { FaHeart } from "react-icons/fa";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "./Toast";
-import { getProductImage, PICSUM_PRODUCT } from "../utils/imageUtils";
+import { getProductImage } from "../utils/imageUtils";
+import { useAppImages } from "../context/AppImagesContext";
 import { isUuid } from "../utils/validation";
 
 export default function ProductCard({ product }) {
@@ -13,6 +14,8 @@ export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { getImage } = useAppImages();
+  const globalFallback = getImage("GLOBAL_FALLBACK_IMAGE");
   const [imageError, setImageError] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
 
@@ -25,10 +28,10 @@ export default function ProductCard({ product }) {
       : 0;
 
   useEffect(() => {
-    const validImage = image || PICSUM_PRODUCT(product?.id || "card");
+    const validImage = image || globalFallback;
     setCurrentImage(validImage);
     setImageError(false);
-  }, [image, product?.id]);
+  }, [image, product?.id, globalFallback]);
 
   const wishlistMutation = useMutation({
     mutationFn: async () => {
@@ -79,7 +82,7 @@ export default function ProductCard({ product }) {
           />
         </button>
         <img
-          src={currentImage || image || PICSUM_PRODUCT(product?.id || "card")}
+          src={currentImage || image || globalFallback}
           alt={product.name || "Product"}
           className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-[1.06]"
           loading="lazy"
@@ -88,9 +91,8 @@ export default function ProductCard({ product }) {
           onError={(e) => {
             if (!imageError) {
               setImageError(true);
-              const fallback = PICSUM_PRODUCT(product?.id || "fallback");
-              setCurrentImage(fallback);
-              e.target.src = fallback;
+              setCurrentImage(globalFallback);
+              e.target.src = globalFallback;
               e.target.onerror = null;
             }
           }}

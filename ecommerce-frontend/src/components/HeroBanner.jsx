@@ -1,15 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { segmentVisuals } from "../data/visualAssets";
-
-const heroImages = [
-  segmentVisuals.men.tiles[0],
-  segmentVisuals.women.tiles[0],
-  segmentVisuals.kids.tiles[0],
-];
+import { useAppImages } from "../context/AppImagesContext";
+import { BRAND_NAME } from "@/config/brand";
 
 export default function HeroBanner() {
-  const brand = import.meta.env.VITE_BRAND_NAME || "TN16 Tirupur Cotton";
+  const { getImage } = useAppImages();
+  const heroImages = [
+    getImage("HERO_BANNER_MEN"),
+    getImage("HERO_BANNER_WOMEN"),
+    getImage("HERO_BANNER_KIDS"),
+  ];
+  const brandHeadline = BRAND_NAME.split(" ")[0];
 
   return (
     <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-50 via-white to-cyan-50/50 border border-black/[0.06] shadow-soft max-w-full">
@@ -24,7 +25,7 @@ export default function HeroBanner() {
             Spun in Tirupur
           </p>
           <h1 className="text-[1.65rem] min-[400px]:text-3xl sm:text-4xl lg:text-5xl font-display text-slate-900 leading-[1.15] sm:leading-tight break-words">
-            {brand.split(" ")[0]}{" "}
+            {brandHeadline}{" "}
             <span className="text-cyan-800">cotton atelier</span>
           </h1>
           <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 px-0">

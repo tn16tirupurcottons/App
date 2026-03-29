@@ -4,11 +4,14 @@ import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import { categoryStock } from "../data/visualAssets";
 import { getCategoryImage } from "../utils/imageUtils";
 import { useBrandTheme } from "../context/BrandThemeContext";
+import { useAppImages } from "../context/AppImagesContext";
 import { resolveCategoryBannerUrl } from "../utils/imageAssetsConfig";
+import { slugToCategoryImageKey } from "../utils/categoryAppImageKeys";
 import SafeImage from "./SafeImage";
 
 export default function CategoryGrid({ categories = [], loading = false }) {
   const { imageAssets } = useBrandTheme();
+  const { getImage } = useAppImages();
   const fallback = [
     { id: "mens-shirts", name: "Men", heroImage: categoryStock.men, slug: "mens-shirts" },
     { id: "women-kurtas", name: "Women", heroImage: categoryStock.women, slug: "women-kurtas" },
@@ -36,7 +39,9 @@ export default function CategoryGrid({ categories = [], loading = false }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-        {(loading ? new Array(4).fill(null) : list).map((cat, idx) => (
+        {(loading ? new Array(4).fill(null) : list).map((cat, idx) => {
+          const slugKey = slugToCategoryImageKey(cat?.slug);
+          return (
           <Link
             to={getShopPathForCategorySlug(cat?.slug || cat?.id)}
             key={cat?.id || idx}
@@ -48,7 +53,9 @@ export default function CategoryGrid({ categories = [], loading = false }) {
               <>
                 <SafeImage
                   src={
-                    resolveCategoryBannerUrl(imageAssets, cat?.slug) || getCategoryImage(cat)
+                    resolveCategoryBannerUrl(imageAssets, cat?.slug) ||
+                    (slugKey ? getImage(slugKey) : "") ||
+                    getCategoryImage(cat)
                   }
                   alt={cat?.name || "Category"}
                   seed={cat?.slug || cat?.name}
@@ -68,7 +75,8 @@ export default function CategoryGrid({ categories = [], loading = false }) {
               </>
             )}
           </Link>
-        ))}
+        );
+        })}
       </div>
     </section>
   );

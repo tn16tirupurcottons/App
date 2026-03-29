@@ -28,7 +28,7 @@ export default function Header() {
   const accountLabel = user ? "Account" : "Login";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#E5E7EB] bg-white backdrop-blur-sm">
+    <header className="fixed top-0 left-0 right-0 z-[100] border-b border-[#E5E7EB] bg-white backdrop-blur-sm pointer-events-auto">
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={logout} />
 
       {/* Mobile: menu + brand + actions, then full-width search */}
@@ -36,7 +36,7 @@ export default function Header() {
         <div className="max-w-[1600px] mx-auto flex h-14 items-center gap-2 sm:gap-3 px-3 sm:px-4">
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+            className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
             aria-label="Open menu"
             onClick={() => setMenuOpen(true)}
           >
@@ -81,7 +81,7 @@ export default function Header() {
       <div className="hidden md:flex lg:hidden max-w-[1600px] mx-auto h-[4.25rem] flex-nowrap items-center gap-3 md:gap-4 px-4 lg:px-6 min-w-0">
         <button
           type="button"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+          className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
           aria-label="Open menu"
           onClick={() => setMenuOpen(true)}
         >

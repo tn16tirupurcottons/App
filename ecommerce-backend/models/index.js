@@ -15,6 +15,7 @@ import PasswordResetToken from "./PasswordResetToken.js";
 import OtpToken from "./OtpToken.js";
 import Banner from "./Banner.js";
 import BrandSetting from "./BrandSetting.js";
+import AppImage from "./AppImage.js";
 
 // =============================
 //      MODEL ASSOCIATIONS
@@ -61,6 +62,8 @@ export const syncDB = async () => {
     // Use plain sync to avoid dropping/recreating constraints in production.
     // All structural changes should be handled via explicit migration scripts.
     await sequelize.sync();
+    const { seedAppImages } = await import("../scripts/seedAppImages.js");
+    await seedAppImages();
     console.log("✅ Database & tables synced!");
   } catch (err) {
     console.error("❌ DB Sync Error:", err);
@@ -85,4 +88,5 @@ export {
   BrandSetting,
   PasswordResetToken,
   OtpToken,
+  AppImage,
 };

@@ -20,6 +20,27 @@ export const listBanners = async (req, res, next) => {
   }
 };
 
+/** Storefront-only: active banners (avoids relying on /api/admin path for public clients). */
+export const listStorefrontBanners = async (req, res, next) => {
+  try {
+    const { page, position } = req.query;
+    const where = { isActive: true };
+    if (page && page !== "all") where.page = page;
+    if (position) where.position = position;
+
+    const banners = await Banner.findAll({
+      where,
+      order: [
+        ["displayOrder", "ASC"],
+        ["createdAt", "DESC"],
+      ],
+    });
+    res.json({ success: true, items: banners });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createBanner = async (req, res, next) => {
   try {
     const payload = req.body;

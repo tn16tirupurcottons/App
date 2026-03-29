@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
-import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
-import { categoryStock, heroBackdrop, segmentVisuals, stockPhoto } from "../data/visualAssets";
+import { handleImageError } from "../utils/imageUtils";
+import { useAppImages } from "../context/AppImagesContext";
 
 export function LuxuryBanner({ image, title, subtitle, cta, link, className = "" }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
-  const bannerImage = image || heroBackdrop;
+  const { getImage } = useAppImages();
+  const fallback = getImage("HOME_HERO_BACKDROP");
+  const bannerImage = image || fallback;
 
   return (
     <div
@@ -17,15 +19,15 @@ export function LuxuryBanner({ image, title, subtitle, cta, link, className = ""
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
       <img
-        src={bannerImage}
+        src={imgError ? fallback : bannerImage}
         alt={title || "Banner"}
-        className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-[1.03]"
+        className="w-full h-full min-h-[200px] object-cover transition-transform duration-700 ease-in-out group-hover:scale-[1.03]"
         loading="lazy"
         decoding="async"
         onError={(e) => {
           if (!imgError) {
             setImgError(true);
-            handleImageError(e, heroBackdrop);
+            handleImageError(e, fallback);
           }
         }}
       />
@@ -46,10 +48,12 @@ export function LuxuryBanner({ image, title, subtitle, cta, link, className = ""
 }
 
 export function EditorsPicksSection() {
+  const { getImage } = useAppImages();
+  const fb = getImage("GLOBAL_FALLBACK_IMAGE");
   const picks = [
-    { id: 1, image: segmentVisuals.men.tiles[0], title: "Men's layers", category: "Pick" },
-    { id: 2, image: segmentVisuals.women.tiles[1], title: "Women's silhouettes", category: "Pick" },
-    { id: 3, image: segmentVisuals.genz.tiles[0], title: "Studio drop", category: "Pick" },
+    { id: 1, key: "HOME_EDITORIAL_MEN_LAYERS", title: "Men's layers", category: "Pick" },
+    { id: 2, key: "HOME_EDITORIAL_WOMEN_SILHOUETTES", title: "Women's silhouettes", category: "Pick" },
+    { id: 3, key: "HOME_EDITORIAL_STUDIO_DROP", title: "Studio drop", category: "Pick" },
   ];
 
   return (
@@ -77,12 +81,12 @@ export function EditorsPicksSection() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10" />
             <img
-              src={pick.image || FALLBACK_IMAGES.men}
+              src={getImage(pick.key)}
               alt={pick.title}
               className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
               loading="lazy"
               decoding="async"
-              onError={(e) => handleImageError(e, FALLBACK_IMAGES.men)}
+              onError={(e) => handleImageError(e, fb)}
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
               <p className="text-[10px] uppercase tracking-[0.28em] text-white/90 mb-1">{pick.category}</p>
@@ -96,17 +100,18 @@ export function EditorsPicksSection() {
 }
 
 export function SeasonalCollectionsSection() {
+  const { getImage } = useAppImages();
   const collections = [
     {
       id: 1,
-      image: stockPhoto("photo-1572804013309-6e6b7da0e1b5", 1400),
+      key: "HOME_COLLECTION_LIGHT_LAYERS",
       title: "Light layers",
       subtitle: "Seasonal",
       link: "/catalog",
     },
     {
       id: 2,
-      image: stockPhoto("photo-1620799140408-ed534d5b51d4", 1400),
+      key: "HOME_COLLECTION_CORE_TEES",
       title: "Core tees",
       subtitle: "Essentials",
       link: "/catalog",
@@ -124,7 +129,7 @@ export function SeasonalCollectionsSection() {
         {collections.map((collection) => (
           <LuxuryBanner
             key={collection.id}
-            image={collection.image}
+            image={getImage(collection.key)}
             title={collection.title}
             subtitle={collection.subtitle}
             cta="Enter"
@@ -138,10 +143,12 @@ export function SeasonalCollectionsSection() {
 }
 
 export function SpecialOffersSection() {
+  const { getImage } = useAppImages();
+  const fb = getImage("GLOBAL_FALLBACK_IMAGE");
   const offers = [
-    { id: 1, image: categoryStock.men, title: "Limited", discount: "Up to 40%", link: "/catalog?featured=true" },
-    { id: 2, image: categoryStock.women, title: "New in", discount: "Fresh grid", link: "/catalog?sort=newest" },
-    { id: 3, image: categoryStock.dressFashion, title: "Top moves", discount: "Restocked", link: "/catalog?featured=true" },
+    { id: 1, key: "HOME_OFFER_LIMITED", title: "Limited", discount: "Up to 40%", link: "/catalog?featured=true" },
+    { id: 2, key: "HOME_OFFER_NEW_IN", title: "New in", discount: "Fresh grid", link: "/catalog?sort=newest" },
+    { id: 3, key: "HOME_OFFER_TOP_MOVES", title: "Top moves", discount: "Restocked", link: "/catalog?featured=true" },
   ];
 
   return (
@@ -159,12 +166,12 @@ export function SpecialOffersSection() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent z-10" />
             <img
-              src={offer.image || FALLBACK_IMAGES.men}
+              src={getImage(offer.key)}
               alt={offer.title}
               className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
               loading="lazy"
               decoding="async"
-              onError={(e) => handleImageError(e, FALLBACK_IMAGES.men)}
+              onError={(e) => handleImageError(e, fb)}
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
               <p className="text-[10px] uppercase tracking-[0.28em] text-white/90 mb-2">{offer.discount}</p>
@@ -182,11 +189,13 @@ export function SpecialOffersSection() {
 }
 
 export function CuratedLooksSection() {
+  const { getImage } = useAppImages();
+  const fb = getImage("GLOBAL_FALLBACK_IMAGE");
   const looks = [
-    { id: 1, image: segmentVisuals.women.tiles[2], title: "Soft tailoring", description: "Dresses & sets." },
-    { id: 2, image: segmentVisuals.men.tiles[1], title: "Denim / shirts", description: "Daily uniform." },
-    { id: 3, image: segmentVisuals.kids.tiles[0], title: "Kids", description: "Play-grade cotton." },
-    { id: 4, image: segmentVisuals.genz.tiles[2], title: "Studio", description: "Contemporary line." },
+    { id: 1, key: "HOME_LOOK_SOFT_TAILORING", title: "Soft tailoring", description: "Dresses & sets." },
+    { id: 2, key: "HOME_LOOK_DENIM_SHIRTS", title: "Denim / shirts", description: "Daily uniform." },
+    { id: 3, key: "HOME_LOOK_KIDS", title: "Kids", description: "Play-grade cotton." },
+    { id: 4, key: "HOME_LOOK_STUDIO", title: "Studio", description: "Contemporary line." },
   ];
 
   return (
@@ -206,12 +215,12 @@ export function CuratedLooksSection() {
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent z-10" />
               <img
-                src={look.image || FALLBACK_IMAGES.women}
+                src={getImage(look.key)}
                 alt={look.title}
                 className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                 loading="lazy"
                 decoding="async"
-                onError={(e) => handleImageError(e, FALLBACK_IMAGES.women)}
+                onError={(e) => handleImageError(e, fb)}
               />
               <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-white">{look.title}</h3>
@@ -226,10 +235,11 @@ export function CuratedLooksSection() {
 }
 
 export function HeroOfferBanner() {
+  const { getImage } = useAppImages();
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <LuxuryBanner
-        image={heroBackdrop}
+        image={getImage("HOME_HERO_TIRUPUR_BANNER")}
         title="Still made in Tirupur"
         subtitle="Latest capsule"
         cta="Shop now"

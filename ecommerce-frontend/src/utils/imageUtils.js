@@ -50,7 +50,7 @@ export function getProductImage(product, category = null) {
   if (productName.includes("women") || brandName.includes("women")) return FALLBACK_IMAGES.women;
   if (productName.includes("kid") || brandName.includes("kid")) return FALLBACK_IMAGES.kids;
 
-  return PICSUM_PRODUCT(product.id || product.name || "product");
+  return "";
 }
 
 export function getCategoryImage(category) {

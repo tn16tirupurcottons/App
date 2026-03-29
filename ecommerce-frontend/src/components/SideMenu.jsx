@@ -60,17 +60,17 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] md:z-[60]" aria-modal="true" role="dialog" aria-label="Navigation menu">
+    <div className="fixed inset-0 z-[110] md:z-[110]" aria-modal="true" role="dialog" aria-label="Navigation menu">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity z-0"
         aria-label="Close menu"
         onClick={onClose}
       />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="absolute top-0 left-0 h-full w-[min(100vw-3rem,22rem)] sm:w-[min(90vw,380px)] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none"
+        className="absolute top-0 left-0 z-[1] h-full w-[min(100vw-3rem,22rem)] sm:w-[min(90vw,380px)] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation"
         style={{ animation: "sideMenuIn 280ms ease-out both" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">

@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { BrandThemeProvider } from "./context/BrandThemeContext";
+import { AppImagesProvider } from "./context/AppImagesContext";
 import { ToastProvider } from "./components/Toast";
 
 // Core pages - loaded immediately
@@ -56,6 +57,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrandThemeProvider>
+          <AppImagesProvider>
           <ToastProvider>
             <BrowserRouter>
             <ScrollToTop />
@@ -284,6 +286,7 @@ export default function App() {
             </Routes>
             </BrowserRouter>
           </ToastProvider>
+          </AppImagesProvider>
         </BrandThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

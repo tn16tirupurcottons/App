@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
 import { useBrandTheme } from "../context/BrandThemeContext";
-import { heroBackdrop } from "../data/visualAssets";
+import { useAppImages } from "../context/AppImagesContext";
 
 export default function BannerCarousel({ page = "home", position = "hero", category = null }) {
   const { theme, imageAssets } = useBrandTheme();
+  const { getImage } = useAppImages();
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -23,7 +24,7 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     queryKey: ["banners", page, position, category],
     queryFn: async () => {
       try {
-        const res = await axiosClient.get(`/admin/banners?page=${page}&position=${position}`);
+        const res = await axiosClient.get(`/banners?page=${page}&position=${position}`);
         const all = res.data.items || [];
         return all.filter(
           (b) =>
@@ -109,16 +110,20 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
 
   const adminHero = imageAssets?.home?.hero?.trim();
   const promoExtras = [imageAssets?.home?.promo1, imageAssets?.home?.promo2].filter((u) => u && String(u).trim());
+  const promoHero = getImage("HOME_PROMO_HERO");
+  const heroBackdropUrl = getImage("HOME_HERO_BACKDROP");
+  const promo1 = getImage("HOME_PROMO_1");
+  const promo2 = getImage("HOME_PROMO_2");
 
   const fallbackBanner = {
     title: "BUILT IN TIRUPUR. WORN EVERYWHERE.",
     subtitle: "Premium cotton essentials — bold fits, factory‑direct. No noise, just product.",
-    image: adminHero || heroBackdrop,
+    image: adminHero || promoHero || heroBackdropUrl,
     images: adminHero
       ? [adminHero, ...promoExtras].filter(Boolean)
       : promoExtras.length
-        ? [...promoExtras, heroBackdrop]
-        : [heroBackdrop],
+        ? [...promoExtras, heroBackdropUrl]
+        : [promoHero, promo1, promo2, heroBackdropUrl].filter(Boolean),
     ctaLabel: "Shop now",
     ctaLink: "/catalog",
   };
@@ -132,7 +137,8 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
         ? [displayBanner.image]
         : []) || [];
 
-  const currentImage = images[currentImageIndex] || images[0] || adminHero || heroBackdrop;
+  const currentImage =
+    images[currentImageIndex] || images[0] || adminHero || promoHero || heroBackdropUrl;
   const showBannerDots = activeBanners.length > 1 && currentBanner;
   const showImageDots = images.length > 1;
   const totalDots = showBannerDots ? activeBanners.length : showImageDots ? images.length : 0;

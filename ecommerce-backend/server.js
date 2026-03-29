@@ -22,6 +22,9 @@ import orderRoutes from "./routes/orderRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import themeRoutes from "./routes/themeRoutes.js";
+import appImageRoutes from "./routes/appImageRoutes.js";
+import adminAppImageRoutes from "./routes/adminAppImageRoutes.js";
+import publicBannerRoutes from "./routes/publicBannerRoutes.js";
 
 // Admin Routes
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
@@ -72,6 +75,8 @@ app.use(compression());
 app.use(cookieParser());
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
+} else {
+  app.use(morgan(":method :url :status :response-time ms"));
 }
 
 // ---------------------------
@@ -124,6 +129,16 @@ const sanitizeInput = (req, _res, next) => {
 app.use(sanitizeInput);
 
 // ---------------------------
+// API REQUEST LOGGING (method + URL for /api/auth — helps debug 405/proxy issues)
+// ---------------------------
+app.use((req, _res, next) => {
+  if (req.originalUrl.startsWith("/api/auth")) {
+    console.log(`[auth] ${req.method} ${req.originalUrl}`);
+  }
+  next();
+});
+
+// ---------------------------
 // RATE LIMITING
 // ---------------------------
 const apiLimiter = rateLimit({
@@ -169,6 +184,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/theme", themeRoutes);
+app.use("/api/images", appImageRoutes);
+app.use("/api/banners", publicBannerRoutes);
 
 // ---------------------------
 // ADMIN ROUTES
@@ -179,6 +196,7 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/banners", adminBannerRoutes);
 app.use("/api/admin/settings", adminSettingsRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/app-images", adminAppImageRoutes);
 
 // ---------------------------
 // ERROR HANDLER (LAST)

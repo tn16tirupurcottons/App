@@ -4,8 +4,10 @@ import ProductList from "../components/ProductList";
 import { segmentThemes } from "../data/segments";
 import { normalizeCategorySlug } from "../utils/validation";
 import { useBrandTheme } from "../context/BrandThemeContext";
+import { useAppImages } from "../context/AppImagesContext";
 import { resolveCategoryBannerUrl } from "../utils/imageAssetsConfig";
 import SafeImage from "../components/SafeImage";
+import { BRAND_NAME } from "@/config/brand";
 
 const segmentToCategorySlug = {
   men: "mens-shirts",
@@ -22,6 +24,7 @@ const segmentToCategorySlug = {
  */
 export default function Catalog({ embeddedSegment = null, embeddedCategorySlug = null }) {
   const { imageAssets } = useBrandTheme();
+  const { getImage } = useAppImages();
   const [searchParams] = useSearchParams();
   const segment = embeddedSegment ?? searchParams.get("segment");
   const categorySlugFromSegment = segment ? segmentToCategorySlug[segment] : null;
@@ -46,22 +49,23 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
     return null;
   }, [segment, categoryFromUrl]);
 
-  const brand = import.meta.env.VITE_BRAND_NAME || "Studio";
-
   const adminBannerOverride = segmentTheme
     ? resolveCategoryBannerUrl(imageAssets, segmentTheme.key || segment)
     : resolveCategoryBannerUrl(imageAssets, categoryFromUrl);
 
+  const segKey = segmentTheme?.key ? String(segmentTheme.key).toUpperCase() : "";
+  const segmentBannerFromRegistry = segKey ? getImage(`SEGMENT_${segKey}_BANNER`) : "";
+
   const primaryBannerSrc = adminBannerOverride
     ? adminBannerOverride
     : segmentTheme
-      ? segmentTheme.backgroundImage || segmentTheme.banner
+      ? segmentBannerFromRegistry || segmentTheme.backgroundImage || segmentTheme.banner
       : "";
   const alternateBannerSrc =
     segmentTheme && !adminBannerOverride && segmentTheme.banner !== primaryBannerSrc
       ? segmentTheme.banner
       : "";
-  const tileFallbackSrc = segmentTheme?.tiles?.[0] || "";
+  const tileFallbackSrc = segKey ? getImage(`SEGMENT_${segKey}_TILE_0`) : segmentTheme?.tiles?.[0] || "";
 
   const [bannerSrc, setBannerSrc] = useState(primaryBannerSrc);
 
@@ -116,7 +120,7 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
               {segmentTheme.description}
             </h1>
             <p className="text-[#555555] text-sm sm:text-base mt-4 sm:mt-6 max-w-xl leading-relaxed">
-              Curated {segmentTheme.label.toLowerCase()} — premium cotton, clean silhouettes, {brand}.
+              Curated {segmentTheme.label.toLowerCase()} — premium cotton, clean silhouettes, {BRAND_NAME}.
             </p>
           </div>
         </section>
