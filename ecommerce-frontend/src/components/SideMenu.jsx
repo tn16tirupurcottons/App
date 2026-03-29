@@ -32,11 +32,13 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = "auto";
     };
   }, [open]);
 
@@ -66,20 +68,20 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] md:z-[110]" aria-modal="true" role="dialog" aria-label="Navigation menu">
+    <div className="fixed inset-0 z-[1000]" aria-modal="true" role="dialog" aria-label="Navigation menu">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity z-0"
+        className="fixed inset-0 z-[999] bg-black/50 transition-opacity"
         aria-label="Close menu"
         onClick={onClose}
       />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="absolute top-0 left-0 z-[1] h-full w-[min(100vw-3rem,22rem)] sm:w-[min(90vw,380px)] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation"
+        className="fixed top-0 left-0 z-[1000] h-full w-[80vw] max-w-[320px] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation"
         style={{ animation: "sideMenuIn 280ms ease-out both" }}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-white">
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900">Menu</span>
           <button
             type="button"
@@ -91,7 +93,7 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-3 space-y-1" aria-label="Primary">
+        <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-3 space-y-2" aria-label="Primary">
           <button type="button" onClick={() => go("/")} className={linkClass}>
             <span className="flex items-center gap-3">
               <FaHome className="text-neutral-500 shrink-0" aria-hidden />
