@@ -232,7 +232,6 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
           max-width: 320px;
           background: #fff;
           z-index: 1000;
-          transform: translateX(-100%);
           transition: transform 0.28s ease;
           box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
         }
