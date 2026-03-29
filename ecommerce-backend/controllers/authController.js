@@ -34,6 +34,13 @@ const normalizeOtpIdentifier = (identifier, method) => {
 const otpStateKey = (identifier, method) =>
   `${method}:${normalizeOtpIdentifier(identifier, method)}`;
 
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+
+const otpEmailKey = (email) => `email:${normalizeEmail(email)}`;
+
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export const toPublicUser = (user) => ({
   id: user.id,
   name: user.name,
@@ -316,7 +323,8 @@ export const resetPassword = async (req, res, next) => {
 // OTP Verification for Registration
 export const sendOtp = async (req, res, next) => {
   try {
-    const { identifier, method } = req.body;
+    const { identifier, method, email: emailFromBody, mobileNumber } = req.body || {};
+
     if (!identifier || !method) {
       return res.status(400).json({ message: "identifier and method are required" });
     }
@@ -324,8 +332,31 @@ export const sendOtp = async (req, res, next) => {
       return res.status(400).json({ message: "method must be 'email' or 'mobile'" });
     }
 
-    const normalizedIdentifier = normalizeOtpIdentifier(identifier, method);
-    const key = otpStateKey(normalizedIdentifier, method);
+    // Strict email validation (before sending OTP).
+    const rawEmail =
+      emailFromBody ||
+      (method === "email" ? identifier : (String(identifier).includes("@") ? identifier : ""));
+    const normalizedEmail = normalizeEmail(rawEmail);
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
+    // Mobile validation (mock only; no paid SMS).
+    let mobileDigits = null;
+    if (mobileNumber || method === "mobile") {
+      const rawMobile = mobileNumber || identifier;
+      const cleaned = String(rawMobile)
+        .trim()
+        .replace(/^\+91/, "")
+        .replace(/\D/g, "");
+
+      if (!/^\d{10}$/.test(cleaned)) {
+        return res.status(400).json({ message: "Invalid mobile number" });
+      }
+      mobileDigits = cleaned;
+    }
+
+    const key = otpEmailKey(normalizedEmail); // rate-limit + verify attempts per email
     const nowMs = Date.now();
     let state = otpRequestState.get(key) || {
       lastOtpSentAt: 0,
@@ -335,24 +366,12 @@ export const sendOtp = async (req, res, next) => {
 
     // Reset request window if 10 minutes passed.
     if (nowMs - state.windowStart > OTP_WINDOW_MS) {
-      state = {
-        lastOtpSentAt: 0,
-        requestCount: 0,
-        windowStart: nowMs,
-      };
+      state = { lastOtpSentAt: 0, requestCount: 0, windowStart: nowMs };
     }
 
-    // Strict resend cooldown based on LAST successful OTP sent timestamp.
+    // Cooldown based on the last OTP request time.
     if (state.lastOtpSentAt && nowMs - state.lastOtpSentAt < OTP_COOLDOWN_MS) {
-      const retryAfter = Math.ceil(
-        (OTP_COOLDOWN_MS - (nowMs - state.lastOtpSentAt)) / 1000
-      );
-      console.log("[otp-cooldown]", {
-        identifier: normalizedIdentifier,
-        lastOtpSentAt: new Date(state.lastOtpSentAt).toISOString(),
-        now: new Date(nowMs).toISOString(),
-        retryAfter,
-      });
+      const retryAfter = Math.ceil((OTP_COOLDOWN_MS - (nowMs - state.lastOtpSentAt)) / 1000);
       return res.status(429).json({
         message: "Too many OTP requests. Please wait 60 seconds.",
         retryAfter,
@@ -361,10 +380,7 @@ export const sendOtp = async (req, res, next) => {
 
     // Max requests per rolling 10 min window.
     if (state.requestCount >= OTP_MAX_REQUESTS_PER_WINDOW) {
-      const retryAfter = Math.max(
-        1,
-        Math.ceil((OTP_WINDOW_MS - (nowMs - state.windowStart)) / 1000)
-      );
+      const retryAfter = Math.max(1, Math.ceil((OTP_WINDOW_MS - (nowMs - state.windowStart)) / 1000));
       return res.status(429).json({
         message: "Too many OTP requests. Try again after some time.",
         retryAfter,
@@ -372,91 +388,145 @@ export const sendOtp = async (req, res, next) => {
     }
 
     // Generate 6-digit OTP (never store plaintext).
-    const otp = Math.floor(100000 + Math.random() * 900000)
-      .toString()
-      .padStart(6, "0");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString().padStart(6, "0");
     const expiresAt = new Date(nowMs + OTP_EXPIRY_MS);
 
-    // SHA256 hash, then truncate to fit existing DB column size.
+    // SHA256 hash (truncate for DB column size compatibility).
     const hashedOtpFull = crypto.createHash("sha256").update(otp).digest("hex");
     const hashedOtp = hashedOtpFull.slice(0, 6);
 
-    // Expire older OTPs (keep records for rate limit window).
+    // Expire older OTPs for this email (and mobile if provided).
     await OtpToken.update(
       { expiresAt: new Date(nowMs) },
-      { where: { identifier: normalizedIdentifier, method, verified: false } }
+      { where: { identifier: normalizedEmail, method: "email", verified: false } }
     );
+    if (mobileDigits) {
+      await OtpToken.update(
+        { expiresAt: new Date(nowMs) },
+        { where: { identifier: mobileDigits, method: "mobile", verified: false } }
+      );
+    }
 
+    // Create fresh OTP tokens for both email and mobile (dual acceptance).
     await OtpToken.create({
       hashedOtp,
-      identifier: normalizedIdentifier,
-      method,
+      identifier: normalizedEmail,
+      method: "email",
       expiresAt,
       verified: false,
     });
 
-    // Send OTP (email via Nodemailer Gmail SMTP).
-    if (method === "email") {
-      const { EMAIL_USER, EMAIL_PASS } = process.env;
-      if (!EMAIL_USER || !EMAIL_PASS) {
-        throw new Error("Email service not configured");
-      }
-
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: EMAIL_USER,
-          pass: EMAIL_PASS,
-        },
-        tls: {
-          // Dev TLS interoperability fix; keep strict in production.
-          rejectUnauthorized: process.env.NODE_ENV === "production",
-        },
+    if (mobileDigits) {
+      await OtpToken.create({
+        hashedOtp,
+        identifier: mobileDigits,
+        method: "mobile",
+        expiresAt,
+        verified: false,
       });
-
-      try {
-        console.log("Sending OTP to:", normalizedIdentifier);
-        await transporter.verify();
-        await transporter.sendMail({
-          from: EMAIL_USER,
-          to: normalizedIdentifier,
-          subject: "Your OTP",
-          text: `Your OTP is ${otp}`,
-        });
-      } catch (mailError) {
-        console.error("MAIL ERROR:", mailError);
-        return res.status(500).json({
-          message: "Email sending failed",
-          error: mailError.message,
-        });
-      }
-    } else {
-      const sent = await sendSMS({
-        to: normalizedIdentifier,
-        body: `Your TNEXT™ registration OTP is ${otp}. Valid for 10 minutes.`,
-      });
-      if (!sent) {
-        return res.status(500).json({
-          message: "Failed to send OTP. Please try again later or contact support.",
-        });
-      }
+      // Development-only mobile mock (temporary).
+      console.log("MOBILE OTP:", otp);
     }
 
-    // Update limiter state only on successful send.
+    // Update limiter state now (prevents spamming even if email fails).
     state.lastOtpSentAt = nowMs;
     state.requestCount += 1;
-    if (!state.windowStart) state.windowStart = nowMs;
+    state.windowStart = state.windowStart || nowMs;
     otpRequestState.set(key, state);
 
-    // Reset verify-attempt state for latest OTP.
     otpVerifyState.set(key, { attempts: 0, expiresAt: nowMs + OTP_EXPIRY_MS });
 
-    // Never return OTP in API responses.
-    res.json({ success: true, message: "OTP sent successfully.", retryAfter: 60 });
+    // Email OTP (free) via Nodemailer Gmail SMTP.
+    const { EMAIL_USER, EMAIL_PASS } = process.env;
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      return res.status(500).json({ message: "Email service not configured" });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+      tls: { rejectUnauthorized: process.env.NODE_ENV === "production" },
+    });
+
+    const otpEmailHtml = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f6f7fb;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e8eaf0;">
+            <tr>
+              <td align="center" style="padding:22px 18px 10px;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;letter-spacing:0.5px;color:#0b0b0f;">TNEXT</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#6b7280;margin-top:6px;">Premium Fashion Store</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:6px 18px 0;">
+                <h1 style="font-family:Arial,Helvetica,sans-serif;margin:0;font-size:20px;color:#0b0b0f;text-align:center;">Verify your account</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 18px 2px;">
+                <p style="font-family:Arial,Helvetica,sans-serif;margin:0;font-size:14px;color:#374151;text-align:center;">
+                  Use this code to complete your registration
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:14px 18px;">
+                <div style="display:inline-block;padding:18px 26px;border-radius:14px;background:#0b0b0f;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:800;letter-spacing:6px;">
+                  ${otp}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 18px 18px;">
+                <p style="font-family:Arial,Helvetica,sans-serif;margin:0;font-size:13px;color:#6b7280;text-align:center;">
+                  This OTP is valid for 10 minutes
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 18px 22px;background:#f9fafb;border-top:1px solid #eef0f6;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111827;text-align:center;font-weight:700;">
+                  TNEXT – Premium Fashion Store
+                </div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6b7280;text-align:center;margin-top:4px;">
+                  Tiruppur Cotton Specialists
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+    try {
+      console.log("Sending OTP to:", normalizedEmail);
+      await transporter.verify();
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: normalizedEmail,
+        subject: "Verify your TNEXT Account",
+        html: otpEmailHtml,
+      });
+      console.log("OTP email send status: ok");
+    } catch (mailError) {
+      console.error("MAIL ERROR:", mailError);
+      return res.status(500).json({
+        message: "Failed to send OTP. Try again later.",
+        error: mailError.message,
+      });
+    }
+
+    res.json({ success: true, message: "OTP sent to your email", retryAfter: 60 });
   } catch (err) {
     console.error("OTP ERROR:", err);
     return res.status(500).json({
-      message: "Failed to send OTP",
+      message: "Failed to send OTP. Try again later.",
       error: err.message,
     });
   }
@@ -465,8 +535,14 @@ export const sendOtp = async (req, res, next) => {
 export const verifyOtpAndRegister = async (req, res, next) => {
   try {
     const { name, email, mobileNumber, password, otp, identifier } = req.body;
+
     if (!name || !email || !password || !otp || !identifier) {
       return res.status(400).json({ message: "name, email, password, otp, and identifier are required" });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Invalid email address" });
     }
 
     const otpInput = String(otp).trim();
@@ -474,99 +550,149 @@ export const verifyOtpAndRegister = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid OTP format" });
     }
 
-    const method = identifier.includes("@") ? "email" : "mobile";
-    const normalizedIdentifier = normalizeOtpIdentifier(identifier, method);
-    const key = otpStateKey(normalizedIdentifier, method);
+    // Normalize optional mobile (no uniqueness enforcement).
+    let mobileDigits = null;
+    if (mobileNumber) {
+      const cleaned = String(mobileNumber).trim().replace(/^\+91/, "").replace(/\D/g, "");
+      if (!/^\d{10}$/.test(cleaned)) {
+        return res.status(400).json({ message: "Invalid mobile number" });
+      }
+      mobileDigits = cleaned;
+    }
+
+    const key = otpEmailKey(normalizedEmail);
     const now = new Date();
     const nowMs = now.getTime();
 
-    // Load most recent active OTP token.
-    const otpRecord = await OtpToken.findOne({
-      where: {
-        identifier: normalizedIdentifier,
-        method,
-        verified: false,
-        expiresAt: { [Op.gt]: now },
-      },
-      order: [["createdAt", "DESC"]],
-    });
-
-    if (!otpRecord) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    // Hash user input for constant-time comparison (we still do a simple equality).
-    const hashedOtpFull = crypto.createHash("sha256").update(otpInput).digest("hex");
-    const hashedOtp = hashedOtpFull.slice(0, 6);
-
     let verifyState = otpVerifyState.get(key) || {
       attempts: 0,
-      expiresAt: otpRecord.expiresAt.getTime(),
+      expiresAt: nowMs + OTP_EXPIRY_MS,
     };
+
     if (nowMs > verifyState.expiresAt) {
-      verifyState = { attempts: 0, expiresAt: otpRecord.expiresAt.getTime() };
+      verifyState = { attempts: 0, expiresAt: nowMs + OTP_EXPIRY_MS };
     }
+
     if (verifyState.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
       return res.status(429).json({
         message: "Too many invalid OTP attempts. Please request a new OTP.",
       });
     }
 
-    if (otpRecord.hashedOtp !== hashedOtp) {
+    // Hash user input for constant-time comparison (never store plaintext OTP).
+    const hashedOtpFull = crypto.createHash("sha256").update(otpInput).digest("hex");
+    const hashedOtp = hashedOtpFull.slice(0, 6);
+
+    // Find matching OTP token for either email or mobile (same OTP).
+    const otpRecordEmail = await OtpToken.findOne({
+      where: {
+        identifier: normalizedEmail,
+        method: "email",
+        verified: false,
+        expiresAt: { [Op.gt]: now },
+        hashedOtp,
+      },
+      order: [["createdAt", "DESC"]],
+    });
+
+    const otpRecordMobile =
+      mobileDigits
+        ? await OtpToken.findOne({
+            where: {
+              identifier: mobileDigits,
+              method: "mobile",
+              verified: false,
+              expiresAt: { [Op.gt]: now },
+              hashedOtp,
+            },
+            order: [["createdAt", "DESC"]],
+          })
+        : null;
+
+    const otpRecord = otpRecordEmail || otpRecordMobile;
+    if (!otpRecord) {
       verifyState.attempts += 1;
       otpVerifyState.set(key, verifyState);
+
       if (verifyState.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
-        otpRecord.expiresAt = now;
-        await otpRecord.save();
+        // Cleanup tokens after max attempts.
+        await OtpToken.destroy({
+          where: {
+            identifier: normalizedEmail,
+            method: "email",
+            verified: false,
+            expiresAt: { [Op.gt]: now },
+          },
+        });
+        if (mobileDigits) {
+          await OtpToken.destroy({
+            where: {
+              identifier: mobileDigits,
+              method: "mobile",
+              verified: false,
+              expiresAt: { [Op.gt]: now },
+            },
+          });
+        }
         return res.status(429).json({
           message: "Too many invalid OTP attempts. Please request a new OTP.",
         });
       }
+
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // Delete OTP after successful verification.
-    await otpRecord.destroy();
+    // Delete OTP after successful verification (delete both email + mobile tokens).
+    await OtpToken.destroy({
+      where: {
+        hashedOtp,
+        verified: false,
+        expiresAt: { [Op.gt]: now },
+        identifier: normalizedEmail,
+        method: "email",
+      },
+    });
+    if (mobileDigits) {
+      await OtpToken.destroy({
+        where: {
+          hashedOtp,
+          verified: false,
+          expiresAt: { [Op.gt]: now },
+          identifier: mobileDigits,
+          method: "mobile",
+        },
+      });
+    }
+
     otpVerifyState.delete(key);
 
-    // Check if email already exists (enforce one account per email)
-    const emailExists = await User.findOne({ where: { email } });
+    // Duplicate email prevention (strict message).
+    const emailExists = await User.findOne({ where: { email: normalizedEmail } });
     if (emailExists) {
-      return res.status(400).json({ message: "An account with this email already exists. Please use a different email." });
+      return res.status(400).json({ message: "Email already registered" });
     }
 
-    // Check mobile number only if provided
-    if (mobileNumber) {
-      const mobileExists = await User.findOne({ where: { mobileNumber } });
-      if (mobileExists) {
-        return res.status(400).json({ message: "Mobile number already exists" });
-      }
-    }
-
-    // Create user (mobileNumber is optional)
-    const user = await User.create({ 
-      name: name.trim(), 
-      email: email.trim().toLowerCase(), 
-      password, 
-      mobileNumber: mobileNumber ? mobileNumber.replace(/^\+91/, "").replace(/\D/g, "") : null 
+    // Create user (mobileNumber is optional). No mobile uniqueness enforcement.
+    const user = await User.create({
+      name: String(name).trim(),
+      email: normalizedEmail,
+      password,
+      mobileNumber: mobileDigits ? mobileDigits : null,
     });
 
     // Issue tokens for automatic login after registration
     const tokens = await issueTokensForUser(user, res);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Registration successful",
+      message: "Account created successfully",
       user: toPublicUser(user),
       ...tokens,
     });
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") {
-      if (err.errors?.some(e => e.path === "email")) {
-        return res.status(400).json({ message: "An account with this email already exists" });
-      }
-      if (err.errors?.some(e => e.path === "mobileNumber")) {
-        return res.status(400).json({ message: "Mobile number already exists" });
+      if (err.errors?.some((e) => e.path === "email")) {
+        return res.status(400).json({ message: "Email already registered" });
       }
     }
     next(err);

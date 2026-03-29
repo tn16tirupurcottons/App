@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { AuthContext } from "../context/AuthContext";
@@ -20,6 +20,7 @@ export default function Register() {
   const [verificationError, setVerificationError] = useState("");
   const [otpRetryAfter, setOtpRetryAfter] = useState(0);
   const COOLDOWN_KEY = "otpCooldownUntil";
+  const otpInputRef = useRef(null);
 
   const startCooldown = (seconds) => {
     const safeSeconds = Math.max(0, Number(seconds) || 0);
@@ -51,6 +52,12 @@ export default function Register() {
     return () => clearInterval(timer);
   }, [otpRetryAfter]);
 
+  // UX: focus OTP input as soon as we reach step 2.
+  useEffect(() => {
+    if (step !== 2) return;
+    otpInputRef.current?.focus?.();
+  }, [step]);
+
   // Step 1: User Details Form
   const detailsFormik = useFormik({
     initialValues: { 
@@ -71,10 +78,10 @@ export default function Register() {
           "Please enter a valid email address"
         ),
       mobileNumber: Yup.string()
-        .test("mobile-optional", "Enter valid 10-digit Indian mobile number", (value) => {
+        .test("mobile-optional", "Invalid mobile number", (value) => {
           if (!value || value.trim() === "") return true; // Optional
           const cleaned = value.replace(/^\+91/, "").replace(/\D/g, "");
-          return /^[6-9]\d{9}$/.test(cleaned);
+          return /^\d{10}$/.test(cleaned);
         }),
       password: Yup.string()
         .min(6, "Password must be at least 6 characters")
@@ -86,15 +93,23 @@ export default function Register() {
         return;
       }
       try {
-        // Determine OTP method: prefer email if both provided
-        const method = values.email ? "email" : "mobile";
-        const identifier = method === "email" ? values.email.trim() : values.mobileNumber.replace(/^\+91/, "").replace(/\D/g, "");
-        
-        if (!identifier) {
-          setErrors({ general: "Email or mobile number is required for OTP verification" });
+        const normalizedEmail = values.email.trim().toLowerCase();
+        let normalizedMobileDigits = null;
+        if (values.mobileNumber && values.mobileNumber.trim() !== "") {
+          normalizedMobileDigits = values.mobileNumber
+            .replace(/^\+91/, "")
+            .replace(/\D/g, "");
+        }
+
+        if (!normalizedEmail) {
+          setErrors({ general: "Invalid email address" });
           setSubmitting(false);
           return;
         }
+
+        // Production-grade: OTP delivery is via free email (mobile is mock-only).
+        const method = "email";
+        const identifier = normalizedEmail;
 
         setOtpMethod(method);
         setOtpIdentifier(identifier);
@@ -104,18 +119,27 @@ export default function Register() {
         const res = await axiosClient.post("/auth/send-otp", {
           identifier,
           method,
+          email: normalizedEmail,
+          mobileNumber: normalizedMobileDigits,
         });
 
         setOtpSent(true);
         setStep(2);
 
         toast.success(
-          res.data.message || `OTP sent to your ${method === "email" ? "email" : "mobile number"}`
+          res.data.message || "OTP sent to your email"
         );
         startCooldown(res.data?.retryAfter ?? 60);
 
         // Store form values for final registration
-        localStorage.setItem("pendingRegistration", JSON.stringify(values));
+        localStorage.setItem(
+          "pendingRegistration",
+          JSON.stringify({
+            ...values,
+            email: normalizedEmail,
+            mobileNumber: normalizedMobileDigits,
+          })
+        );
       } catch (err) {
         console.log("API error:", err.response?.data);
         const retryAfter = Number(err.response?.data?.retryAfter || 0);
@@ -195,9 +219,20 @@ export default function Register() {
     try {
       setOtpLoading(true);
       setVerificationError("");
+
+      const pendingData = JSON.parse(
+        localStorage.getItem("pendingRegistration") || "{}"
+      );
+      const normalizedEmail = (pendingData.email || otpIdentifier || "")
+        .trim()
+        .toLowerCase();
+      const normalizedMobileDigits = pendingData.mobileNumber || null;
+
       const res = await axiosClient.post("/auth/send-otp", {
-        identifier: otpIdentifier,
-        method: otpMethod,
+        identifier: normalizedEmail,
+        method: "email",
+        email: normalizedEmail,
+        mobileNumber: normalizedMobileDigits,
       });
 
       toast.success(res.data.message || "OTP resent successfully");
@@ -366,7 +401,11 @@ export default function Register() {
               <h2 className="text-3xl font-display">Enter Verification Code</h2>
               <p className="text-sm text-muted">
                 We've sent a 6-digit OTP to your {otpMethod === "email" ? "email" : "mobile number"}
-                {otpMethod === "email" ? ` (${otpIdentifier})` : ` (+91${otpIdentifier})`}
+                {otpMethod === "email" ? (
+                  <span className="break-all"> ({otpIdentifier})</span>
+                ) : (
+                  ` (+91${otpIdentifier})`
+                )}
               </p>
             </div>
 
@@ -376,6 +415,7 @@ export default function Register() {
                   Enter 6-digit OTP *
                 </label>
                 <input
+                  ref={otpInputRef}
                   name="otp"
                   type="text"
                   value={otpFormik.values.otp}

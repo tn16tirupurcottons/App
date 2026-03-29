@@ -24,7 +24,7 @@ const User = sequelize.define(
     },
     mobileNumber: {
       type: DataTypes.STRING,
-      unique: true,
+      unique: false,
       allowNull: true,
       validate: {
         len: [8, 20],

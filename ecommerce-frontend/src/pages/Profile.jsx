@@ -26,6 +26,7 @@ export default function Profile() {
   const toast = useToast();
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+  const [editOpen, setEditOpen] = React.useState(false);
   const [profileForm, setProfileForm] = React.useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -75,11 +76,13 @@ export default function Profile() {
       toast.success(res.data?.message || "Profile updated successfully");
       await refetchMe();
       window.dispatchEvent(new Event("auth-update"));
+      return true;
     } catch (error) {
       console.log("API error:", error.response?.data);
       const msg = error.response?.data?.message || error.message || "Failed to update profile";
       setProfileError(msg);
       toast.error(msg);
+      return false;
     } finally {
       setSavingProfile(false);
     }
@@ -129,6 +132,7 @@ export default function Profile() {
               <button
                 type="button"
                 className="shrink-0 rounded-full border border-neutral-300 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors"
+                onClick={() => setEditOpen(true)}
               >
                 Edit profile
               </button>
@@ -173,35 +177,63 @@ export default function Profile() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-neutral-200 bg-white p-6 space-y-4">
-          <h3 className="text-lg font-bold text-neutral-900">Edit Profile</h3>
-          <form onSubmit={handleProfileSave} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input
-              type="text"
-              value={profileForm.name}
-              onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Name"
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900"
-            />
-            <input
-              type="email"
-              value={profileForm.email}
-              onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="Email"
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900"
-            />
-            <div className="md:col-span-2 flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={savingProfile}
-                className="rounded-full bg-neutral-900 text-white px-5 py-2 text-sm font-semibold hover:bg-neutral-800 transition-colors disabled:opacity-50"
+        {editOpen ? (
+          <div
+            className="fixed inset-0 z-[300] bg-black/40 flex items-center justify-center px-4 py-6"
+            onClick={() => setEditOpen(false)}
+          >
+            <div
+              className="w-full max-w-xl card rounded-2xl border border-neutral-200 bg-white p-6 md:p-10 space-y-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-bold text-neutral-900">Edit Profile</h3>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(false)}
+                  className="rounded-full border border-neutral-300 bg-white px-3 py-2 text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  aria-label="Close edit profile"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  const ok = await handleProfileSave(e);
+                  if (ok) setEditOpen(false);
+                }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
               >
-                {savingProfile ? "Saving..." : "Save profile"}
-              </button>
-              {profileError ? <p className="text-sm text-red-600">{profileError}</p> : null}
+                <input
+                  type="text"
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Name"
+                  className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900"
+                />
+                <input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                  className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900"
+                />
+
+                <div className="md:col-span-2 flex items-center gap-3 flex-wrap">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="rounded-full bg-neutral-900 text-white px-5 py-2 text-sm font-semibold hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                  >
+                    {savingProfile ? "Saving..." : "Save profile"}
+                  </button>
+                  {profileError ? <p className="text-sm text-red-600">{profileError}</p> : null}
+                </div>
+              </form>
             </div>
-          </form>
-        </section>
+          </div>
+        ) : null}
 
         <section className="rounded-2xl border border-neutral-200 bg-white p-6 space-y-4">
           <div className="flex items-center justify-between gap-3">

@@ -12,6 +12,7 @@ async function runMigrations() {
   const migrations = [
     "scripts/migrations/20250120_add_mobile_number.js",
     "scripts/migrations/20250120_fix_all_fk_constraints.js",
+    "scripts/migrations/20260329_remove_mobile_number_unique.js",
   ];
 
   for (const migration of migrations) {
