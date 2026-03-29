@@ -38,8 +38,8 @@ const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
 const otpEmailKey = (email) => `email:${normalizeEmail(email)}`;
 
-const EMAIL_REGEX =
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
 export const toPublicUser = (user) => ({
   id: user.id,
@@ -332,13 +332,11 @@ export const sendOtp = async (req, res, next) => {
       return res.status(400).json({ message: "method must be 'email' or 'mobile'" });
     }
 
-    // Strict email validation (before sending OTP).
-    const rawEmail =
-      emailFromBody ||
-      (method === "email" ? identifier : (String(identifier).includes("@") ? identifier : ""));
+    // Strict email validation (before generating/storing/sending OTP).
+    const rawEmail = method === "email" ? identifier : emailFromBody;
     const normalizedEmail = normalizeEmail(rawEmail);
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ message: "Please enter a valid email address" });
     }
 
     // Mobile validation (mock only; no paid SMS).
@@ -350,7 +348,7 @@ export const sendOtp = async (req, res, next) => {
         .replace(/^\+91/, "")
         .replace(/\D/g, "");
 
-      if (!/^\d{10}$/.test(cleaned)) {
+      if (!MOBILE_REGEX.test(cleaned)) {
         return res.status(400).json({ message: "Invalid mobile number" });
       }
       mobileDigits = cleaned;
@@ -505,7 +503,7 @@ export const sendOtp = async (req, res, next) => {
 </html>`;
 
     try {
-      console.log("Sending OTP to:", normalizedEmail);
+      console.log("OTP will be sent to:", normalizedEmail);
       await transporter.verify();
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -542,7 +540,7 @@ export const verifyOtpAndRegister = async (req, res, next) => {
 
     const normalizedEmail = normalizeEmail(email);
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ message: "Please enter a valid email address" });
     }
 
     const otpInput = String(otp).trim();
@@ -554,7 +552,7 @@ export const verifyOtpAndRegister = async (req, res, next) => {
     let mobileDigits = null;
     if (mobileNumber) {
       const cleaned = String(mobileNumber).trim().replace(/^\+91/, "").replace(/\D/g, "");
-      if (!/^\d{10}$/.test(cleaned)) {
+      if (!MOBILE_REGEX.test(cleaned)) {
         return res.status(400).json({ message: "Invalid mobile number" });
       }
       mobileDigits = cleaned;

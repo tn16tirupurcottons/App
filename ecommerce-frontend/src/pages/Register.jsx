@@ -7,6 +7,9 @@ import axiosClient from "../api/axiosClient";
 import { useToast } from "../components/Toast";
 import { FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
 export default function Register() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -73,15 +76,12 @@ export default function Register() {
       email: Yup.string()
         .email("Enter a valid email address")
         .required("Email is required")
-        .matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-          "Please enter a valid email address"
-        ),
+        .matches(EMAIL_REGEX, "Please enter a valid email address"),
       mobileNumber: Yup.string()
         .test("mobile-optional", "Invalid mobile number", (value) => {
           if (!value || value.trim() === "") return true; // Optional
           const cleaned = value.replace(/^\+91/, "").replace(/\D/g, "");
-          return /^\d{10}$/.test(cleaned);
+          return MOBILE_REGEX.test(cleaned);
         }),
       password: Yup.string()
         .min(6, "Password must be at least 6 characters")
@@ -103,6 +103,16 @@ export default function Register() {
 
         if (!normalizedEmail) {
           setErrors({ general: "Invalid email address" });
+          setSubmitting(false);
+          return;
+        }
+        if (!EMAIL_REGEX.test(normalizedEmail)) {
+          setErrors({ email: "Please enter a valid email address" });
+          setSubmitting(false);
+          return;
+        }
+        if (normalizedMobileDigits && !MOBILE_REGEX.test(normalizedMobileDigits)) {
+          setErrors({ mobileNumber: "Invalid mobile number" });
           setSubmitting(false);
           return;
         }
@@ -300,7 +310,11 @@ export default function Register() {
                         detailsFormik.setFieldValue("mobileNumber", val ? `+91${val}` : "");
                       }}
                       onBlur={detailsFormik.handleBlur}
-                      className="flex-1 border border-border bg-white rounded-r-full px-4 py-3 text-dark focus:outline-none focus:border-primary"
+                      className={`flex-1 border bg-white rounded-r-full px-4 py-3 text-dark focus:outline-none focus:border-primary ${
+                        detailsFormik.touched.mobileNumber && detailsFormik.errors.mobileNumber
+                          ? "border-red-500"
+                          : "border-border"
+                      }`}
                       placeholder="9876543210"
                       maxLength={10}
                     />
@@ -320,7 +334,11 @@ export default function Register() {
                   value={detailsFormik.values.email}
                   onChange={detailsFormik.handleChange}
                   onBlur={detailsFormik.handleBlur}
-                  className="w-full border border-border bg-white rounded-full px-4 py-3 text-dark focus:outline-none focus:border-primary"
+                  className={`w-full border bg-white rounded-full px-4 py-3 text-dark focus:outline-none focus:border-primary ${
+                    detailsFormik.touched.email && detailsFormik.errors.email
+                      ? "border-red-500"
+                      : "border-border"
+                  }`}
                   placeholder="you@example.com"
                 />
                 {detailsFormik.touched.email && detailsFormik.errors.email && (

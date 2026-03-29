@@ -71,15 +71,14 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
     <div className="fixed inset-0 z-[1000]" aria-modal="true" role="dialog" aria-label="Navigation menu">
       <button
         type="button"
-        className="fixed inset-0 z-[999] bg-black/50 transition-opacity"
+        className="overlay fixed inset-0 z-[999] bg-black/50 transition-opacity"
         aria-label="Close menu"
         onClick={onClose}
       />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="fixed top-0 left-0 z-[1000] h-full w-[80vw] max-w-[320px] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation"
-        style={{ animation: "sideMenuIn 280ms ease-out both" }}
+        className={`drawer open fixed top-0 left-0 z-[1000] h-full w-[80%] max-w-[320px] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation transition-transform duration-300 ease-out translate-x-0`}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-white">
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900">Menu</span>
@@ -205,9 +204,29 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
         </div>
       </div>
       <style>{`
-        @keyframes sideMenuIn {
-          from { transform: translateX(-100%); opacity: 0.96; }
-          to { transform: translateX(0); opacity: 1; }
+        .overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 999;
+        }
+        .drawer {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 80%;
+          max-width: 320px;
+          background: #fff;
+          z-index: 1000;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+        .drawer.open {
+          transform: translateX(0);
         }
       `}</style>
     </div>
