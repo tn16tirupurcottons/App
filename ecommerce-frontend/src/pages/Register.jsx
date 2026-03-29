@@ -18,7 +18,6 @@ export default function Register() {
   const [otpIdentifier, setOtpIdentifier] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [verificationError, setVerificationError] = useState("");
-  const [devOtp, setDevOtp] = useState(null); // For dev mode OTP display
 
   // Step 1: User Details Form
   const detailsFormik = useFormik({
@@ -73,14 +72,10 @@ export default function Register() {
 
         setOtpSent(true);
         setStep(2);
-        
-        // Show dev OTP if provided (development mode)
-        if (res.data.devOtp) {
-          setDevOtp(res.data.devOtp);
-          toast.info("Check server console for OTP (development mode)");
-        } else {
-          toast.success(res.data.message || `OTP sent to your ${method === "email" ? "email" : "mobile number"}`);
-        }
+
+        toast.success(
+          res.data.message || `OTP sent to your ${method === "email" ? "email" : "mobile number"}`
+        );
 
         // Store form values for final registration
         localStorage.setItem("pendingRegistration", JSON.stringify(values));
@@ -164,13 +159,7 @@ export default function Register() {
         method: otpMethod,
       });
 
-      // Update dev OTP if provided
-      if (res.data.devOtp) {
-        setDevOtp(res.data.devOtp);
-        toast.info("OTP resent. Check server console (development mode)");
-      } else {
-        toast.success("OTP resent successfully");
-      }
+      toast.success(res.data.message || "OTP resent successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to resend OTP");
     } finally {
@@ -181,7 +170,6 @@ export default function Register() {
   const handleBackToDetails = () => {
     setStep(1);
     setOtpSent(false);
-    setDevOtp(null);
     setVerificationError("");
     otpFormik.resetForm();
   };
@@ -330,15 +318,6 @@ export default function Register() {
                 {otpMethod === "email" ? ` (${otpIdentifier})` : ` (+91${otpIdentifier})`}
               </p>
             </div>
-
-            {/* Dev Mode OTP Display */}
-            {devOtp && (
-              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-2xl px-4 py-3">
-                <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ Development Mode</p>
-                <p className="text-xs text-yellow-700 mb-2">Email/SMS service not configured. Use this OTP:</p>
-                <p className="text-2xl font-mono font-bold text-yellow-900 text-center tracking-widest">{devOtp}</p>
-              </div>
-            )}
 
             <form onSubmit={otpFormik.handleSubmit} className="space-y-5">
               <div>

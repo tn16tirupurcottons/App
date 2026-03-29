@@ -76,6 +76,8 @@ function AuthProvider({ children }) {
   };
 
   const logout = (callback) => {
+    // Best-effort server logout to clear refresh cookie.
+    axiosClient.post("/auth/logout").catch(() => {});
     localStorage.removeItem("tn16_token");
     setUser(null);
     if (callback && typeof callback === "function") {

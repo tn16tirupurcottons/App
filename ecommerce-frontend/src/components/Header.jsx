@@ -1,5 +1,5 @@
-import React, { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBars, FaShoppingCart, FaHeart, FaUser } from "react-icons/fa";
 import SearchBar from "./SearchBar";
 import SideMenu from "./SideMenu";
@@ -14,18 +14,48 @@ const wordmarkClassName =
 
 export default function Header() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { user, logout: logoutContext } = useContext(AuthContext);
   const { theme } = useBrandTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileRef = useRef(null);
 
   const logout = () => {
     logoutContext();
     navigate("/");
     setMenuOpen(false);
+    setProfileMenuOpen(false);
   };
 
-  const accountHref = user ? "/membership" : "/login";
+  const accountHref = user ? "/profile" : "/login";
   const accountLabel = user ? "Account" : "Login";
+
+  useEffect(() => {
+    if (pathname !== "/profile") setProfileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const onDocMouseDown = (e) => {
+      if (!profileRef.current) return;
+      if (profileRef.current.contains(e.target)) return;
+      setProfileMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [profileMenuOpen]);
+
+  const goHome = (e) => {
+    if (e) e.preventDefault();
+    setMenuOpen(false);
+    setProfileMenuOpen(false);
+    if (pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    navigate("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] border-b border-[#E5E7EB] bg-white backdrop-blur-sm pointer-events-auto">
@@ -42,7 +72,11 @@ export default function Header() {
           >
             <FaBars size={20} />
           </button>
-          <Link to="/" className="group flex min-w-0 flex-1 items-center justify-center gap-2 sm:justify-start">
+          <Link
+            to="/"
+            onClick={goHome}
+            className="group flex min-w-0 flex-1 items-center justify-center gap-2 sm:justify-start"
+          >
             {theme.logo ? (
               <img
                 src={theme.logo}
@@ -63,13 +97,69 @@ export default function Header() {
             >
               <FaHeart size={18} />
             </Link>
-            <Link
-              to={accountHref}
-              className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
-              aria-label={accountLabel}
-            >
-              <FaUser size={18} />
-            </Link>
+            {user && pathname === "/profile" ? (
+              <div className="relative" ref={profileRef}>
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((v) => !v)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+                  aria-label={accountLabel}
+                >
+                  <FaUser size={18} />
+                </button>
+                {profileMenuOpen ? (
+                  <div className="absolute right-0 top-12 z-[200] min-w-[14rem] rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate("/profile");
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                    >
+                      My Profile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate("/orders");
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                    >
+                      Orders
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => logout()}
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileMenuOpen(true);
+                  navigate("/profile");
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+                aria-label={accountLabel}
+              >
+                <FaUser size={18} />
+              </button>
+            ) : (
+              <Link
+                to={accountHref}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+                aria-label={accountLabel}
+              >
+                <FaUser size={18} />
+              </Link>
+            )}
           </div>
         </div>
         <div className="px-3 pb-3 sm:px-4">
@@ -87,7 +177,7 @@ export default function Header() {
         >
           <FaBars size={20} />
         </button>
-        <Link to="/" className="group flex shrink-0 items-center gap-2">
+        <Link to="/" onClick={goHome} className="group flex shrink-0 items-center gap-2">
           {theme.logo ? (
             <img
               src={theme.logo}
@@ -115,19 +205,82 @@ export default function Header() {
           >
             <FaHeart size={18} />
           </Link>
-          <Link
-            to={accountHref}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
-            aria-label={accountLabel}
-          >
-            <FaUser size={18} />
-          </Link>
+          {user && pathname === "/profile" ? (
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                onClick={() => setProfileMenuOpen((v) => !v)}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+                aria-label={accountLabel}
+              >
+                <FaUser size={18} />
+              </button>
+              {profileMenuOpen ? (
+                <div className="absolute right-0 top-12 z-[200] min-w-[14rem] rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    My Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/orders");
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    Orders
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : user ? (
+            <button
+              type="button"
+              onClick={() => {
+                setProfileMenuOpen(true);
+                navigate("/profile");
+              }}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+              aria-label={accountLabel}
+            >
+              <FaUser size={18} />
+            </button>
+          ) : (
+            <Link
+              to={accountHref}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+              aria-label={accountLabel}
+            >
+              <FaUser size={18} />
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Desktop: one row — [LOGO] [centered search] [actions], never wraps */}
       <div className="hidden lg:flex max-w-[1600px] mx-auto h-[4.25rem] flex-nowrap items-center gap-4 xl:gap-6 px-6 xl:px-8 min-w-0">
-        <Link to="/" className="group flex shrink-0 items-center gap-2 xl:gap-3">
+        <Link
+          to="/"
+          onClick={goHome}
+          className="group flex shrink-0 items-center gap-2 xl:gap-3"
+        >
           {theme.logo ? (
             <img
               src={theme.logo}
@@ -176,13 +329,71 @@ export default function Header() {
               {user.name?.split(" ")[0]}
             </span>
           )}
-          <Link
-            to={accountHref}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#000000] hover:text-neutral-700 transition ease-in-out"
-            aria-label={accountLabel}
-          >
-            <FaUser size={17} />
-          </Link>
+          {user && pathname === "/profile" ? (
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                onClick={() => setProfileMenuOpen((v) => !v)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#000000] hover:text-neutral-700 transition ease-in-out"
+                aria-label={accountLabel}
+              >
+                <FaUser size={17} />
+              </button>
+              {profileMenuOpen ? (
+                <div className="absolute right-0 top-12 z-[200] min-w-[14rem] rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    My Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/orders");
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    Orders
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : !user ? (
+            <Link
+              to={accountHref}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#000000] hover:text-neutral-700 transition ease-in-out"
+              aria-label={accountLabel}
+            >
+              <FaUser size={17} />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setProfileMenuOpen(true);
+                navigate("/profile");
+              }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#000000] hover:text-neutral-700 transition ease-in-out"
+              aria-label={accountLabel}
+            >
+              <FaUser size={17} />
+            </button>
+          )}
           <Link
             to="/wishlist"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#000000] hover:text-neutral-700 transition ease-in-out"

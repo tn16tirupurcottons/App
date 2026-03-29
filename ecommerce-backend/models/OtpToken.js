@@ -10,9 +10,12 @@ const OtpToken = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    otp: {
+    // SECURITY: store ONLY hashed OTP (SHA256 hex, truncated to 6 chars to fit existing column size).
+    // The DB column is still named `otp` for backward-compatibility.
+    hashedOtp: {
       type: DataTypes.STRING(6),
       allowNull: false,
+      field: "otp",
     },
     identifier: {
       type: DataTypes.STRING,
@@ -26,6 +29,11 @@ const OtpToken = sequelize.define(
     expiresAt: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    failedAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     verified: {
       type: DataTypes.BOOLEAN,

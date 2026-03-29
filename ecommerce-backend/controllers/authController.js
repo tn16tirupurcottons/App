@@ -2,11 +2,13 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import ms from "ms";
+import nodemailer from "nodemailer";
+import { Op } from "sequelize";
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import PasswordResetToken from "../models/PasswordResetToken.js";
 import OtpToken from "../models/OtpToken.js";
-import { sendPasswordResetNotice, sendEmail, sendSMS } from "../services/notificationService.js";
+import { sendPasswordResetNotice, sendSMS } from "../services/notificationService.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
@@ -18,6 +20,7 @@ export const toPublicUser = (user) => ({
   email: user.email,
   mobileNumber: user.mobileNumber,
   role: user.role,
+  joinedAt: user.createdAt,
 });
 
 const signAccessToken = (user) =>
@@ -301,106 +304,118 @@ export const sendOtp = async (req, res, next) => {
       return res.status(400).json({ message: "method must be 'email' or 'mobile'" });
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const now = new Date();
+    const otpWindowMs = 10 * 60 * 1000; // 10 minutes
+    const otpResendCooldownMs = 60 * 1000; // 60 seconds
 
-    // Delete old OTPs for this identifier
-    await OtpToken.destroy({
-      where: { identifier, verified: false },
+    // Rate limit: max 5 OTP requests per identifier (email) per 10 minutes.
+    // (Requirement: per email. We still key by `identifier` to cover both email + mobile safely.)
+    const rateLimitWindowStart = new Date(Date.now() - otpWindowMs);
+    const requestsCount = await OtpToken.count({
+      where: {
+        identifier,
+        method,
+        createdAt: { [Op.gte]: rateLimitWindowStart },
+      },
     });
+    if (requestsCount >= 5) {
+      return res.status(429).json({
+        message: "Too many OTP requests. Please try again later.",
+      });
+    }
 
-    // Create new OTP
-    await OtpToken.create({
-      otp,
-      identifier,
-      method,
-      expiresAt,
+    // Resend cooldown: prevent re-sending within 60 seconds for the same identifier.
+    const lastOtp = await OtpToken.findOne({
+      where: { identifier, method },
+      order: [["createdAt", "DESC"]],
     });
-
-    // Send OTP
-    try {
-      let sent = false;
-      
-      if (method === "email") {
-        sent = await sendEmail({
-          to: identifier,
-          subject: "Your COTNEXT™ Registration OTP",
-          html: `
-            <h2>Your OTP for TNEXT™ Registration</h2>
-            <p>Your OTP is: <strong style="font-size:24px;letter-spacing:4px">${otp}</strong></p>
-            <p>This OTP will expire in 10 minutes.</p>
-            <p>If you didn't request this, please ignore this email.</p>
-          `,
-        });
-        
-        if (sent) {
-          console.log(`[OTP] Email OTP sent to ${identifier}`);
-          res.json({ success: true, message: "OTP sent successfully to your email" });
-        } else {
-          // SendGrid not configured - provide dev fallback
-          if (process.env.NODE_ENV !== "production") {
-            console.log(`\n⚠️  [DEV MODE] Email OTP for ${identifier}: ${otp}`);
-            console.log(`⚠️  Configure SENDGRID_API_KEY and SENDGRID_FROM_EMAIL for email delivery\n`);
-            res.json({ 
-              success: true, 
-              message: "OTP generated (email service not configured - check server console)", 
-              devOtp: otp,
-              warning: "Email service not configured. OTP is logged in console for development."
-            });
-          } else {
-            return res.status(500).json({ 
-              message: "Email service not configured. Please contact support." 
-            });
-          }
-        }
-      } else {
-        sent = await sendSMS({
-          to: identifier,
-          body: `Your TNEXT™ registration OTP is ${otp}. Valid for 10 minutes.`,
-        });
-        
-        if (sent) {
-          console.log(`[OTP] SMS OTP sent to ${identifier}`);
-          res.json({ success: true, message: "OTP sent successfully to your mobile number" });
-        } else {
-          // Twilio not configured - provide dev fallback
-          if (process.env.NODE_ENV !== "production") {
-            console.log(`\n⚠️  [DEV MODE] SMS OTP for ${identifier}: ${otp}`);
-            console.log(`⚠️  Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER for SMS delivery\n`);
-            res.json({ 
-              success: true, 
-              message: "OTP generated (SMS service not configured - check server console)", 
-              devOtp: otp,
-              warning: "SMS service not configured. OTP is logged in console for development."
-            });
-          } else {
-            return res.status(500).json({ 
-              message: "SMS service not configured. Please contact support." 
-            });
-          }
-        }
-      }
-    } catch (sendError) {
-      console.error("[OTP] Failed to send OTP:", sendError);
-      // In development, still allow OTP to work by logging it
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`\n⚠️  [DEV MODE - ERROR FALLBACK] OTP for ${identifier}: ${otp}`);
-        console.log(`⚠️  Email/SMS service error: ${sendError.message}`);
-        console.log(`⚠️  Configure SENDGRID_API_KEY (for email) or TWILIO credentials (for SMS)\n`);
-        res.json({ 
-          success: true, 
-          message: "OTP generated (service error - check server console)", 
-          devOtp: otp,
-          warning: `Service error: ${sendError.message}. OTP is logged in console.`
-        });
-      } else {
-        // In production, return error if email/SMS fails
-        return res.status(500).json({ 
-          message: "Failed to send OTP. Please try again later or contact support." 
+    if (lastOtp?.createdAt) {
+      const elapsed = Date.now() - lastOtp.createdAt.getTime();
+      if (elapsed < otpResendCooldownMs) {
+        const secondsLeft = Math.ceil((otpResendCooldownMs - elapsed) / 1000);
+        return res.status(429).json({
+          message: `Please wait ${secondsLeft}s before requesting a new OTP.`,
         });
       }
     }
+
+    // Generate 6-digit OTP (never store plaintext).
+    const otp = Math.floor(100000 + Math.random() * 900000)
+      .toString()
+      .padStart(6, "0");
+    const expiresAt = new Date(Date.now() + otpWindowMs);
+
+    // SHA256 hash, then truncate to fit existing DB column size.
+    const hashedOtpFull = crypto.createHash("sha256").update(otp).digest("hex");
+    const hashedOtp = hashedOtpFull.slice(0, 6);
+
+    // Expire older OTPs (keep records for rate limit window).
+    await OtpToken.update(
+      { expiresAt: now },
+      { where: { identifier, method, verified: false } }
+    );
+
+    await OtpToken.create({
+      hashedOtp,
+      identifier,
+      method,
+      expiresAt,
+      failedAttempts: 0,
+      verified: false,
+    });
+
+    // Send OTP (email via Nodemailer Gmail SMTP).
+    if (method === "email") {
+      const { EMAIL_USER, EMAIL_PASS } = process.env;
+      if (!EMAIL_USER || !EMAIL_PASS) {
+        return res
+          .status(500)
+          .json({ message: "Email service not configured. Please contact support." });
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: EMAIL_USER,
+          pass: EMAIL_PASS,
+        },
+      });
+
+      try {
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: identifier,
+          subject: "Your TNEXT™ Registration OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #111827;">
+              <h2>Your OTP for TNEXT™ Registration</h2>
+              <p>Your OTP is: <strong style="font-size:24px;letter-spacing:4px">${otp}</strong></p>
+              <p>This OTP will expire in 10 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+            </div>
+          `,
+        });
+      } catch (sendError) {
+        return res.status(500).json({
+          message: "Failed to send OTP. Please try again later or contact support.",
+        });
+      }
+    } else {
+      const sent = await sendSMS({
+        to: identifier,
+        body: `Your TNEXT™ registration OTP is ${otp}. Valid for 10 minutes.`,
+      });
+      if (!sent) {
+        return res.status(500).json({
+          message: "Failed to send OTP. Please try again later or contact support.",
+        });
+      }
+    }
+
+    // Never return OTP in API responses.
+    res.json({ success: true, message: "OTP sent successfully." });
   } catch (err) {
     next(err);
   }
@@ -413,15 +428,52 @@ export const verifyOtpAndRegister = async (req, res, next) => {
       return res.status(400).json({ message: "name, email, password, otp, and identifier are required" });
     }
 
-    // Verify OTP
+    const otpInput = String(otp).trim();
+    if (!/^\d{6}$/.test(otpInput)) {
+      return res.status(400).json({ message: "Invalid OTP format" });
+    }
+
+    const method = identifier.includes("@") ? "email" : "mobile";
+    const now = new Date();
+
+    // Load most recent active OTP token.
     const otpRecord = await OtpToken.findOne({
-      where: { identifier, otp, verified: false },
+      where: {
+        identifier,
+        method,
+        verified: false,
+        expiresAt: { [Op.gt]: now },
+      },
       order: [["createdAt", "DESC"]],
     });
 
-    if (!otpRecord || otpRecord.expiresAt < new Date()) {
+    if (!otpRecord) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+
+    // Hash user input for constant-time comparison (we still do a simple equality).
+    const hashedOtpFull = crypto.createHash("sha256").update(otpInput).digest("hex");
+    const hashedOtp = hashedOtpFull.slice(0, 6);
+
+    if (otpRecord.hashedOtp !== hashedOtp) {
+      const nextFailed = (otpRecord.failedAttempts || 0) + 1;
+      otpRecord.failedAttempts = nextFailed;
+      if (nextFailed >= 5) {
+        otpRecord.expiresAt = now;
+      }
+      await otpRecord.save();
+
+      if (nextFailed >= 5) {
+        return res.status(429).json({
+          message: "Too many invalid OTP attempts. Please request a new OTP.",
+        });
+      }
+
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Delete OTP after successful verification.
+    await otpRecord.destroy();
 
     // Check if email already exists (enforce one account per email)
     const emailExists = await User.findOne({ where: { email } });
@@ -444,10 +496,6 @@ export const verifyOtpAndRegister = async (req, res, next) => {
       password, 
       mobileNumber: mobileNumber ? mobileNumber.replace(/^\+91/, "").replace(/\D/g, "") : null 
     });
-
-    // Mark OTP as verified
-    otpRecord.verified = true;
-    await otpRecord.save();
 
     // Issue tokens for automatic login after registration
     const tokens = await issueTokensForUser(user, res);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FaTimes,
   FaHome,
@@ -28,6 +28,7 @@ const segmentLinks = [
  */
 export default function SideMenu({ open, onClose, user, onLogout }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +56,11 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
   if (!open) return null;
 
   const go = (to) => {
+    if (to === "/" && pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      onClose();
+      return;
+    }
     navigate(to);
     onClose();
   };
@@ -133,6 +139,18 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
           ))}
 
           <div className="pt-4 pb-2 px-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Offers</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => go("/catalog?featured=true")}
+            className={linkClass}
+          >
+            <span className="flex items-center gap-3">Worth a look</span>
+            <FaChevronRight className="text-neutral-300 text-xs shrink-0" aria-hidden />
+          </button>
+
+          <div className="pt-4 pb-2 px-1">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Editions</p>
           </div>
           <button type="button" onClick={() => go("/editions")} className={linkClass}>
@@ -153,7 +171,7 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
             </Link>
           ) : (
             <>
-              <button type="button" onClick={() => go("/membership")} className={`${linkClass} bg-white shadow-sm`}>
+              <button type="button" onClick={() => go("/profile")} className={`${linkClass} bg-white shadow-sm`}>
                 <span className="flex items-center gap-3">
                   <FaUser className="text-neutral-500 shrink-0" aria-hidden />
                   Profile
