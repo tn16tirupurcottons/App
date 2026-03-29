@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBars, FaShoppingCart, FaHeart, FaUser } from "react-icons/fa";
 import SearchBar from "./SearchBar";
-import SideMenu from "./SideMenu";
 import { AuthContext } from "../context/AuthContext";
 import { useBrandTheme } from "../context/BrandThemeContext";
 
@@ -12,19 +11,17 @@ const WORDMARK = "TNEXT";
 const wordmarkClassName =
   "font-display text-2xl sm:text-[1.75rem] font-bold text-[#000000] tracking-[0.12em] uppercase truncate group-hover:text-neutral-800 transition ease-in-out duration-200";
 
-export default function Header() {
+export default function Header({ onOpenMenu }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { user, logout: logoutContext } = useContext(AuthContext);
   const { theme } = useBrandTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileRef = useRef(null);
 
   const logout = () => {
     logoutContext();
     navigate("/");
-    setMenuOpen(false);
     setProfileMenuOpen(false);
   };
 
@@ -48,7 +45,6 @@ export default function Header() {
 
   const goHome = (e) => {
     if (e) e.preventDefault();
-    setMenuOpen(false);
     setProfileMenuOpen(false);
     if (pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -59,8 +55,6 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] border-b border-[#E5E7EB] bg-white backdrop-blur-sm pointer-events-auto">
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={logout} />
-
       {/* Mobile: menu + brand + actions, then full-width search */}
       <div className="md:hidden">
         <div className="max-w-[1600px] mx-auto flex h-14 items-center gap-2 sm:gap-3 px-3 sm:px-4">
@@ -68,7 +62,7 @@ export default function Header() {
             type="button"
             className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
             aria-label="Open menu"
-            onClick={() => setMenuOpen(true)}
+            onClick={onOpenMenu}
           >
             <FaBars size={20} />
           </button>
@@ -173,7 +167,7 @@ export default function Header() {
           type="button"
           className="relative z-[102] flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors touch-manipulation"
           aria-label="Open menu"
-          onClick={() => setMenuOpen(true)}
+          onClick={onOpenMenu}
         >
           <FaBars size={20} />
         </button>

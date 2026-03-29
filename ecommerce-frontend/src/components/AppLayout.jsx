@@ -1,17 +1,26 @@
-import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
+import SideMenu from "./SideMenu";
+import { AuthContext } from "../context/AuthContext";
 import "../admin/admin.css";
 
 const getPageBackground = () => "bg-white";
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
+  const [menuOpen, setMenuOpen] = useState(false);
   const isAdminRoute = location.pathname.startsWith("/admin");
   const pageBackground = getPageBackground();
   const isHomePage = location.pathname === "/";
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   if (isAdminRoute) {
     return (
@@ -27,7 +36,17 @@ export default function AppLayout() {
     <div
       className={`w-full min-h-screen flex flex-col ${pageBackground} text-neutral-900 overflow-x-hidden transition-colors duration-300`}
     >
-      <Header />
+      <Header onOpenMenu={() => setMenuOpen(true)} />
+      <SideMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user}
+        onLogout={() => {
+          logout();
+          setMenuOpen(false);
+          navigate("/");
+        }}
+      />
       <main
         className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 ${
           isHomePage

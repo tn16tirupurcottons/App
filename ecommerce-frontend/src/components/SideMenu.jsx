@@ -55,8 +55,6 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
     return () => cancelAnimationFrame(t);
   }, [open]);
 
-  if (!open) return null;
-
   const go = (to) => {
     if (to === "/" && pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -68,19 +66,30 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000]" aria-modal="true" role="dialog" aria-label="Navigation menu">
+    <div
+      className={`fixed inset-0 z-[1000] transition-opacity duration-300 ${
+        open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+      }`}
+      aria-modal="true"
+      role="dialog"
+      aria-label="Navigation menu"
+    >
       <button
         type="button"
-        className="overlay fixed inset-0 z-[999] bg-black/50 transition-opacity"
+        className={`overlay fixed inset-0 z-[999] bg-black/40 transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
         aria-label="Close menu"
         onClick={onClose}
       />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className={`drawer open fixed top-0 left-0 z-[1000] h-full w-[85%] max-w-[320px] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation transition-transform duration-300 ease-out translate-x-0`}
+        className={`drawer fixed top-0 left-0 z-[1000] h-full min-h-screen w-[80%] max-w-[320px] bg-white shadow-2xl border-r border-neutral-200 flex flex-col outline-none touch-manipulation transition-transform duration-300 ease-out ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-white">
+        <div className="drawer-header sticky top-0 z-10 border-b border-neutral-100 bg-white">
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900">Menu</span>
           <button
             type="button"
@@ -92,7 +101,7 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-3 space-y-2" aria-label="Primary">
+        <nav className="drawer-content overscroll-contain py-3 px-3 space-y-2" aria-label="Primary">
           <button type="button" onClick={() => go("/")} className={linkClass}>
             <span className="flex items-center gap-3">
               <FaHome className="text-neutral-500 shrink-0" aria-hidden />
@@ -217,16 +226,26 @@ export default function SideMenu({ open, onClose, user, onLogout }) {
           position: fixed;
           top: 0;
           left: 0;
-          height: 100%;
-          width: 85%;
+          height: 100vh;
+          min-height: 100vh;
+          width: 80%;
           max-width: 320px;
           background: #fff;
           z-index: 1000;
           transform: translateX(-100%);
-          transition: transform 0.3s ease;
+          transition: transform 0.28s ease;
+          box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
         }
-        .drawer.open {
-          transform: translateX(0);
+        .drawer-header {
+          height: 60px;
+          padding: 0 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .drawer-content {
+          flex: 1;
+          overflow-y: auto;
         }
       `}</style>
     </div>
