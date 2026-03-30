@@ -19,6 +19,7 @@ process.on("unhandledRejection", (error) => {
 
 // Database Sync
 import { syncDB, sequelize } from "./models/index.js";
+import runMigrationsSafely from "./scripts/run-migrations.js";
 
 // User Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -367,6 +368,7 @@ const freePortIfInUse = (port) => {
 
 const startServer = async () => {
   try {
+    await runMigrationsSafely();
     await syncDB();
     console.log("✅ Database synced successfully!");
     await bootstrapCatalog().catch((error) =>

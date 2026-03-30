@@ -193,6 +193,13 @@ export const login = async (req, res, next) => {
       ...tokens,
     });
   } catch (err) {
+    // If DB schema is behind the current model, return a stable message
+    // instead of crashing/throwing a raw Sequelize error to the client.
+    if (err?.name === "SequelizeDatabaseError" && err?.parent?.code === "42703") {
+      return res.status(500).json({
+        message: "Database schema mismatch. Please contact admin.",
+      });
+    }
     next(err);
   }
 };
