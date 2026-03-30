@@ -15,6 +15,7 @@ async function runMigrations() {
     "scripts/migrations/20260329_remove_mobile_number_unique.js",
     "scripts/migrations/20260330_add_insider_fields.js",
     "scripts/migrations/20260330_create_coupons_tables.js",
+    "scripts/migrations/20260330_add_category_isActive.js",
   ];
 
   for (const migration of migrations) {

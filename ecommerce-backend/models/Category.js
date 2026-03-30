@@ -27,6 +27,12 @@ const Category = sequelize.define(
     accentColor: {
       type: DataTypes.STRING,
     },
+    // Category is shown/hidden from the storefront using soft-deletes.
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   { timestamps: true }
 );

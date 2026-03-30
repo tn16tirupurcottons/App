@@ -4,11 +4,20 @@ import slugify from "../utils/slugify.js";
 
 export const getCategories = async (req, res) => {
   try {
+    const includeInactive =
+      String(req.query.includeInactive || "").toLowerCase() === "true";
+    const where = includeInactive ? {} : { isActive: true };
+
     const categories = await Category.findAll({
+      where,
       order: [["name", "ASC"]],
     });
     // Convert Sequelize models to plain objects
-    const items = categories.map((cat) => cat.get({ plain: true }));
+    const items = categories.map((cat) => {
+      const plain = cat.get({ plain: true });
+      // Backward-compatible: storefront expects heroImage; admin can also use image alias.
+      return { ...plain, image: plain.heroImage };
+    });
     res.json({ success: true, items });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -18,7 +27,7 @@ export const getCategories = async (req, res) => {
 export const getCategoryBySlug = async (req, res) => {
   try {
     const category = await Category.findOne({
-      where: { slug: req.params.slug },
+      where: { slug: req.params.slug, isActive: true },
       include: [
         {
           model: Product,
@@ -34,7 +43,8 @@ export const getCategoryBySlug = async (req, res) => {
     }
 
     // Convert Sequelize model to plain object
-    res.json({ success: true, category: category.get({ plain: true }) });
+    const plain = category.get({ plain: true });
+    res.json({ success: true, category: { ...plain, image: plain.heroImage } });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -42,7 +52,15 @@ export const getCategoryBySlug = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, slug, description, heroImage, accentColor } = req.body;
+    const {
+      name,
+      slug,
+      description,
+      heroImage,
+      image,
+      accentColor,
+      isActive,
+    } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
     }
@@ -57,8 +75,9 @@ export const createCategory = async (req, res) => {
       name,
       slug: categorySlug,
       description,
-      heroImage,
+      heroImage: image || heroImage,
       accentColor,
+      isActive: isActive === undefined ? true : Boolean(isActive),
     });
 
     res.status(201).json({ success: true, category });
@@ -75,6 +94,13 @@ export const updateCategory = async (req, res) => {
     }
 
     const payload = { ...req.body };
+    if (payload.image && !payload.heroImage) {
+      payload.heroImage = payload.image;
+      delete payload.image;
+    }
+    if (payload.isActive !== undefined) {
+      payload.isActive = Boolean(payload.isActive);
+    }
     if (payload.slug || payload.name) {
       const candidate = slugify(payload.slug || payload.name);
       const exists = await Category.findOne({
@@ -100,18 +126,10 @@ export const deleteCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    const productCount = await Product.count({
-      where: { categoryId: category.id },
-    });
-
-    if (productCount > 0) {
-      return res.status(400).json({
-        message: "Cannot delete category with linked products",
-      });
-    }
-
-    await category.destroy();
-    res.json({ success: true });
+    // Soft delete (deactivate) to keep relations intact.
+    category.isActive = false;
+    await category.save();
+    res.json({ success: true, message: "Category deactivated" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
