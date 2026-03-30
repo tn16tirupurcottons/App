@@ -13,6 +13,8 @@ async function runMigrations() {
     "scripts/migrations/20250120_add_mobile_number.js",
     "scripts/migrations/20250120_fix_all_fk_constraints.js",
     "scripts/migrations/20260329_remove_mobile_number_unique.js",
+    "scripts/migrations/20260330_add_insider_fields.js",
+    "scripts/migrations/20260330_create_coupons_tables.js",
   ];
 
   for (const migration of migrations) {

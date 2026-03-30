@@ -43,6 +43,7 @@ const BrandSettings = lazy(() => import("./pages/admin/BrandSettings"));
 const ImageManagement = lazy(() => import("./pages/admin/ImageManagement"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
 
 // Loading component
 const LoadingFallback = () => (
@@ -266,6 +267,17 @@ export default function App() {
                     <ProtectedRoute adminOnly={true}>
                       <Suspense fallback={<LoadingFallback />}>
                         <AdminUsers />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin/coupons"
+                  element={
+                    <ProtectedRoute adminOnly={true}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AdminCoupons />
                       </Suspense>
                     </ProtectedRoute>
                   }

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import { ensureInsiderUpgraded } from "../services/insiderService.js";
 
 const toPublicUser = (user) => ({
   id: user.id,
@@ -8,6 +9,8 @@ const toPublicUser = (user) => ({
   mobileNumber: user.mobileNumber,
   role: user.role,
   joinedAt: user.createdAt,
+  is_insider: user.is_insider,
+  insider_since: user.insider_since,
 });
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,6 +31,7 @@ export const checkEmailAvailability = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
+    await ensureInsiderUpgraded(req.user.id);
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
     return res.json({ success: true, user: toPublicUser(user) });

@@ -44,6 +44,18 @@ export default function AdminUsers() {
       toast.error(err.response?.data?.message || "Unable to delete user"),
   });
 
+  const insiderToggleMutation = useMutation({
+    mutationFn: (id) => axiosClient.patch(`/admin/users/${id}/insider-toggle`),
+    onSuccess: (res) => {
+      toast.success(
+        res.data?.user?.is_insider ? "User promoted to Insider" : "User removed from Insider"
+      );
+      qc.invalidateQueries(["adminUsers"]);
+    },
+    onError: (err) =>
+      toast.error(err.response?.data?.message || "Unable to toggle Insider"),
+  });
+
   const handleRoleToggle = (user) => {
     const nextRole = user.role === "admin" ? "user" : "admin";
     roleMutation.mutate({ id: user.id, role: nextRole });
@@ -118,6 +130,16 @@ export default function AdminUsers() {
                       Remove
                     </button>
                   </div>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => insiderToggleMutation.mutate(user.id)}
+                        disabled={insiderToggleMutation.isPending}
+                        className="w-full px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-900 text-xs font-semibold uppercase tracking-wide hover:bg-neutral-50 transition disabled:opacity-50"
+                      >
+                        {user.is_insider ? "Disable Insider" : "Enable Insider"}
+                      </button>
+                    </div>
                 </div>
               ))}
             </div>
@@ -156,6 +178,14 @@ export default function AdminUsers() {
                             className="px-4 py-2 rounded-full border border-neutral-900 bg-white text-neutral-900 text-xs font-semibold uppercase tracking-wide hover:bg-neutral-900 hover:text-white transition disabled:opacity-50"
                           >
                             {user.role === "admin" ? "Demote" : "Promote"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => insiderToggleMutation.mutate(user.id)}
+                            disabled={insiderToggleMutation.isPending}
+                            className="px-4 py-2 rounded-full border border-neutral-200 bg-white text-neutral-900 text-xs font-semibold uppercase tracking-wide hover:bg-neutral-50 transition disabled:opacity-50"
+                          >
+                            {user.is_insider ? "Disable Insider" : "Enable Insider"}
                           </button>
                           <button
                             onClick={() => handleDelete(user)}

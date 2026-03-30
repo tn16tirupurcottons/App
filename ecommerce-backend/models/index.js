@@ -16,6 +16,8 @@ import OtpToken from "./OtpToken.js";
 import Banner from "./Banner.js";
 import BrandSetting from "./BrandSetting.js";
 import AppImage from "./AppImage.js";
+import Coupon from "./Coupon.js";
+import CouponUsage from "./CouponUsage.js";
 
 // =============================
 //      MODEL ASSOCIATIONS
@@ -52,6 +54,12 @@ User.hasMany(PasswordResetToken, {
 });
 PasswordResetToken.belongsTo(User, { foreignKey: "userId" });
 
+// Coupon usage logging associations
+Coupon.hasMany(CouponUsage, { foreignKey: "couponId", onDelete: "CASCADE" });
+CouponUsage.belongsTo(Coupon, { foreignKey: "couponId" });
+CouponUsage.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(CouponUsage, { foreignKey: "userId", onDelete: "CASCADE" });
+
 // =============================
 //      SYNC DB
 // =============================
@@ -64,6 +72,8 @@ export const syncDB = async () => {
     await sequelize.sync();
     const { seedAppImages } = await import("../scripts/seedAppImages.js");
     await seedAppImages();
+    const { seedCoupons } = await import("../scripts/seedCoupons.js");
+    await seedCoupons();
     console.log("✅ Database & tables synced!");
   } catch (err) {
     console.error("❌ DB Sync Error:", err);
@@ -89,4 +99,6 @@ export {
   PasswordResetToken,
   OtpToken,
   AppImage,
+  Coupon,
+  CouponUsage,
 };

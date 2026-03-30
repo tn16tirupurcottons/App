@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import CategoryGrid from "../components/CategoryGrid";
@@ -17,6 +17,7 @@ import {
   CuratedLooksSection,
   HeroOfferBanner,
 } from "../components/LuxurySections";
+import { AuthContext } from "../context/AuthContext";
 
 const fallbackFilters = [
   { label: "Men's Shirts", slug: "mens-shirts" },
@@ -123,16 +124,31 @@ const FilterChip = ({ label, active, slug, navigate }) => {
   );
 };
 
-const coupons = [
+const fallbackCoupons = [
   { code: "TN16SAVE", text: "Get 25% off up to ₹200" },
-  { code: "FREESHIP", text: "Free shipping on ₹1499+" },
   { code: "INSIDER", text: "Extra 10% for Insider members" },
+  { code: "FLAT100", text: "Flat ₹100 off on ₹999+" },
 ];
+
+const formatCouponText = (c) => {
+  try {
+    if (!c) return "";
+    if (c.discount_type === "percentage") {
+      const cap = c.max_discount ? ` up to ₹${Math.round(Number(c.max_discount))}` : "";
+      return `Save ${Math.round(Number(c.discount_value))}%${cap}`;
+    }
+    if (c.discount_type === "flat") return `Save ₹${Math.round(Number(c.discount_value))}`;
+    return "";
+  } catch {
+    return "";
+  }
+};
 
 export default function Home() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCategorySlug = searchParams.get("category") || "";
+  const { user } = useContext(AuthContext);
 
   const { data: categoryResponse, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
@@ -165,6 +181,25 @@ export default function Home() {
       return res.data;
     },
   });
+
+  const { data: eligibleCouponsData, isLoading: couponsLoading } = useQuery({
+    queryKey: ["eligibleCouponsHome"],
+    enabled: !!user,
+    queryFn: async () => {
+      const res = await axiosClient.get("/coupons/eligible");
+      return res.data?.items || [];
+    },
+  });
+  const coupons = !user
+    ? fallbackCoupons
+    : couponsLoading
+      ? fallbackCoupons
+      : eligibleCouponsData?.length
+        ? eligibleCouponsData.map((c) => ({
+            code: c.code,
+            text: formatCouponText(c),
+          }))
+        : [];
 
   const products = productResponse?.items || [];
   const displayProducts =

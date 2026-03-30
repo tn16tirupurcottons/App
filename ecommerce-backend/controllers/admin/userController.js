@@ -1,5 +1,6 @@
 import { Op, fn, col } from "sequelize";
 import { User, Order } from "../../models/index.js";
+import { toggleInsiderStatus } from "../../services/insiderService.js";
 
 export const listUsers = async (req, res, next) => {
   try {
@@ -105,6 +106,26 @@ export const deleteUser = async (req, res, next) => {
     }
     await user.destroy();
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const toggleUserInsider = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const nextIsInsider = !user.is_insider;
+    await toggleInsiderStatus(user.id, nextIsInsider);
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        is_insider: nextIsInsider,
+        insider_since: nextIsInsider ? new Date() : null,
+      },
+    });
   } catch (error) {
     next(error);
   }

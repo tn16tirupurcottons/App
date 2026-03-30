@@ -9,6 +9,7 @@ import RefreshToken from "../models/RefreshToken.js";
 import PasswordResetToken from "../models/PasswordResetToken.js";
 import OtpToken from "../models/OtpToken.js";
 import { sendPasswordResetNotice, sendSMS } from "../services/notificationService.js";
+import { ensureInsiderUpgraded } from "../services/insiderService.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
@@ -48,6 +49,8 @@ export const toPublicUser = (user) => ({
   mobileNumber: user.mobileNumber,
   role: user.role,
   joinedAt: user.createdAt,
+  is_insider: user.is_insider,
+  insider_since: user.insider_since,
 });
 
 const signAccessToken = (user) =>
@@ -195,7 +198,10 @@ export const login = async (req, res, next) => {
 };
 
 export const me = async (req, res) => {
-  res.json({ success: true, user: toPublicUser(req.user) });
+  // Keep insider status up to date for consistent UI.
+  await ensureInsiderUpgraded(req.user.id);
+  const fresh = await User.findByPk(req.user.id);
+  res.json({ success: true, user: toPublicUser(fresh || req.user) });
 };
 
 export const refresh = async (req, res, next) => {

@@ -25,6 +25,7 @@ export default function MultiStepCheckout() {
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [couponCode, setCouponCode] = useState(() => localStorage.getItem("tn16_applied_coupon") || "");
 
   // Step 1: Shipping Address
   const [shipping, setShipping] = useState({
@@ -55,7 +56,9 @@ export default function MultiStepCheckout() {
   useEffect(() => {
     const init = async () => {
       try {
-        const res = await axiosClient.post("/orders/checkout");
+        const res = await axiosClient.post("/orders/checkout", {
+          couponCode: couponCode || undefined,
+        });
         setOrderData(res.data);
       } catch (err) {
         setError(err.response?.data?.message || "Unable to start checkout");
@@ -64,7 +67,7 @@ export default function MultiStepCheckout() {
       }
     };
     init();
-  }, []);
+  }, [couponCode]);
 
   const handleShippingChange = (field, value) => {
     setShipping((prev) => ({ ...prev, [field]: value }));
@@ -101,6 +104,7 @@ export default function MultiStepCheckout() {
     try {
       const res = await axiosClient.post("/orders/checkout", {
         paymentMethod: paymentMethod,
+        couponCode: couponCode || undefined,
       });
       setClientSecret(res.data.clientSecret || "");
       if (res.data.razorpayOrderId) {
@@ -117,6 +121,7 @@ export default function MultiStepCheckout() {
       try {
         const res = await axiosClient.post("/orders/checkout", {
           paymentMethod: "razorpay",
+          couponCode: couponCode || undefined,
         });
         if (res.data.razorpayOrderId) {
           setOrderData((prev) => ({ ...prev, ...res.data }));
@@ -176,6 +181,7 @@ export default function MultiStepCheckout() {
         razorpayOrderId: finalOrderData?.razorpayOrderId,
         razorpayPaymentId: finalOrderData?.razorpayPaymentId,
         razorpaySignature: finalOrderData?.razorpaySignature,
+        couponCode: couponCode || undefined,
       };
 
       const res = await axiosClient.post("/orders", orderPayload);
@@ -186,6 +192,10 @@ export default function MultiStepCheckout() {
       
       setCurrentStep(STEPS.CONFIRMATION);
       toast.success("Order placed successfully!");
+      if (couponCode) {
+        localStorage.removeItem("tn16_applied_coupon");
+        setCouponCode("");
+      }
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to place order");
       toast.error(err.response?.data?.message || "Failed to place order");

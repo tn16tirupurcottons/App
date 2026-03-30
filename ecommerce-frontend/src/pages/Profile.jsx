@@ -126,6 +126,11 @@ export default function Profile() {
                 <p className="text-base font-semibold text-neutral-900 break-words">
                   {effectiveUser?.name || "—"}
                 </p>
+                {effectiveUser?.is_insider ? (
+                  <span className="mt-2 inline-flex items-center rounded-full bg-neutral-900 text-white px-3 py-1 text-[10px] uppercase tracking-[0.22em]">
+                    Insider
+                  </span>
+                ) : null}
               </div>
             </div>
             <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

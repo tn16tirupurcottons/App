@@ -1,5 +1,14 @@
-import { Order, Cart, Product, OrderItem, User } from "../models/index.js";
+import {
+  Order,
+  Cart,
+  Product,
+  OrderItem,
+  User,
+  sequelize,
+} from "../models/index.js";
 import { notifyOrderPlaced, sendSMS } from "../services/notificationService.js";
+import { applyCouponPreview, consumeCouponForUser } from "../services/couponService.js";
+import { ensureInsiderUpgraded } from "../services/insiderService.js";
 import {
   createRazorpayOrder,
   createStripePaymentIntent,
@@ -10,8 +19,13 @@ import {
 } from "../services/paymentService.js";
 import { validatePaymentMethod, validateAmount } from "../middlewares/securityMiddleware.js";
 
-const calculateTotals = (cartItems) => {
-  const subtotal = cartItems.reduce(
+const safeNumber = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const calculateSubtotal = (cartItems) => {
+  return cartItems.reduce(
     (sum, item) => {
       const fallbackPrice =
         (item.Product?.price || 0) - (item.Product?.discount || 0);
@@ -20,16 +34,27 @@ const calculateTotals = (cartItems) => {
     },
     0
   );
-  const taxTotal = Number((subtotal * 0.05).toFixed(2));
-  const shippingFee = subtotal > 1999 ? 0 : 59;
-  const discountTotal = 0;
-  const total = subtotal + taxTotal + shippingFee - discountTotal;
-  return { subtotal, taxTotal, shippingFee, discountTotal, total };
+};
+
+const calculateTotals = (cartItems, discountTotal = 0) => {
+  const rawSubtotal = calculateSubtotal(cartItems);
+  const discountedSubtotal = Math.max(0, rawSubtotal - safeNumber(discountTotal));
+  const taxTotal = Number((discountedSubtotal * 0.05).toFixed(2));
+  const shippingFee = discountedSubtotal >= 1999 ? 0 : 59;
+  const total = discountedSubtotal + taxTotal + shippingFee;
+  return {
+    rawSubtotal,
+    subtotal: discountedSubtotal,
+    taxTotal,
+    shippingFee,
+    discountTotal: safeNumber(discountTotal),
+    total,
+  };
 };
 
 export const createCheckoutIntent = async (req, res) => {
   try {
-    const { paymentMethod } = req.body;
+    const { paymentMethod, couponCode } = req.body || {};
 
     const cartItems = await Cart.findAll({
       where: { userId: req.user.id },
@@ -40,7 +65,22 @@ export const createCheckoutIntent = async (req, res) => {
       return res.status(400).json({ message: "Cart empty" });
     }
 
-    const totals = calculateTotals(cartItems);
+    let discountTotal = 0;
+    if (couponCode) {
+      await ensureInsiderUpgraded(req.user.id);
+      const refreshedUser = await User.findByPk(req.user.id);
+      const preview = await applyCouponPreview({
+        code: couponCode,
+        user: refreshedUser,
+        cartSubtotal: calculateSubtotal(cartItems),
+      });
+      if (!preview.ok) {
+        return res.status(400).json({ message: preview.message });
+      }
+      discountTotal = preview.discount_amount;
+    }
+
+    const totals = calculateTotals(cartItems, discountTotal);
 
     // Validate amount
     if (!validateAmount(totals.total)) {
@@ -170,7 +210,8 @@ export const placeOrder = async (req, res) => {
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
-      shipping 
+      shipping,
+      couponCode,
     } = req.body;
 
     if (!shipping) {
@@ -197,8 +238,24 @@ export const placeOrder = async (req, res) => {
     if (!cartItems.length) {
       return res.status(400).json({ message: "Cart empty" });
     }
+    const cartSubtotal = calculateSubtotal(cartItems);
 
-    const totals = calculateTotals(cartItems);
+    let discountTotal = 0;
+    if (couponCode) {
+      await ensureInsiderUpgraded(req.user.id);
+      const refreshedUser = await User.findByPk(req.user.id);
+      const preview = await applyCouponPreview({
+        code: couponCode,
+        user: refreshedUser,
+        cartSubtotal,
+      });
+      if (!preview.ok) {
+        return res.status(400).json({ message: preview.message });
+      }
+      discountTotal = preview.discount_amount;
+    }
+
+    const totals = calculateTotals(cartItems, discountTotal);
 
     // Validate amount
     if (!validateAmount(totals.total)) {
@@ -297,46 +354,67 @@ export const placeOrder = async (req, res) => {
       }
     }
 
-    const order = await Order.create({
-      userId: req.user.id,
-      subtotal: totals.subtotal,
-      taxTotal: totals.taxTotal,
-      shippingFee: totals.shippingFee,
-      discountTotal: totals.discountTotal,
-      total: totals.total,
-      paymentIntentId: verifiedPaymentId,
-      paymentMethod: paymentMethod === "online" ? "razorpay" : paymentMethod,
-      paymentStatus,
-      razorpayOrderId: razorpayOrderId || null,
-      razorpayPaymentId: razorpayPaymentId || null,
-      shippingName: shipping.name,
-      shippingPhone: shipping.phone,
-      shippingAddress: shipping.address,
-      shippingCity: shipping.city,
-      shippingState: shipping.state,
-      shippingZip: shipping.zip,
-      shippingCountry: shipping.country || "India",
-      status: paymentMethod === "cod" ? "pending" : "confirmed",
+    let order;
+    await sequelize.transaction(async (tx) => {
+      order = await Order.create(
+        {
+          userId: req.user.id,
+          subtotal: totals.subtotal,
+          taxTotal: totals.taxTotal,
+          shippingFee: totals.shippingFee,
+          discountTotal: totals.discountTotal,
+          total: totals.total,
+          paymentIntentId: verifiedPaymentId,
+          paymentMethod: paymentMethod === "online" ? "razorpay" : paymentMethod,
+          paymentStatus,
+          razorpayOrderId: razorpayOrderId || null,
+          razorpayPaymentId: razorpayPaymentId || null,
+          shippingName: shipping.name,
+          shippingPhone: shipping.phone,
+          shippingAddress: shipping.address,
+          shippingCity: shipping.city,
+          shippingState: shipping.state,
+          shippingZip: shipping.zip,
+          shippingCountry: shipping.country || "India",
+          status: paymentMethod === "cod" ? "pending" : "confirmed",
+        },
+        { transaction: tx }
+      );
+
+      await Promise.all(
+        cartItems.map((item) =>
+          OrderItem.create(
+            {
+              orderId: order.id,
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              selectedColor: item.selectedColor,
+              selectedSize: item.selectedSize,
+            },
+            { transaction: tx }
+          )
+        )
+      );
+
+      await Cart.destroy({ where: { userId: req.user.id }, transaction: tx });
+
+      if (couponCode && totals.discountTotal > 0) {
+        await consumeCouponForUser({
+          code: couponCode,
+          userId: req.user.id,
+          cartSubtotal,
+          transaction: tx,
+        });
+      }
     });
 
-    await Promise.all(
-      cartItems.map((item) =>
-        OrderItem.create({
-          orderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          selectedColor: item.selectedColor,
-          selectedSize: item.selectedSize,
-        })
-      )
-    );
-    await Cart.destroy({ where: { userId: req.user.id } });
     const customer = await User.findByPk(req.user.id);
     const orderItems = await OrderItem.findAll({
       where: { orderId: order.id },
       include: [{ model: Product }],
     });
+
     notifyOrderPlaced({
       order,
       items: orderItems,
@@ -345,10 +423,14 @@ export const placeOrder = async (req, res) => {
     }).catch((err) =>
       console.error("[notifications] order placement failed", err)
     );
-    // Convert Sequelize model to plain object
+
+    // Upgrade insider status based on fresh order totals.
+    await ensureInsiderUpgraded(req.user.id);
+
     res.status(201).json({ success: true, order: order.get({ plain: true }) });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const status = error.statusCode || error.status || 500;
+    res.status(status).json({ message: error.message });
   }
 };
 

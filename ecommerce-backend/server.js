@@ -33,6 +33,7 @@ import themeRoutes from "./routes/themeRoutes.js";
 import appImageRoutes from "./routes/appImageRoutes.js";
 import adminAppImageRoutes from "./routes/adminAppImageRoutes.js";
 import publicBannerRoutes from "./routes/publicBannerRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 
 // Admin Routes
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
@@ -41,6 +42,7 @@ import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
 import adminBannerRoutes from "./routes/admin/adminBannerRoutes.js";
 import adminSettingsRoutes from "./routes/admin/adminSettingsRoutes.js";
 import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
+import adminCouponRoutes from "./routes/admin/adminCouponRoutes.js";
 
 // Utils
 import { bootstrapCatalog } from "./utils/bootstrapCatalog.js";
@@ -242,11 +244,13 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/user", usersRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/theme", themeRoutes);
 app.use("/api/images", appImageRoutes);
 app.use("/api/banners", publicBannerRoutes);
+app.use("/api/coupons", couponRoutes);
 
 // ---------------------------
 // ADMIN ROUTES
@@ -257,6 +261,7 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/banners", adminBannerRoutes);
 app.use("/api/admin/settings", adminSettingsRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/coupons", adminCouponRoutes);
 app.use("/api/admin/app-images", adminAppImageRoutes);
 
 // ---------------------------

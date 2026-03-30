@@ -26,6 +26,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { name: "Products", icon: ShoppingBag, path: "/admin/products" },
     { name: "Orders", icon: ListOrdered, path: "/admin/orders" },
     { name: "Categories", icon: Tags, path: "/admin/categories" },
+    { name: "Coupons", icon: Tags, path: "/admin/coupons" },
     { name: "Customers", icon: Users, path: "/admin/customers" },
     { name: "Team & Roles", icon: Shield, path: "/admin/users" },
     { name: "Banners", icon: Image, path: "/admin/banners" },

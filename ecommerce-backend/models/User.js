@@ -40,6 +40,17 @@ const User = sequelize.define(
       type: DataTypes.ENUM("user", "admin"),
       defaultValue: "user",
     },
+
+    // Insider membership (TNEXT Insider)
+    is_insider: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    insider_since: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
