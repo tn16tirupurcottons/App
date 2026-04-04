@@ -19,7 +19,7 @@ export default function HeroBanner() {
         <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-slate-200/40 blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-14 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center w-full min-w-0">
+      <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-14 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center w-full min-w-0">
         <div className="space-y-4 sm:space-y-5 text-center lg:text-left min-w-0">
           <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-black/[0.06] text-cyan-800 font-semibold text-[10px] sm:text-xs uppercase tracking-[0.28em] shadow-soft">
             Spun in Tirupur

@@ -5,18 +5,21 @@ import { AuthProvider } from "./context/AuthContext";
 import { BrandThemeProvider } from "./context/BrandThemeContext";
 import { AppImagesProvider } from "./context/AppImagesContext";
 import { ToastProvider } from "./components/Toast";
+import { Toaster } from "react-hot-toast";
 
 // Core pages - loaded immediately
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Catalog from "./pages/Catalog";
+import Offers from "./pages/Offers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrdersHub from "./pages/OrdersHub";
 import Profile from "./pages/Profile";
 
 import AppLayout from "./components/AppLayout";
+import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -41,6 +44,7 @@ const EditProduct = lazy(() => import("./pages/admin/EditProduct"));
 const BannerManagement = lazy(() => import("./pages/admin/BannerManagement"));
 const BrandSettings = lazy(() => import("./pages/admin/BrandSettings"));
 const ImageManagement = lazy(() => import("./pages/admin/ImageManagement"));
+const ImageUpload = lazy(() => import("./pages/admin/ImageUpload"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
@@ -56,14 +60,15 @@ const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrandThemeProvider>
-          <AppImagesProvider>
-          <ToastProvider>
-            <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrandThemeProvider>
+            <AppImagesProvider>
+            <ToastProvider>
+              <BrowserRouter>
+              <ScrollToTop />
+              <Routes>
 
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Home />} />
@@ -73,6 +78,8 @@ export default function App() {
                 <Route path="/kids" element={<Catalog embeddedSegment="kids" />} />
                 <Route path="/accessories" element={<Catalog embeddedSegment="accessories" />} />
                 <Route path="/catalog" element={<Catalog />} />
+                <Route path="/offers" element={<Offers />} />
+                <Route path="/offers/:slug" element={<Offers />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/orders" element={<OrdersHub />} />
                 <Route path="/track-order" element={<OrdersHub />} />
@@ -304,14 +311,27 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-              </Route>
 
-            </Routes>
-            </BrowserRouter>
-          </ToastProvider>
+                <Route
+                  path="/admin/upload"
+                  element={
+                    <ProtectedRoute adminOnly={true}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ImageUpload />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+
+              </Route>
+              </Routes>
+              </BrowserRouter>
+              <Toaster position="top-right" />
+            </ToastProvider>
           </AppImagesProvider>
         </BrandThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
+  </ErrorBoundary>
   );
 }

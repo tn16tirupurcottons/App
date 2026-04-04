@@ -4,9 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl } from "../utils/imageUtils";
+import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl, normalizeImageArray } from "../utils/imageUtils";
 import { isUuid } from "../utils/validation";
-import FullScreenImageViewer from "../components/FullScreenImageViewer";
+import ProductGallery from "../components/ProductGallery.jsx";
+import ProductCard from "../components/ProductCard";
+import VirtualTryOn from "../components/VirtualTryOn";
+import ARViewer from "../components/ARViewer";
+import AiStylistSection from "../components/AiStylistSection";
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 
@@ -28,39 +32,64 @@ export default function ProductDetails() {
     retry: 2,
   });
 
-  const gallery = useMemo(() => {
-    if (!product) return [FALLBACK_IMAGE];
-    const images = [];
-    const categoryName = product?.Category?.name || product?.category?.name || "";
-    const primaryImage = getProductImage(product, categoryName);
-    if (primaryImage && !images.includes(primaryImage)) images.push(primaryImage);
-    if (product.gallery && Array.isArray(product.gallery)) {
-      product.gallery.forEach((img) => {
-        if (img && !images.includes(img)) images.push(img);
-      });
-    }
-    if (product.thumbnail && !images.includes(product.thumbnail) && isValidImageUrl(product.thumbnail)) {
-      images.unshift(product.thumbnail);
-    }
-    return images.length > 0 ? images : [FALLBACK_IMAGE];
-  }, [product]);
+  const categoryName = product?.Category?.name || product?.category?.name || "";
 
-  const [activeImage, setActiveImage] = useState(0);
+  const mediaItems = useMemo(() => {
+    if (!product) return [{ type: "image", src: FALLBACK_IMAGE }];
+
+    const validImage = (src) => isValidImageUrl(src);
+    const normalizeImages = normalizeImageArray;
+    const uniqueImages = [];
+    const addImage = (src) => {
+      if (!validImage(src) || uniqueImages.includes(src)) return;
+      uniqueImages.push(src);
+    };
+
+    const primaryImage = getProductImage(product, categoryName);
+    addImage(primaryImage);
+
+    const galleryImages = normalizeImages(product.gallery);
+    galleryImages.forEach(addImage);
+
+    addImage(product.thumbnail);
+
+    const items = uniqueImages.length > 0 ? uniqueImages.map((src) => ({ type: "image", src })) : [{ type: "image", src: FALLBACK_IMAGE }];
+
+    if (product.videoUrl) {
+      items.push({ type: "video", src: product.videoUrl });
+    }
+
+    if (Array.isArray(product.spinImages) && product.spinImages.length > 0) {
+      const validFrames = product.spinImages.filter(validImage);
+      if (validFrames.length > 0) {
+        items.push({ type: "spin", frames: validFrames });
+      }
+    }
+
+    return items;
+  }, [product, categoryName]);
+
+  const normalizedTryOnImages = useMemo(() => normalizeImageArray(product?.tryOnImages), [product?.tryOnImages]);
+  const normalizedSpinImages = useMemo(() => normalizeImageArray(product?.spinImages), [product?.spinImages]);
+
+  const hasTryOnImage = useMemo(() => normalizedTryOnImages.some(isValidImageUrl), [normalizedTryOnImages]);
+
+  const hasARModel = Boolean(product?.model3dUrl || product?.arModelUrl);
+
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-
-  useEffect(() => {
-    setActiveImage(0);
-    setIsFullScreenOpen(false);
-  }, [id]);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
+  const [arOpen, setArOpen] = useState(false);
 
   useEffect(() => {
     if (product?.sizes?.length) setSelectedSize(product.sizes[0]);
     if (product?.colors?.length) setSelectedColor(product.colors[0]);
   }, [product]);
+
+  useEffect(() => {
+    if (!hasTryOnImage) setTryOnOpen(false);
+    if (!hasARModel) setArOpen(false);
+  }, [hasTryOnImage, hasARModel]);
 
   const addToCart = useMutation({
     mutationFn: async () => {
@@ -115,9 +144,25 @@ export default function ProductDetails() {
     },
   });
 
+  const { data: recommendedResponse } = useQuery({
+    queryKey: ["recommended", product?.categoryId || "global"],
+    queryFn: async () => {
+      const categoryQuery = product?.categoryId ? `?categoryId=${product.categoryId}` : "";
+      const userId = user?.id || "guest";
+      const res = await axiosClient.get(`/products/recommended/${userId}${categoryQuery}`);
+      return res.data;
+    },
+    enabled: Boolean(product),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const recommended = (recommendedResponse?.items || [])
+    .filter((item) => item.id !== product?.id)
+    .slice(0, 8);
+
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-0 py-4">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-4">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
           <div className="aspect-[3/4] bg-neutral-100 rounded-xl animate-pulse" />
           <div className="space-y-6">
@@ -147,17 +192,6 @@ export default function ProductDetails() {
 
   const finalPrice = Number(product.price || 0) - Number(product.discount || 0);
 
-  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
-  const handleTouchMove = (e) => setTouchEnd(e.touches[0].clientX);
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > 50 && activeImage < gallery.length - 1) setActiveImage(activeImage + 1);
-    if (distance < -50 && activeImage > 0) setActiveImage(activeImage - 1);
-    setTouchStart(null);
-    setTouchEnd(null);
-  };
-
   const sizeBtn = (isOn) =>
     `min-w-[3rem] px-4 py-3 text-sm font-semibold border transition-all duration-200 ease-in-out rounded-lg ${
       isOn
@@ -166,84 +200,16 @@ export default function ProductDetails() {
     }`;
 
   return (
-    <div className="w-full max-w-6xl mx-auto pb-24 sm:pb-8 text-neutral-900">
+    <div className="w-full px-4 md:px-6 lg:px-8 pb-24 sm:pb-8 text-neutral-900">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 lg:items-start">
-        <div className="w-full lg:sticky lg:top-28 space-y-4">
-          <div
-            className="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 cursor-zoom-in group"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onClick={() => setIsFullScreenOpen(true)}
-          >
-            <div className="aspect-[3/4] sm:aspect-[4/5] max-h-[85vh]">
-              <img
-                src={gallery[activeImage] || FALLBACK_IMAGE}
-                alt={product.name || "Product"}
-                className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-[1.03]"
-                onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-            {product.discount > 0 && (
-              <span className="absolute top-4 left-4 text-[10px] tracking-[0.2em] uppercase bg-sky-400 text-black px-2 py-1 font-bold">
-                −{Math.round((product.discount / product.price) * 100)}%
-              </span>
-            )}
-            {gallery.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveImage(activeImage > 0 ? activeImage - 1 : gallery.length - 1);
-                  }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 text-neutral-900 p-2.5 border border-neutral-200 shadow-sm opacity-0 group-hover:opacity-100 transition duration-200 ease-in-out hidden sm:block"
-                  aria-label="Previous"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveImage(activeImage < gallery.length - 1 ? activeImage + 1 : 0);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 text-neutral-900 p-2.5 border border-neutral-200 shadow-sm opacity-0 group-hover:opacity-100 transition duration-200 ease-in-out hidden sm:block"
-                  aria-label="Next"
-                >
-                  ›
-                </button>
-              </>
-            )}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-[10px] uppercase tracking-widest px-3 py-1 sm:hidden">
-              {activeImage + 1} / {gallery.length}
-            </div>
-          </div>
-
-          {gallery.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {gallery.map((img, idx) => (
-                <button
-                  key={`${img}-${idx}`}
-                  type="button"
-                  onClick={() => setActiveImage(idx)}
-                  className={`flex-shrink-0 w-16 h-20 sm:w-20 sm:h-24 overflow-hidden border-2 transition duration-200 ease-in-out ${
-                    activeImage === idx ? "border-neutral-900" : "border-neutral-200 opacity-80 hover:opacity-100"
-                  }`}
-                >
-                  <img
-                    src={img || FALLBACK_IMAGE}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => handleImageError(e, FALLBACK_IMAGE)}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="w-full lg:sticky lg:top-28">
+          <ProductGallery
+            images={mediaItems.filter((item) => item.type === "image").map((item) => item.src)}
+            spinImages={normalizedSpinImages}
+            videoUrl={product?.videoUrl || ""}
+            productName={product?.name || ""}
+            onImageClick={() => null}
+          />
         </div>
 
         <div className="space-y-8 lg:sticky lg:top-28">
@@ -268,6 +234,53 @@ export default function ProductDetails() {
 
           {product.description && (
             <p className="text-sm text-neutral-600 leading-relaxed max-w-prose">{product.description}</p>
+          )}
+
+          <div className="flex flex-wrap gap-3 mt-4 mb-8">
+            {hasTryOnImage && (
+              <button
+                type="button"
+                onClick={() => setTryOnOpen((v) => !v)}
+                className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
+              >
+                Try On
+              </button>
+            )}
+            {hasARModel && (
+              <button
+                type="button"
+                onClick={() => setArOpen((v) => !v)}
+                className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
+              >
+                View in AR
+              </button>
+            )}
+          </div>
+
+          {tryOnOpen && (
+            <div>
+              {hasTryOnImage ? (
+                <VirtualTryOn
+                  overlayImage={normalizedTryOnImages.find(isValidImageUrl) || ""}
+                />
+              ) : (
+                <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
+                  Virtual try-on is not available for this product.
+                </div>
+              )}
+            </div>
+          )}
+
+          {arOpen && (
+            <div>
+              {hasARModel ? (
+                <ARViewer model3dUrl={product.model3dUrl} arModelUrl={product.arModelUrl} />
+              ) : (
+                <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
+                  3D product preview is not available for this item.
+                </div>
+              )}
+            </div>
           )}
 
           {product.sizes?.length > 0 && (
@@ -376,15 +389,22 @@ export default function ProductDetails() {
             <li>Returns · 7 days</li>
             <li>Ships from · Tirupur</li>
           </ul>
+
+          <AiStylistSection userId={user?.id} />
+
+          {recommended.length > 0 && (
+            <div className="mt-8">
+              <p className="text-sm font-semibold text-neutral-900 mb-3">Recommended for you</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {recommended.map((item) => (
+                  <ProductCard key={item.id} product={item} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <FullScreenImageViewer
-        images={gallery}
-        initialIndex={activeImage}
-        isOpen={isFullScreenOpen}
-        onClose={() => setIsFullScreenOpen(false)}
-      />
     </div>
   );
 }

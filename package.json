@@ -1,0 +1,40 @@
+{
+  "name": "tn16-ecommerce-app",
+  "description": "TN16 Full-Stack Ecommerce Application - Frontend (React/Vite) + Backend (Express/Node)",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-all": "npm run install-frontend && npm run install-backend",
+    "install-frontend": "cd ecommerce-frontend && npm install",
+    "install-backend": "cd ecommerce-backend && npm install",
+    "dev": "concurrently \"cd ecommerce-backend && npm run dev\" \"cd ecommerce-frontend && npm run dev\"",
+    "dev:backend": "cd ecommerce-backend && npm run dev",
+    "dev:frontend": "cd ecommerce-frontend && npm run dev",
+    "build": "npm run build-frontend && npm run build-backend",
+    "build-frontend": "cd ecommerce-frontend && npm run build",
+    "build-backend": "echo 'Backend is Node.js - no build needed'",
+    "start": "concurrently \"cd ecommerce-backend && npm start\" \"cd ecommerce-frontend && npm run preview\"",
+    "start:backend": "cd ecommerce-backend && npm start",
+    "start:frontend": "cd ecommerce-frontend && npm run preview",
+    "clean": "rimraf ecommerce-backend/node_modules ecommerce-frontend/node_modules package-lock.json ecommerce-backend/package-lock.json ecommerce-frontend/package-lock.json",
+    "clean-full": "npm run clean && rimraf ecommerce-backend/dist ecommerce-frontend/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "ecommerce",
+    "react",
+    "node",
+    "express",
+    "sequelize",
+    "postgresql"
+  ],
+  "author": "TN16",
+  "license": "MIT"
+}

@@ -12,6 +12,7 @@ import {
   Users,
   Shield,
   Home,
+  Upload,
 } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
@@ -31,6 +32,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { name: "Team & Roles", icon: Shield, path: "/admin/users" },
     { name: "Banners", icon: Image, path: "/admin/banners" },
     { name: "Images", icon: Images, path: "/admin/images" },
+    { name: "Upload", icon: Upload, path: "/admin/upload" },
     { name: "Settings", icon: Settings, path: "/admin/brand-settings" },
   ];
 

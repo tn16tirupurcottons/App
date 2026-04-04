@@ -1,12 +1,18 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import ProductCard from "./ProductCard";
+import SkeletonCard from "./SkeletonCard";
+import FilterSidebar from "./FilterSidebar";
 import { normalizeCategorySlug } from "../utils/validation";
 
 const defaultQuery = {
   search: "",
   categorySlug: "",
+  subCategorySlug: "",
+  size: [],
+  color: [],
+  brand: [],
   sort: "newest",
   page: 1,
   limit: 12,
@@ -14,11 +20,26 @@ const defaultQuery = {
 
 function buildProductQueryString(q) {
   const params = new URLSearchParams();
-  Object.entries(q).forEach(([key, value]) => {
+
+  const payload = {
+    ...q,
+    category: q.categorySlug,
+    subCategory: q.subCategorySlug,
+  };
+
+  Object.entries(payload).forEach(([key, value]) => {
     if (value === "" || value === null || value === undefined) return;
-    if (key === "categorySlug" && normalizeCategorySlug(value) === "") return;
+    if (key === "category" && normalizeCategorySlug(value) === "") return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === "" || item === null || item === undefined) return;
+        params.append(key, String(item));
+      });
+      return;
+    }
     params.set(key, String(value));
   });
+
   return params.toString();
 }
 
@@ -29,17 +50,21 @@ export default function ProductList({ initialQuery = {} }) {
       ...defaultQuery,
       ...initialQuery,
       categorySlug: cat,
+      subCategorySlug: initialQuery.subCategorySlug || "",
+      size: Array.isArray(initialQuery.size) ? initialQuery.size : [],
+      color: Array.isArray(initialQuery.color) ? initialQuery.color : [],
+      brand: Array.isArray(initialQuery.brand) ? initialQuery.brand : [],
       search: initialQuery.search ?? "",
     };
   }, [initialQuery]);
 
   const [query, setQuery] = useState(mergedInitial);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     setQuery((prev) => ({
       ...prev,
       ...mergedInitial,
-      page: 1,
     }));
   }, [mergedInitial]);
 
@@ -53,23 +78,73 @@ export default function ProductList({ initialQuery = {} }) {
 
   const categories = useMemo(() => categoriesData?.items || [], [categoriesData]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["catalog-products", query],
-    queryFn: async () => {
-      const qs = buildProductQueryString(query);
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: [
+      "catalog-products",
+      query.search,
+      query.categorySlug,
+      query.subCategorySlug,
+      JSON.stringify(query.size),
+      JSON.stringify(query.color),
+      JSON.stringify(query.brand),
+      query.sort,
+    ],
+    queryFn: async ({ pageParam = 1 }) => {
+      const qs = buildProductQueryString({ ...query, page: pageParam });
       const res = await axiosClient.get(`/products?${qs}`);
       return res.data;
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
     },
     keepPreviousData: true,
   });
 
-  const products = data?.items || [];
+  const products = useMemo(() => {
+    return data?.pages.flatMap(page => page.items) || [];
+  }, [data]);
+
+  const loadMoreRef = useRef(null);
+
+  const handleIntersect = useCallback(
+    (entries) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: "100px",
+    });
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [handleIntersect]);
 
   const handleChange = (field, value) => {
     setQuery((prev) => ({
       ...prev,
       [field]: value,
-      page: field === "page" ? value : 1,
     }));
   };
 
@@ -77,7 +152,8 @@ export default function ProductList({ initialQuery = {} }) {
     "rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-200 transition duration-200 ease-in-out";
 
   return (
-    <div className="space-y-10 text-neutral-900">
+    <div className="space-y-6 text-neutral-900">
+      {/* Search and Sort Bar */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <input
           placeholder="Search products…"
@@ -85,18 +161,6 @@ export default function ProductList({ initialQuery = {} }) {
           onChange={(e) => handleChange("search", e.target.value)}
           className={`flex-1 min-w-0 sm:min-w-[200px] ${inputClass}`}
         />
-        <select
-          value={query.categorySlug}
-          onChange={(e) => handleChange("categorySlug", e.target.value)}
-          className={`sm:w-48 ${inputClass}`}
-        >
-          <option value="">All categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.slug}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
         <select
           value={query.sort}
           onChange={(e) => handleChange("sort", e.target.value)}
@@ -108,41 +172,44 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
-        {isLoading
-          ? new Array(8).fill(null).map((_, idx) => (
-              <div key={idx} className="aspect-[3/4] rounded-xl bg-neutral-100 animate-pulse" />
-            ))
-          : products.map((product) => <ProductCard key={product.id} product={product} />)}
-      </div>
+      {/* Main Content Layout */}
+      <div className="flex gap-8">
+        {/* Sidebar */}
+        <FilterSidebar
+          query={query}
+          onChange={handleChange}
+          categories={categories}
+          isMobileOpen={isMobileFiltersOpen}
+          onMobileToggle={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
+        />
 
-      {!isLoading && products.length === 0 && (
-        <p className="text-center text-neutral-500 py-16 text-sm uppercase tracking-widest">Nothing here yet.</p>
-      )}
+        {/* Product Grid */}
+        <div className="flex-1 min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+            {isLoading
+              ? new Array(12).fill(null).map((_, idx) => <SkeletonCard key={`skeleton-${idx}`} />)
+              : products.map((product) => <ProductCard key={product.id} product={product} />)}
+          </div>
 
-      {data?.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 text-zinc-400 pt-8">
-          <button
-            type="button"
-            disabled={query.page <= 1}
-            onClick={() => handleChange("page", query.page - 1)}
-            className="px-5 py-2 rounded-none border border-white/15 text-xs font-bold uppercase tracking-widest disabled:opacity-25 hover:border-sky-400 hover:text-sky-400 transition duration-200 ease-in-out"
-          >
-            Prev
-          </button>
-          <span className="text-xs tabular-nums">
-            {data.page || 1} / {data.totalPages || 1}
-          </span>
-          <button
-            type="button"
-            disabled={(data.page || 1) >= (data.totalPages || 1)}
-            onClick={() => handleChange("page", query.page + 1)}
-            className="px-5 py-2 rounded-lg border border-neutral-200 text-xs font-bold uppercase tracking-widest disabled:opacity-25 hover:border-neutral-900 hover:text-neutral-900 transition duration-200 ease-in-out"
-          >
-            Next
-          </button>
+          {!isLoading && products.length === 0 && (
+            <p className="text-center text-neutral-500 py-16 text-sm uppercase tracking-widest">Nothing here yet.</p>
+          )}
+
+          {/* Infinite Scroll Trigger */}
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="flex justify-center py-8">
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-sm text-neutral-500">
+                  <div className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin"></div>
+                  Loading more products...
+                </div>
+              ) : (
+                <div className="h-4"></div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

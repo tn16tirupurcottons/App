@@ -48,6 +48,15 @@ const Banner = sequelize.define(
       defaultValue: "hero",
       comment: "Position on page: hero, top, middle, bottom, sidebar",
     },
+    categoryId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: "Categories",
+        key: "id",
+      },
+      comment: "Optional category target for this banner",
+    },
     images: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
       defaultValue: [],

@@ -8,7 +8,7 @@ export default function MegaMenu({ segment }) {
     <div
       className="hidden md:block absolute left-0 right-0 top-full bg-white/95 backdrop-blur-xl border-t border-border shadow-medium z-40"
     >
-      <div className="max-w-7xl mx-auto grid grid-cols-4 lg:grid-cols-5 gap-6 px-6 py-8 text-sm text-dark/70">
+      <div className="w-full grid grid-cols-4 lg:grid-cols-5 gap-6 px-6 py-8 text-sm text-dark/70">
         {segment.menuColumns?.map((col) => (
           <div key={col.title}>
             <p className="font-semibold text-dark mb-3 uppercase tracking-[0.3em] text-[11px]">

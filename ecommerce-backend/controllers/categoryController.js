@@ -11,42 +11,59 @@ export const getCategories = async (req, res) => {
     const categories = await Category.findAll({
       where,
       order: [["name", "ASC"]],
+      attributes: ["id", "name", "slug", "heroImage", "isActive", "description"],
     });
+    
+    if (!categories || categories.length === 0) {
+      return res.json({ success: true, items: [] });
+    }
+
     // Convert Sequelize models to plain objects
     const items = categories.map((cat) => {
       const plain = cat.get({ plain: true });
       // Backward-compatible: storefront expects heroImage; admin can also use image alias.
       return { ...plain, image: plain.heroImage };
     });
+    
     res.json({ success: true, items });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get categories error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch categories" });
   }
 };
 
 export const getCategoryBySlug = async (req, res) => {
   try {
+    const { slug } = req.params;
+    
+    // VALIDATION: slug
+    if (!slug || typeof slug !== "string" || !slug.trim()) {
+      return res.status(400).json({ success: false, message: "Valid category slug is required" });
+    }
+
     const category = await Category.findOne({
-      where: { slug: req.params.slug, isActive: true },
+      where: { slug: slug.trim(), isActive: true },
       include: [
         {
           model: Product,
           separate: true,
           limit: 8,
           order: [["createdAt", "DESC"]],
+          attributes: ["id", "name", "slug", "price", "discount", "thumbnail"],
         },
       ],
     });
 
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ success: false, message: "Category not found" });
     }
 
     // Convert Sequelize model to plain object
     const plain = category.get({ plain: true });
     res.json({ success: true, category: { ...plain, image: plain.heroImage } });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get category by slug error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch category" });
   }
 };
 

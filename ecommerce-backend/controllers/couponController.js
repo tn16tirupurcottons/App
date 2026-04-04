@@ -21,33 +21,48 @@ export const applyCoupon = async (req, res, next) => {
   try {
     const { code } = req.body || {};
 
-    if (!code) return res.status(400).json({ message: "code is required" });
+    // VALIDATION: code is required
+    if (!code || typeof code !== "string" || !code.trim()) {
+      return res.status(400).json({ success: false, message: "Valid coupon code is required" });
+    }
+
+    const normalizedCode = normalizeCouponCode(code);
+    if (normalizedCode.length === 0 || normalizedCode.length > 50) {
+      return res.status(400).json({ success: false, message: "Invalid coupon code format" });
+    }
 
     // Ensure cart and compute cart subtotal server-side.
     const { subtotal } = await getCartSubtotalForUser(req.user.id);
     if (!Number.isFinite(subtotal) || subtotal <= 0) {
-      return res.status(400).json({ message: "Cart empty" });
+      return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
     // Keep insider status fresh (so insider-only coupons behave correctly).
     await ensureInsiderUpgraded(req.user.id);
     const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(401).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
     const result = await applyCouponPreview({
-      code,
+      code: normalizedCode,
       user,
       cartSubtotal: subtotal,
     });
 
     if (!result.ok) {
-      return res.status(400).json({ message: result.message });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
-    res.json({ final_total: result.final_total, discount: result.discount_amount });
+    res.json({ 
+      success: true,
+      final_total: result.final_total, 
+      discount: result.discount_amount 
+    });
   } catch (err) {
+    console.error("Apply coupon error:", err);
     const status = err.statusCode || err.status || 500;
-    res.status(status).json({ message: err.message || "Failed to apply coupon" });
+    res.status(status).json({ success: false, message: err.message || "Failed to apply coupon" });
   }
 };
 

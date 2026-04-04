@@ -31,6 +31,12 @@ Cart.belongsTo(Product, { foreignKey: "productId" });
 Category.hasMany(Product, { foreignKey: "categoryId", onDelete: "RESTRICT" });
 Product.belongsTo(Category, { foreignKey: "categoryId" });
 
+Category.hasMany(Banner, { foreignKey: "categoryId", onDelete: "SET NULL" });
+Banner.belongsTo(Category, { foreignKey: "categoryId" });
+
+Category.hasMany(Category, { as: "subCategories", foreignKey: "parentId", onDelete: "SET NULL" });
+Category.belongsTo(Category, { as: "parentCategory", foreignKey: "parentId" });
+
 User.hasMany(Order, { foreignKey: "userId", onDelete: "CASCADE" });
 Order.belongsTo(User, { foreignKey: "userId" });
 

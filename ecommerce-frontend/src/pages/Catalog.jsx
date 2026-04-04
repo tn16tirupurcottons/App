@@ -7,6 +7,7 @@ import { useBrandTheme } from "../context/BrandThemeContext";
 import { useAppImages } from "../context/AppImagesContext";
 import { resolveCategoryBannerUrl } from "../utils/imageAssetsConfig";
 import SafeImage from "../components/SafeImage";
+import CategoryMarketing from "../components/CategoryMarketing";
 import { BRAND_NAME } from "@/config/brand";
 
 const segmentToCategorySlug = {
@@ -88,9 +89,13 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
         ? `Shop ${categoryFromUrl.replace(/-/g, " ")}`
         : "All products";
 
+  const isExplicitCategoryPage = Boolean(categoryFromUrl);
+
   return (
     <div className="w-full space-y-12 sm:space-y-16 text-neutral-900">
-      {segmentTheme && (
+      {isExplicitCategoryPage ? (
+        <CategoryMarketing categorySlug={categoryFromUrl} />
+      ) : segmentTheme ? (
         <section
           className="relative isolate overflow-hidden rounded-2xl border border-[#E5E7EB] shadow-sm min-h-[220px] sm:min-h-[280px] md:min-h-[320px]"
           aria-label={`${segmentTheme.label} collection banner`}
@@ -124,23 +129,27 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
             </p>
           </div>
         </section>
+      ) : null}
+
+      {!isExplicitCategoryPage && (
+        <>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
+              {titleSegmentLabel || (categoryFromUrl ? categoryFromUrl.replace(/-/g, " ") : "Catalog")}
+            </p>
+            <h2 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 mt-2">
+              {headingText}
+            </h2>
+            <p className="text-neutral-600 mt-4 text-sm max-w-2xl leading-relaxed">
+              {searchParams.get("query")
+                ? "Find your piece in the grid below."
+                : "Filter, sort, and scroll — minimal chrome, maximum product."}
+            </p>
+          </div>
+
+          <ProductList initialQuery={initialQuery} />
+        </>
       )}
-
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
-          {titleSegmentLabel || (categoryFromUrl ? categoryFromUrl.replace(/-/g, " ") : "Catalog")}
-        </p>
-        <h2 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 mt-2">
-          {headingText}
-        </h2>
-        <p className="text-neutral-600 mt-4 text-sm max-w-2xl leading-relaxed">
-          {searchParams.get("query")
-            ? "Find your piece in the grid below."
-            : "Filter, sort, and scroll — minimal chrome, maximum product."}
-        </p>
-      </div>
-
-      <ProductList initialQuery={initialQuery} />
     </div>
   );
 }

@@ -90,7 +90,7 @@ export default function Cart() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 text-dark">
+      <div className="w-full px-4 py-8 text-dark">
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-32 bg-light rounded-2xl animate-pulse" />

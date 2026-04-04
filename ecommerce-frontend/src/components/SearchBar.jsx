@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
+import { getProductImage } from "../utils/imageUtils";
 import { FaSearch, FaTimes } from "react-icons/fa";
 
 export default function SearchBar({
@@ -215,10 +216,11 @@ export default function SearchBar({
                     }`}
                   >
                     <img
-                      src={product.thumbnail || "/placeholder.png"}
+                      src={getProductImage(product, product.Category?.name || product.category?.name) || "/placeholder.png"}
                       alt={product.name}
                       className="w-10 h-10 object-cover rounded-lg bg-zinc-800"
                       onError={(e) => {
+                        e.target.onerror = null;
                         e.target.src = "/placeholder.png";
                       }}
                     />

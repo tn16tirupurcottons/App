@@ -18,6 +18,67 @@ export const FALLBACK_IMAGES = {
   default: "https://picsum.photos/600/800",
 };
 
+const PEXELS_PRODUCT_PHOTOS = {
+  dresses: [2379004, 19090, 934070, 1108099, 2983464, 1289467],
+  women: [439390, 18029, 3184312, 12019014, 853068, 247501],
+  men: [428340, 838158, 1278611, 21674, 375576, 1714208],
+  kids: [145869, 1738785, 2892046, 3029445, 3258769, 1227648],
+  footwear: [19090, 2983464, 937481, 301705, 1048274, 2835171],
+  accessories: [2956395, 19090, 936418, 631306, 712386, 1331746],
+  default: [1625536, 1048274, 2255044, 3299932, 3011656, 928294],
+};
+
+function kebabCase(text) {
+  return String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/--+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function numericHash(value) {
+  const str = String(value || "");
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash || 1;
+}
+
+function getProductQuery(product, category) {
+  const safeName = String(product?.name || product?.title || "").trim();
+  const safeBrand = String(product?.brand || "").trim();
+  const safeCategory = String(category || product?.Category?.name || product?.category?.name || "").trim();
+  const base = [safeName, safeBrand, safeCategory]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!base) return "luxury fashion";
+
+  // Prioritize most descriptive terms and ensure luxury-level context
+  const tokens = base
+    .split(/\s+/)
+    .filter((t) => t.length > 2 && !["and", "for", "with", "the", "a", "of", "in"].includes(t));
+
+  const key = tokens.slice(0, 3).join(" ") || base;
+  return `${key} designer fashion premium`;
+}
+
+function getUnsplashSourceUrl(query, seed) {
+  const encoded = encodeURIComponent(String(query || "luxury fashion").trim());
+  return `https://source.unsplash.com/1600x2000/?${encoded}&sig=${seed}`;
+}
+
+function getPexelsSourceUrl(category, seed) {
+  const key = String(category || "default").toLowerCase();
+  const list = PEXELS_PRODUCT_PHOTOS[key] || PEXELS_PRODUCT_PHOTOS.default;
+  const idx = Number(seed) % list.length;
+  const id = list[idx];
+  return `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&h=1600&w=1200`;
+}
+
 export function getProductImage(product, category = null) {
   if (!product) return FALLBACK_IMAGES.default;
 
@@ -34,23 +95,43 @@ export function getProductImage(product, category = null) {
     return product.image;
   }
 
-  if (category) {
-    const categoryLower = String(category).toLowerCase();
-    if (categoryLower.includes("men") || categoryLower.includes("mens")) return FALLBACK_IMAGES.men;
-    if (categoryLower.includes("women") || categoryLower.includes("womens")) return FALLBACK_IMAGES.women;
-    if (categoryLower.includes("kid")) return FALLBACK_IMAGES.kids;
-    if (categoryLower.includes("accessory")) return FALLBACK_IMAGES.accessories;
-    if (categoryLower.includes("athleisure") || categoryLower.includes("active"))
-      return categoryStock.athleisure;
+  const productCategory = String(category || product?.Category?.name || product?.category?.name || "").toLowerCase();
+
+  if (productCategory.includes("men") || String(product.name || "").toLowerCase().includes("men")) {
+    const seed = numericHash(product.id || product.name || Date.now());
+    return getPexelsSourceUrl("men", seed + 1);
   }
 
-  const productName = String(product.name || "").toLowerCase();
-  const brandName = String(product.brand || "").toLowerCase();
-  if (productName.includes("men") || brandName.includes("men")) return FALLBACK_IMAGES.men;
-  if (productName.includes("women") || brandName.includes("women")) return FALLBACK_IMAGES.women;
-  if (productName.includes("kid") || brandName.includes("kid")) return FALLBACK_IMAGES.kids;
+  if (productCategory.includes("women") || String(product.name || "").toLowerCase().includes("women")) {
+    const seed = numericHash(product.id || product.name || Date.now());
+    return getPexelsSourceUrl("women", seed + 2);
+  }
 
-  return "";
+  if (productCategory.includes("kid") || String(product.name || "").toLowerCase().includes("kid")) {
+    const seed = numericHash(product.id || product.name || Date.now());
+    return getPexelsSourceUrl("kids", seed + 3);
+  }
+
+  if (
+    productCategory.includes("dress") ||
+    productCategory.includes("ethnic") ||
+    String(product.name || "").toLowerCase().includes("dress")
+  ) {
+    const seed = numericHash(product.id || product.name || Date.now());
+    return getPexelsSourceUrl("dresses", seed + 4);
+  }
+
+  if (productCategory.includes("foot") || productCategory.includes("shoe")) {
+    const seed = numericHash(product.id || product.name || Date.now());
+    return getPexelsSourceUrl("footwear", seed + 5);
+  }
+
+  const seed = numericHash(product.id || product.name || Date.now());
+  const dynamicQuery = getProductQuery(product, productCategory);
+  const unsplashUrl = getUnsplashSourceUrl(dynamicQuery, seed);
+
+  // Always return an image URL; rely on img onError fallback to handle real fetch issues.
+  return unsplashUrl;
 }
 
 export function getCategoryImage(category) {
@@ -88,6 +169,29 @@ export function getBannerImage(banner) {
   }
 
   return FALLBACK_IMAGES.banner;
+}
+
+export function normalizeImageArray(value) {
+  if (Array.isArray(value)) {
+    return value.filter((item) => typeof item === "string" && item.trim() !== "");
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "") return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item) => typeof item === "string" && item.trim() !== "");
+      }
+    } catch {
+      // Fallback to comma-separated strings if JSON parsing fails.
+      return trimmed.split(",").map((item) => item.trim()).filter((item) => item !== "");
+    }
+  }
+
+  return [];
 }
 
 export function isValidImageUrl(url) {

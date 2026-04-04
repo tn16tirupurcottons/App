@@ -51,30 +51,67 @@ export default function BannerManagement() {
 
     const saveMutation = useMutation({
       mutationFn: async (payload) => {
-        if (banner) {
-          return await axiosClient.put(`/admin/banners/${banner.id}`, payload);
-        } else {
-          return await axiosClient.post("/admin/banners", payload);
+        console.log("[BANNER FORM] Saving banner with payload:", payload);
+        try {
+          if (banner) {
+            console.log(`[BANNER FORM] Updating banner ${banner.id}`);
+            const response = await axiosClient.put(`/admin/banners/${banner.id}`, payload);
+            console.log("[BANNER FORM] Update response:", response.data);
+            return response;
+          } else {
+            console.log("[BANNER FORM] Creating new banner");
+            const response = await axiosClient.post("/admin/banners", payload);
+            console.log("[BANNER FORM] Create response:", response.data);
+            return response;
+          }
+        } catch (err) {
+          console.error("[BANNER FORM] API Error:", err.response?.data || err.message);
+          throw err;
         }
       },
-      onSuccess: () => {
-        toast.success(banner ? "Banner updated" : "Banner created");
+      onSuccess: (response) => {
+        console.log("[BANNER FORM] ✅ Success:", response.data);
+        toast.success(banner ? "Banner updated 📝" : "Banner created ✅");
         qc.invalidateQueries({ queryKey: ["banners"] });
         onClose();
       },
       onError: (err) => {
-        toast.error(err.response?.data?.message || "Failed to save banner");
+        const message = err.response?.data?.message || err.message || "Failed to save banner";
+        console.error("[BANNER FORM] ❌ Error:", message);
+        toast.error(message);
       },
     });
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      // Ensure images array is properly formatted
+      
+      // Validate required fields
+      if (!form.title || !form.title.trim()) {
+        toast.error("Title is required");
+        return;
+      }
+      
+      if (!form.images || form.images.length === 0) {
+        toast.error("At least one banner image is required");
+        return;
+      }
+      
+      // Build payload with proper structure
       const payload = {
-        ...form,
-        images: form.images && form.images.length > 0 ? form.images : (form.image ? [form.image] : []),
-        image: form.images && form.images.length > 0 ? form.images[0] : form.image,
+        title: form.title.trim(),
+        subtitle: form.subtitle?.trim() || "",
+        images: form.images.filter((img) => img && String(img).trim()), // Array of image URLs
+        image: form.images[0], // Primary image for backward compat
+        ctaLabel: form.ctaLabel?.trim() || "Shop Now",
+        ctaLink: form.ctaLink?.trim() || "/catalog",
+        segment: form.segment || "default",
+        page: form.page || "home",
+        position: form.position || "hero",
+        displayOrder: Number(form.displayOrder) || 0,
+        isActive: Boolean(form.isActive),
       };
+      
+      console.log("[BANNER FORM] Submit - Final payload:", payload);
       saveMutation.mutate(payload);
     };
 

@@ -57,7 +57,7 @@ export function EditorsPicksSection() {
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Editorial</p>
@@ -119,7 +119,7 @@ export function SeasonalCollectionsSection() {
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <div className="text-center mb-14 max-w-xl mx-auto">
         <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Capsules</p>
         <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em] mb-3">Collections</h2>
@@ -152,7 +152,7 @@ export function SpecialOffersSection() {
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-neutral-200">
       <div className="text-center mb-14">
         <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500 mb-2">Offers</p>
         <h2 className="text-4xl sm:text-6xl font-display text-neutral-900 uppercase tracking-[0.04em]">Worth a look</h2>
@@ -199,7 +199,7 @@ export function CuratedLooksSection() {
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <div className="rounded-2xl border border-white/10 bg-zinc-950/50 px-4 py-12 sm:px-8 sm:py-16">
         <div className="text-center mb-12 max-w-lg mx-auto">
           <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 mb-2">Grid</p>
@@ -237,7 +237,7 @@ export function CuratedLooksSection() {
 export function HeroOfferBanner() {
   const { getImage } = useAppImages();
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <LuxuryBanner
         image={getImage("HOME_HERO_TIRUPUR_BANNER")}
         title="Still made in Tirupur"

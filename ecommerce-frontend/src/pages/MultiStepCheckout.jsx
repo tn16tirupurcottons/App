@@ -206,7 +206,7 @@ export default function MultiStepCheckout() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-8 sm:py-10">
         <div className="card p-8 text-center">
           <p className="text-muted">Preparing checkout...</p>
         </div>
@@ -216,7 +216,7 @@ export default function MultiStepCheckout() {
 
   if (error && !orderData) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-8 sm:py-10">
         <div className="card p-6 sm:p-8 text-center">
           <h2 className="text-lg sm:text-xl font-semibold text-dark mb-2">Checkout Error</h2>
           <p className="text-red-600">{error}</p>
@@ -233,7 +233,7 @@ export default function MultiStepCheckout() {
 
   if (!orderData) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-8 sm:py-10">
         <div className="card p-6 sm:p-8 text-center">
           <h2 className="text-lg sm:text-xl font-semibold text-dark mb-2">No Items to Checkout</h2>
           <p className="text-muted">Your cart is empty. Add items to proceed.</p>
@@ -249,7 +249,7 @@ export default function MultiStepCheckout() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-10 pb-24 sm:pb-6 md:pb-0">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-10 pb-24 sm:pb-6 md:pb-0">
       {/* Progress Steps */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between max-w-2xl mx-auto">

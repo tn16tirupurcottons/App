@@ -2,360 +2,462 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../admin/components/AdminLayout";
-import ImageUploader from "../../components/ImageUploader";
+import EnhancedImageUploader from "../../components/EnhancedImageUploader";
 import AutocompleteInput from "../../components/AutocompleteInput";
-import AutocompleteColorsInput from "../../components/AutocompleteColorsInput";
 import { useToast } from "../../components/Toast";
 import axiosClient from "../../api/axiosClient";
+
+// 🔥 STATIC NAMES
+const staticNames = {
+  "mens-wear": [
+    "Slim Fit Shirt",
+    "Casual Shirt",
+    "Formal Shirt",
+    "Denim Shirt",
+    "Linen Shirt",
+    "Polo Shirt",
+    "T-Shirt",
+    "Henley Shirt",
+    "Oxford Shirt",
+    "Chino Pants",
+    "Casual Jacket",
+    "Blazer",
+    "Hoodie",
+    "Sweater",
+    "Cargo Pants",
+    "Jeans",
+    "Short Sleeve Tee",
+    "Full Sleeve Shirt",
+    "Premium Cotton Shirt",
+    "Urban Wear"
+  ],
+  "womens-wear": [
+    "Floral Dress",
+    "Party Dress",
+    "Maxi Dress",
+    "Kurti Set",
+    "Designer Dress",
+    "Summer Dress",
+    "Cocktail Dress",
+    "Evening Gown",
+    "Casual Shirt",
+    "Blouse",
+    "Saree",
+    "Lehenga",
+    "Salwar Top",
+    "Ethnic Suit",
+    "Palazzo Pants",
+    "Jeans",
+    "Cardigan",
+    "Sweater Dress",
+    "Sundress",
+    "Designer Top"
+  ],
+  "kids-wear": [
+    "Boys T-Shirt",
+    "Girls Dress",
+    "Kids Wear Set",
+    "Cartoon Print Tee",
+    "School Uniform",
+    "Party Wear Dress",
+    "Casual Shorts",
+    "Jogger Pants",
+    "Hoodie Jacket",
+    "Denim Jacket",
+    "Summer Dress",
+    "Ethnic Wear",
+    "Sports Shirt",
+    "Casual Dress",
+    "Printed Tee",
+    "Windbreaker Jacket",
+    "Jersey Shirt",
+    "Playsuit",
+    "Party Suit",
+    "Trendy Outfit"
+  ],
+  "ethnic-wear": [
+    "Traditional Saree",
+    "Lehenga Choli",
+    "Anarkali Suit",
+    "Salwar Kameez",
+    "Kurta Pajama",
+    "Silk Saree",
+    "Embroidered Suit",
+    "Chikankari Kurta",
+    "Bandhani Dress",
+    "Block Print Saree",
+    "Tiered Skirt",
+    "Traditional Blouse",
+    "Gharara",
+    "Sharara",
+    "Chaniya Choli",
+    "Dhoti Kurta",
+    "Silk Dupatta",
+    "Embellished Dress",
+    "Festival Wear",
+    "Heritage Collection"
+  ],
+  "western-wear": [
+    "Denim Jeans",
+    "Casual T-Shirt",
+    "Button-Up Shirt",
+    "Leather Jacket",
+    "Denim Jacket",
+    "Cargo Pants",
+    "Shorts",
+    "Hoodie",
+    "Sweatshirt",
+    "Sneaker Outfit",
+    "Bomber Jacket",
+    "Flannel Shirt",
+    "Tank Top",
+    "Skirt",
+    "Casual Blazer",
+    "Joggers",
+    "Jumpsuit",
+    "Kaftan",
+    "Dungarees",
+    "Street Style"
+  ],
+  "casual-wear": [
+    "Casual Shirt",
+    "Comfortable Tee",
+    "Lounge Pants",
+    "Relaxed Fit Tee",
+    "Cotton Saree",
+    "Comfort Dress",
+    "Weekend Wear",
+    "Work From Home",
+    "Casual Pants",
+    "Slip-On Jacket",
+    "Relaxed Shirt",
+    "Casual Shorts",
+    "Hoodie Tee",
+    "Casual Kurta",
+    "Comfortable Dress",
+    "Soft Cotton Shirt",
+    "Casual Skirt",
+    "Linen Pants",
+    "Comfort Top",
+    "Easy Breezy Wear"
+  ],
+  "formal-wear": [
+    "Formal Shirt",
+    "Dress Pants",
+    "Blazer Jacket",
+    "Formal Suit",
+    "Dress Shoes",
+    "Saree",
+    "Formal Gown",
+    "Executive Suit",
+    "Formal Kurta",
+    "Tie",
+    "Dress Coat",
+    "Formal Blouse",
+    "Pencil Skirt",
+    "Formal Dress",
+    "Professional Wear",
+    "Office Suit",
+    "Formal Top",
+    "Black Formal Dress",
+    "Corporate Outfit",
+    "Premium Formal"
+  ],
+  "party-wear": [
+    "Evening Gown",
+    "Cocktail Dress",
+    "Party Dress",
+    "Sequin Dress",
+    "Art Silk Saree",
+    "Lehenga Top",
+    "Silk Dress",
+    "Glamour Outfit",
+    "Festival Wear",
+    "Velvet Dress",
+    "Embellished Gown",
+    "Satin Dress",
+    "Beaded Dress",
+    "Party Suit",
+    "Festive Outfit",
+    "Celebration Dress",
+    "Luxury Wear",
+    "Designer Dress",
+    "Elegant Gown",
+    "Statement Dress"
+  ],
+  "summer-wear": [
+    "Summer Dress",
+    "Light Shirt",
+    "Linen Dress",
+    "Cotton Saree",
+    "Sleeveless Dress",
+    "Summer Shorts",
+    "Light Pants",
+    "Breathable Tee",
+    "Sun Dress",
+    "Beach Wear",
+    "White Cotton Shirt",
+    "Summer Kurta",
+    "Light Jacket",
+    "Breezy Dress",
+    "Cool Shirt",
+    "Summer Top",
+    "Light Blouse",
+    "Cotton Dress",
+    "Summer Skirt",
+    "Heat-Friendly Outfit"
+  ],
+  "winter-wear": [
+    "Winter Jacket",
+    "Sweater",
+    "Wool Coat",
+    "Shawl",
+    "Scarf",
+    "Thermal Wear",
+    "Hoodie",
+    "Fleece Jacket",
+    "Cardigan",
+    "Wool Pants",
+    "Warm Dress",
+    "Wool Saree",
+    "Waistcoat",
+    "Pullover",
+    "Winter Kurta",
+    "Quilted Jacket",
+    "Thermal Shirt",
+    "Chunky Knit",
+    "Warm Leggings",
+    "Cozy Outfit"
+  ]
+};
 
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [imageUrlDraft, setImageUrlDraft] = useState("");
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["adminCategories"],
-    queryFn: async () => {
-      const res = await axiosClient.get("/categories");
-      return res.data.items || [];
-    },
+    queryKey: ["categories"],
+    queryFn: async () => (await axiosClient.get("/categories")).data.items || [],
   });
 
-  // Fetch all products for autocomplete suggestions
-  const { data: allProductsData } = useQuery({
-    queryKey: ["allProductsForSuggestions"],
-    queryFn: async () => {
-      const res = await axiosClient.get("/admin/products?limit=1000");
-      const products = res.data.items || [];
-      // Ensure categoryId is accessible (handle both plain objects and Sequelize models)
-      return products.map((p) => ({
-        ...p,
-        categoryId: p.categoryId || p.Category?.id || null,
-      }));
-    },
-  });
+  // 🔥 SUGGESTIONS
+  const rootCategories = categories.filter((cat) => !cat.parentId);
+  const subCategories = categories.filter((cat) => String(cat.parentId) === String(form?.parentCategoryId));
 
-  // Extract unique suggestions filtered by selected category
   const productNameSuggestions = useMemo(() => {
-    if (!allProductsData || !form?.categoryId) return [];
-    const names = new Set();
-    allProductsData.forEach((p) => {
-      // Only include products from the selected category (exclude current product)
-      if (p.name && p.categoryId === form.categoryId && p.id !== id) {
-        names.add(p.name);
-      }
-    });
-    return Array.from(names).sort();
-  }, [allProductsData, form?.categoryId, id]);
+    if (!form?.categoryId) return [];
+    const cat = categories.find((c) => String(c.id) === String(form.categoryId));
+    return staticNames[cat?.slug] || [];
+  }, [form?.categoryId, categories]);
 
-  const brandSuggestions = useMemo(() => {
-    if (!allProductsData || !form?.categoryId) return [];
-    const brands = new Set();
-    allProductsData.forEach((p) => {
-      // Only include brands from the selected category
-      if (p.brand && p.categoryId === form.categoryId) {
-        brands.add(p.brand);
-      }
-    });
-    return Array.from(brands).sort();
-  }, [allProductsData, form?.categoryId]);
+  // ⚡ AUTO NAME
+  const autoFillName = () => {
+    const cat = categories.find((c) => String(c.id) === String(form.categoryId));
+    const names = staticNames[cat?.slug] || [];
+    const name = names[Math.floor(Math.random() * names.length)];
+    setForm((p) => ({ ...p, name }));
+  };
 
-  const colorSuggestions = useMemo(() => {
-    if (!allProductsData || !form?.categoryId) return [];
-    const colors = new Set();
-    allProductsData.forEach((p) => {
-      // Only include colors from the selected category
-      if (p.categoryId === form.categoryId && p.colors && Array.isArray(p.colors)) {
-        p.colors.forEach((c) => {
-          if (c && c.trim()) colors.add(c.trim());
+  // 🤖 AI DESCRIPTION
+  const generateDescription = () => {
+    const desc = `${form.name} crafted for premium comfort and modern style. Breathable fabric, perfect fit, and ideal for daily wear.`;
+    setForm(p => ({ ...p, description: desc }));
+  };
+
+  // 💰 AUTO PRICE
+  const autoPrice = () => {
+    const price = Math.floor(Math.random()*2000)+499;
+    setForm(p => ({ ...p, price }));
+    toast.success("Auto price generated 💰");
+  };
+
+  // 📦 BULK CSV UPLOAD
+  const handleCSVUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const rows = reader.result.split("\n").slice(1);
+      rows.forEach(async (row) => {
+        const [name, price] = row.split(",");
+        if (!name) return;
+
+        await axiosClient.post("/admin/products", {
+          name,
+          price: Number(price),
+          categoryId: form.categoryId,
+          thumbnail: "",
         });
-      }
-    });
-    return Array.from(colors).sort();
-  }, [allProductsData, form?.categoryId]);
+      });
 
+      toast.success("Bulk upload done 🚀");
+    };
+    reader.readAsText(file);
+  };
+
+  // LOAD PRODUCT
   useEffect(() => {
     const load = async () => {
-      try {
-        const res = await axiosClient.get(`/products/${id}`);
-        const product = res.data;
+      const res = await axiosClient.get(`/products/${id}`);
+      const p = res.data;
 
-        const gallery = [];
-        if (product.thumbnail) gallery.push(product.thumbnail);
-        if (product.gallery && Array.isArray(product.gallery)) {
-          product.gallery.forEach((url) => {
-            if (url && !gallery.includes(url)) gallery.push(url);
-          });
-        }
-
-        setForm({
-          name: product.name || "",
-          price: product.price || "",
-          brand: product.brand || "",
-          categoryId: product.categoryId || "",
-          description: product.description || "",
-          inventory: product.inventory || 0,
-          sizes: (product.sizes || []).join(","),
-          colors: (product.colors || []).join(","),
-          gallery: gallery,
-          isFeatured: product.isFeatured || false,
-        });
-      } catch (error) {
-        toast.error("Failed to load product details");
-      }
+      setForm({
+        name: p.name,
+        price: p.price,
+        categoryId: p.categoryId,
+        parentCategoryId: p.categoryId,
+        description: p.description,
+        gallery: [...new Set([p.thumbnail, ...(p.gallery || [])])],
+      });
     };
     load();
-  }, [id, toast]);
+  }, [id]);
 
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+  useEffect(() => {
+    if (!form || !categories.length) return;
+    const selected = categories.find((c) => String(c.id) === String(form.categoryId));
+    if (!selected) return;
+    const parentId = selected.parentId ? String(selected.parentId) : String(selected.id);
+    if (String(form.parentCategoryId) !== parentId) {
+      setForm((prev) => ({ ...prev, parentCategoryId: parentId }));
+    }
+  }, [categories, form]);
+
+  const handleChange = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form) return;
+
+    if (!form.categoryId) {
+      toast.error("Please choose a category");
+      return;
+    }
+    if (!form.name?.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (!form.price || Number(form.price) <= 0) {
+      toast.error("Enter a valid price greater than 0");
+      return;
+    }
+    if (!form.gallery?.length) {
+      toast.error("Please upload at least 1 product image");
+      return;
+    }
 
     setSaving(true);
-
     try {
-      if (!form.gallery || form.gallery.length === 0) {
-        toast.error("Please upload at least one product image");
-        setSaving(false);
-        return;
-      }
-
       const payload = {
         ...form,
         price: Number(form.price),
-        inventory: Number(form.inventory),
-        sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
-        colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
-        gallery: form.gallery,
-        thumbnail: form.gallery[0] || "",
+        thumbnail: form.gallery[0],
       };
 
-      await axiosClient.put(`/admin/products/${id}`, payload);
-
-      toast.success("Product updated successfully!");
-      setTimeout(() => navigate("/admin/products"), 1500);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Update failed");
+      const res = await axiosClient.put(`/admin/products/${id}`, payload);
+      toast.success(res.data?.message || "Updated ✅");
+      navigate("/admin/products");
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Update failed";
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  if (!form) {
-    return (
-      <AdminLayout title="Edit Product">
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6">
-          <div className="space-y-4">
-            <div className="h-8 bg-gray-200 rounded animate-pulse" />
-            <div className="h-32 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  if(!form) return <AdminLayout title="Loading..." />;
 
   return (
     <AdminLayout title="Edit Product">
-      <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm md:shadow p-4 md:p-6">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
-        {/* FORM START */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* Basic Info */}
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700">
-                Category *
-                <select
-                  className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm mt-1 focus:outline-none focus:border-neutral-900"
-                  value={form.categoryId}
-                  onChange={(e) => {
-                    handleChange("categoryId", e.target.value);
-                    // Clear name, brand, and colors when category changes to show fresh suggestions
-                    if (e.target.value !== form.categoryId) {
-                      handleChange("name", "");
-                      handleChange("brand", "");
-                      handleChange("colors", "");
-                    }
-                  }}
-                  required
-                >
-                  <option value="">Select category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <AutocompleteInput
-                label="Product Name"
-                value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                suggestions={productNameSuggestions}
-                placeholder={form.categoryId ? "e.g., Heritage Cuban Shirt" : "Select category first"}
-                required
-                disabled={!form.categoryId}
-              />
-              <Input
-                label="Price (INR) *"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={(e) => handleChange("price", e.target.value)}
-                required
-              />
-              <AutocompleteInput
-                label="Brand"
-                value={form.brand}
-                onChange={(e) => handleChange("brand", e.target.value)}
-                suggestions={brandSuggestions}
-                placeholder={form.categoryId ? "TN16" : "Select category first"}
-                required
-                disabled={!form.categoryId}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Input
-                label="Inventory"
-                type="number"
-                min="0"
-                value={form.inventory}
-                onChange={(e) => handleChange("inventory", e.target.value)}
-              />
-              <Input
-                label="Sizes (comma separated)"
-                value={form.sizes}
-                onChange={(e) => handleChange("sizes", e.target.value)}
-                placeholder="S, M, L, XL"
-              />
-              <AutocompleteColorsInput
-                label="Colors (comma separated)"
-                value={form.colors}
-                onChange={(e) => handleChange("colors", e.target.value)}
-                suggestions={colorSuggestions}
-                placeholder={form.categoryId ? "White, Black, Blue" : "Select category first"}
-                disabled={!form.categoryId}
-              />
-
-              <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isFeatured}
-                  onChange={(e) => handleChange("isFeatured", e.target.checked)}
-                  className="w-4 h-4 text-neutral-900 rounded focus:ring-neutral-900"
-                />
-                <span>Featured Product</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Description */}
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Description *
-            </label>
-            <textarea
-              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-neutral-900 transition"
-              rows="4"
-              value={form.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-              required
-            />
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Main category</label>
+            <select
+              value={form.parentCategoryId || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange("parentCategoryId", value);
+                handleChange("categoryId", value);
+              }}
+              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="">Select main category</option>
+              {rootCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Images */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Product Images *{" "}
-              <span className="text-gray-400 font-normal">
-                (First image will be the primary/thumbnail)
-              </span>
-            </label>
-            <ImageUploader
-              images={form.gallery}
-              onChange={(images) => handleChange("gallery", images)}
-              maxImages={10}
-              maxSizeMB={5}
-            />
-            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:items-center">
-              <input
-                type="url"
-                value={imageUrlDraft}
-                onChange={(e) => setImageUrlDraft(e.target.value)}
-                placeholder="Or paste image URL and add"
-                className="flex-1 min-w-0 border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-neutral-900"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const u = imageUrlDraft.trim();
-                  if (!u) return;
-                  if (form.gallery.includes(u)) {
-                    toast.info("URL already in gallery");
-                    return;
-                  }
-                  handleChange("gallery", [...form.gallery, u]);
-                  setImageUrlDraft("");
-                  toast.success("Image URL added");
-                }}
-                className="shrink-0 rounded-full border-2 border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-900 hover:text-white transition"
-              >
-                Add URL
-              </button>
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate("/admin/products")}
-              className="flex-1 border-2 border-gray-300 text-gray-700 rounded-full py-3 font-semibold hover:bg-gray-50 transition"
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Sub-category</label>
+            <select
+              value={form.categoryId || ""}
+              onChange={(e) => handleChange("categoryId", e.target.value)}
+              disabled={!form.parentCategoryId || !subCategories.length}
+              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm disabled:opacity-60"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-              disabled={
-                saving ||
-                !form.name ||
-                !form.price ||
-                !form.categoryId ||
-                !form.gallery.length
-              }
-            >
-              {saving ? "Saving..." : "Update Product"}
-            </button>
+              <option value="">Select sub-category (optional)</option>
+              {subCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
+        </div>
 
-        </form>
-        {/* FORM END */}
+        <AutocompleteInput
+          label="Product Name"
+          value={form.name}
+          onChange={(e)=>handleChange("name",e.target.value)}
+          suggestions={productNameSuggestions}
+        />
 
-      </div>
+        {/* 🔥 SMART BUTTONS */}
+        <div className="flex gap-2 flex-wrap">
+          <button type="button" onClick={autoFillName}>⚡ Auto Name</button>
+          <button type="button" onClick={generateDescription}>🤖 AI Desc</button>
+          <button type="button" onClick={autoPrice}>💰 Auto Price</button>
+        </div>
+
+        <textarea value={form.description} onChange={e=>handleChange("description",e.target.value)} />
+
+        <input type="number" value={form.price} onChange={e=>handleChange("price",e.target.value)} />
+
+        <EnhancedImageUploader
+          images={form.gallery}
+          onChange={(imgs)=>handleChange("gallery", Array.from(new Set(imgs)))}
+        />
+
+        {/* 📦 BULK UPLOAD */}
+        <div>
+          <label>Bulk Upload (CSV)</label>
+          <input type="file" accept=".csv" onChange={handleCSVUpload}/>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/products")}
+            className="px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 transition"
+          >
+            Cancel / Back
+          </button>
+
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save & Back"}
+          </button>
+        </div>
+
+      </form>
     </AdminLayout>
-  );
-}
-
-function Input({ label, className = "", ...rest }) {
-  return (
-    <label className={`block text-sm font-semibold text-gray-700 ${className}`}>
-      <span className="block mb-1.5">{label}</span>
-      <input
-        {...rest}
-        className="w-full border-2 border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-neutral-900 transition"
-      />
-    </label>
   );
 }

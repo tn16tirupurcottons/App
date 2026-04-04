@@ -43,22 +43,30 @@ export const getMe = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const { name, email } = req.body || {};
-    if (!name || !email) {
-      return res.status(400).json({ message: "name and email are required" });
+    
+    // VALIDATION: Required fields
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Valid name is required" });
+    }
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({ success: false, message: "Valid email is required" });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ success: false, message: "Invalid email address format" });
     }
 
+    // VALIDATION: Email uniqueness
     const duplicate = await User.findOne({ where: { email: normalizedEmail } });
     if (duplicate && duplicate.id !== req.user.id) {
-      return res.status(400).json({ message: "An account with this email already exists" });
+      return res.status(409).json({ success: false, message: "Email is already in use by another account" });
     }
 
     const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
     user.name = String(name).trim();
     user.email = normalizedEmail;
@@ -70,6 +78,7 @@ export const updateProfile = async (req, res, next) => {
       user: toPublicUser(user),
     });
   } catch (error) {
+    console.error("Update profile error:", error);
     return next(error);
   }
 };
@@ -77,26 +86,42 @@ export const updateProfile = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
   try {
     const { oldPassword, newPassword } = req.body || {};
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "oldPassword and newPassword are required" });
+    
+    // VALIDATION: Required fields
+    if (!oldPassword || typeof oldPassword !== "string") {
+      return res.status(400).json({ success: false, message: "Current password is required" });
     }
-    if (String(newPassword).length < 6) {
-      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    if (!newPassword || typeof newPassword !== "string") {
+      return res.status(400).json({ success: false, message: "New password is required" });
+    }
+
+    // VALIDATION: Password length
+    if (String(newPassword).trim().length < 6) {
+      return res.status(400).json({ success: false, message: "New password must be at least 6 characters" });
+    }
+
+    // VALIDATION: Passwords are different
+    if (String(oldPassword).trim() === String(newPassword).trim()) {
+      return res.status(400).json({ success: false, message: "New password must be different from current password" });
     }
 
     const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const matches = await bcrypt.compare(String(oldPassword), user.password);
-    if (!matches) {
-      return res.status(400).json({ message: "Old password is incorrect" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    user.password = String(newPassword);
+    // VALIDATION: Old password is correct
+    const matches = await bcrypt.compare(String(oldPassword), user.password);
+    if (!matches) {
+      return res.status(401).json({ success: false, message: "Current password is incorrect" });
+    }
+
+    user.password = String(newPassword).trim();
     await user.save();
 
     return res.json({ success: true, message: "Password changed successfully" });
   } catch (error) {
+    console.error("Change password error:", error);
     return next(error);
   }
 };

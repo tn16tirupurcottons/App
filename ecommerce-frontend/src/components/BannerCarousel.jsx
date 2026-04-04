@@ -24,16 +24,30 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
     queryKey: ["banners", page, position, category],
     queryFn: async () => {
       try {
-        const res = await axiosClient.get(`/banners?page=${page}&position=${position}`);
+        console.log("[BANNER CAROUSEL] Fetching banners from API:", { page, position, category });
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (position) params.append("position", position);
+        if (category) params.append("segment", category);
+        
+        const res = await axiosClient.get(`/banners?${params.toString()}`);
+        console.log(`[BANNER CAROUSEL] Got ${res.data.items?.length || 0} banners from API`);
+        
         const all = res.data.items || [];
-        return all.filter(
+        
+        // Filter active banners by page/position/category
+        const filtered = all.filter(
           (b) =>
             b.isActive &&
             (b.page === page || b.page === "all") &&
             b.position === position &&
             (category ? b.segment === category || b.segment === "default" : true)
         );
-      } catch {
+        
+        console.log(`[BANNER CAROUSEL] Filtered to ${filtered.length} banners`);
+        return filtered;
+      } catch (err) {
+        console.error("[BANNER CAROUSEL] API Error:", err.message);
         return [];
       }
     },

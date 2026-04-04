@@ -3,52 +3,84 @@ import { Category, Product } from "../models/index.js";
 
 const baseCategories = [
   {
-    name: "Men",
-    slug: "mens-shirts",
-    description: "Signature shirts, polos and breathable staples for men.",
+    name: "Men's Wear",
+    slug: "mens-wear",
+    description: "Premium shirts, casual wear and formal outfits for men.",
     heroImage:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80",
     accentColor: "#0f172a",
   },
   {
-    name: "Women",
-    slug: "women-kurtas",
-    description: "Handloom kurtas, dresses and co-ord sets for women.",
+    name: "Women's Wear",
+    slug: "womens-wear",
+    description: "Elegant dresses, traditional wear and contemporary fashion for women.",
     heroImage:
       "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80",
     accentColor: "#be185d",
   },
   {
-    name: "Kids",
+    name: "Kids Wear",
     slug: "kids-wear",
-    description: "Play-proof coordinates and festive cotton fits for kids.",
+    description: "Comfortable and stylish clothing for kids of all ages.",
     heroImage:
       "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=80",
     accentColor: "#0ea5e9",
   },
   {
-    name: "Gen Z",
-    slug: "genz",
-    description: "Neon athleisure and varsity inspired staples.",
+    name: "Ethnic Wear",
+    slug: "ethnic-wear",
+    description: "Traditional sarees, lehengas and ethnic collections.",
     heroImage:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
-    accentColor: "#7c3aed",
+      "https://images.unsplash.com/photo-1505696722531-002a82b34181?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#d4a574",
   },
   {
-    name: "Athleisure",
-    slug: "athleisure",
-    description: "Performance fabrics blended with Tirupur cotton.",
+    name: "Western Wear",
+    slug: "western-wear",
+    description: "Denim, casual shirts and contemporary western fashion.",
     heroImage:
-      "https://images.unsplash.com/photo-1484519332611-516457305ff6?auto=format&fit=crop&w=1200&q=80",
-    accentColor: "#10b981",
+      "https://images.unsplash.com/photo-1542272604-787c62d465d1?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#475569",
   },
   {
-    name: "Accessories",
-    slug: "accessories",
-    description: "Caps, socks, scarves and utility bags.",
+    name: "Casual Wear",
+    slug: "casual-wear",
+    description: "Comfortable everyday clothing for all occasions.",
     heroImage:
-      "https://images.unsplash.com/photo-1484506097116-1bcba4c0c49b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1506629082632-421bfe45569e?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#64748b",
+  },
+  {
+    name: "Formal Wear",
+    slug: "formal-wear",
+    description: "Professional and elegant formal clothing collection.",
+    heroImage:
+      "https://images.unsplash.com/photo-1514886291840-2e0a9bf2a9ae?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#1e293b",
+  },
+  {
+    name: "Party Wear",
+    slug: "party-wear",
+    description: "Vibrant party dresses and celebration outfits.",
+    heroImage:
+      "https://images.unsplash.com/photo-1539008588435-c68697784152?auto=format&fit=crop&w=1200&q=80",
     accentColor: "#f97316",
+  },
+  {
+    name: "Summer Collection",
+    slug: "summer-wear",
+    description: "Light and breathable clothing for warm weather.",
+    heroImage:
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#fbbf24",
+  },
+  {
+    name: "Winter Collection",
+    slug: "winter-wear",
+    description: "Warm and cozy winter clothing collection.",
+    heroImage:
+      "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=1200&q=80",
+    accentColor: "#3b82f6",
   },
 ];
 
@@ -58,7 +90,7 @@ const baseProducts = [
     price: 1899,
     discount: 200,
     brand: "TN16",
-    categorySlug: "mens-shirts",
+    categorySlug: "mens-wear",
     description:
       "Relaxed Cuban collar shirt crafted in airy Tirupur cotton with corozo buttons.",
     sizes: ["S", "M", "L", "XL"],
@@ -73,7 +105,7 @@ const baseProducts = [
     price: 2499,
     discount: 0,
     brand: "TN16 Studio",
-    categorySlug: "women-kurtas",
+    categorySlug: "womens-wear",
     description:
       "Handloom kurta with tonal pinstripes, paired with tapered cotton trousers.",
     sizes: ["XS", "S", "M", "L"],

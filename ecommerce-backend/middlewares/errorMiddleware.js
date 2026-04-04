@@ -1,41 +1,74 @@
 export const errorHandler = (err, req, res, next) => {
-  // Log error details (server-side only)
   const isProduction = process.env.NODE_ENV === "production";
-  const status = err.status || err.statusCode || 500;
-  
+  let status = err.status || err.statusCode || 500;
+  let message = err.message || "An error occurred";
+
+  // Handle specific error types
+  if (err instanceof SyntaxError && "body" in err) {
+    // JSON parsing error
+    status = 400;
+    message = "Invalid JSON in request body";
+  } else if (err.name === "ValidationError" || err.name === "SequelizeValidationError") {
+    status = 400;
+    message = "Validation failed: " + (err.errors ? err.errors.map((e) => e.message).join(", ") : message);
+  } else if (err.name === "SequelizeUniqueConstraintError") {
+    status = 409;
+    message = "Resource already exists (duplicate entry)";
+  } else if (err.name === "SequelizeForeignKeyConstraintError") {
+    status = 400;
+    message = "Invalid reference to related resource";
+  } else if (err.name === "SequelizeError") {
+    status = 500;
+    message = "Database error occurred";
+  } else if (err.name === "JsonWebTokenError") {
+    status = 401;
+    message = "Invalid or expired token";
+  } else if (err.name === "TokenExpiredError") {
+    status = 401;
+    message = "Token has expired";
+  } else if (err.name === "UnauthorizedError") {
+    status = 401;
+    message = "Unauthorized access";
+  }
+
+  // Log error (development or monitoring)
   if (!isProduction) {
-    console.error("Error:", err);
-  } else {
-    // In production, log to monitoring service (implement as needed)
     console.error("Error:", {
+      name: err.name,
       message: err.message,
       status,
       path: req.path,
       method: req.method,
-      // Don't log sensitive data
+      stack: err.stack,
+    });
+  } else {
+    // In production, log to monitoring system
+    console.error("Error:", {
+      name: err.name,
+      message: err.message,
+      status,
+      path: req.path,
+      method: req.method,
     });
   }
 
-  // Don't leak internal errors in production
-  if (isProduction) {
-    // Generic error messages for production
-    if (status === 500) {
-      return res.status(500).json({
-        message: "An internal server error occurred. Please try again later.",
-      });
-    }
-    
-    // Don't expose database errors
-    if (err.name === "SequelizeError" || err.name === "ValidationError") {
-      return res.status(400).json({
-        message: "Invalid request. Please check your input.",
-      });
-    }
-  }
-
-  // In development, show full error
+  // Send response (production-safe)
   res.status(status).json({
-    message: err.message,
-    stack: isProduction ? null : err.stack,
+    success: false,
+    message: isProduction ? getProductionMessage(status, message) : message,
+    ...(isProduction ? {} : { error: err.message, stack: err.stack }),
   });
+};
+
+// Production-safe error messages
+const getProductionMessage = (status, defaultMessage) => {
+  const messages = {
+    400: "Bad request. Please check your input.",
+    401: "Unauthorized. Please log in.",
+    403: "Access forbidden.",
+    404: "Resource not found.",
+    409: "Resource conflict. Try again or use different data.",
+    500: "Internal server error. Please try again later.",
+  };
+  return messages[status] || defaultMessage;
 };

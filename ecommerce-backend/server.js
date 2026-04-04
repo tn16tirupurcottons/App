@@ -20,6 +20,70 @@ process.on("unhandledRejection", (error) => {
 // Database Sync
 import { syncDB, sequelize } from "./models/index.js";
 import runMigrationsSafely from "./scripts/run-migrations.js";
+import { runDynamicPricingUpdate } from "./services/dynamicPricingService.js";
+
+// Run missing migration for offer/lightning fields
+const runMissingMigration = async () => {
+  try {
+    console.log("🔧 Running missing offer/lightning migration...");
+    await sequelize.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'isOnOffer'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "isOnOffer" BOOLEAN NOT NULL DEFAULT false;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'offerTag'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "offerTag" TEXT;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'isLightningDeal'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "isLightningDeal" BOOLEAN NOT NULL DEFAULT false;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'dealStartTime'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "dealStartTime" TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'dealEndTime'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "dealEndTime" TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'dealStock'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "dealStock" INTEGER NOT NULL DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'dealSold'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "dealSold" INTEGER NOT NULL DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'Products' AND table_schema = 'public' AND column_name = 'isFeatured'
+        ) THEN
+          ALTER TABLE "Products" ADD COLUMN "isFeatured" BOOLEAN NOT NULL DEFAULT false;
+        END IF;
+      END$$;
+    `);
+    console.log("✅ Missing columns added successfully!");
+  } catch (err) {
+    console.error("❌ Failed to add missing columns:", err.message);
+  }
+};
 
 // User Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -33,8 +97,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import themeRoutes from "./routes/themeRoutes.js";
 import appImageRoutes from "./routes/appImageRoutes.js";
 import adminAppImageRoutes from "./routes/adminAppImageRoutes.js";
-import publicBannerRoutes from "./routes/publicBannerRoutes.js";
-import couponRoutes from "./routes/couponRoutes.js";
+import publicBannerRoutes from "./routes/publicBannerRoutes.js";import marketingRoutes from "./routes/marketingRoutes.js";import couponRoutes from "./routes/couponRoutes.js";
 
 // Admin Routes
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
@@ -59,20 +122,45 @@ app.set("trust proxy", 1);
 // ---------------------------
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((origin) => origin.trim())
-  : ["http://localhost:5173", "http://18.237.198.9"]; // default frontend URLs
+  : ["http://localhost:5173", "http://18.237.198.9", "http://localhost:5001"];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow server-to-server requests / Postman
+      console.log("DEBUG CORS: origin=", origin);
+
+      if (process.env.NODE_ENV !== "production") {
+        // Permissive for local development and file:// patching.
+        return callback(null, true);
+      }
+
+      if (origin === undefined || origin === null || origin === "null") {
+        return callback(null, true);
+      }
+
       if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
         return callback(null, true);
       }
+
+      if (origin.startsWith("file://")) {
+        return callback(null, true);
+      }
+
       return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true, // allow cookies and Authorization headers
+    credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
+
+// Logging for debug
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && !allowedOrigins.includes(origin) && origin !== 'null' && !origin.startsWith('file://')) {
+    console.warn(`CORS warning: attempted origin=${origin}`);
+  }
+  next();
+});
 
 // ---------------------------
 // SECURITY & PERFORMANCE
@@ -93,7 +181,7 @@ if (process.env.NODE_ENV !== "production") {
 // ---------------------------
 // BODY PARSERS
 // ---------------------------
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // ---------------------------
@@ -140,6 +228,11 @@ const sanitizeInput = (req, _res, next) => {
 app.use(sanitizeInput);
 
 // ---------------------------
+// STATIC FILES
+// ---------------------------
+app.use('/uploads', express.static('uploads'));
+
+// ---------------------------
 // API REQUEST LOGGING (method + URL for /api/auth — helps debug 405/proxy issues)
 // ---------------------------
 app.use((req, _res, next) => {
@@ -152,7 +245,7 @@ app.use((req, _res, next) => {
 // ---------------------------
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 200,
+  limit: process.env.NODE_ENV === "production" ? 1200 : 10000,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: "Too many requests from this IP, please try again later.",
@@ -251,6 +344,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/theme", themeRoutes);
 app.use("/api/images", appImageRoutes);
 app.use("/api/banners", publicBannerRoutes);
+app.use("/api", marketingRoutes);
 app.use("/api/coupons", couponRoutes);
 
 // ---------------------------
@@ -273,7 +367,7 @@ app.use(errorHandler);
 // ---------------------------
 // START SERVER
 // ---------------------------
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Helper function to free port if in use (Windows only)
 const freePortIfInUse = (port) => {
@@ -368,7 +462,7 @@ const freePortIfInUse = (port) => {
 
 const startServer = async () => {
   try {
-    await runMigrationsSafely();
+    // await runMigrationsSafely(); // Already done
     await syncDB();
     console.log("✅ Database synced successfully!");
     await bootstrapCatalog().catch((error) =>
@@ -377,9 +471,27 @@ const startServer = async () => {
 
     await freePortIfInUse(PORT);
 
-    const server = app.listen(PORT, () => {
-      console.log("Server running on port", PORT);
+    const server = app.listen(PORT, async () => {
       console.log(`🚀 Server running at http://localhost:${PORT}`);
+
+      // Run missing migration first
+      await runMissingMigration();
+
+      // Start dynamic pricing updates after server is online
+      runDynamicPricingUpdate()
+        .then(() => {
+          console.log("✅ Initial dynamic pricing job completed.");
+        })
+        .catch((err) => {
+          console.error("❌ Initial dynamic pricing job failed:", err);
+        });
+
+      // Recurring update every 15 minutes (keep this interval manageable for your infra)
+      setInterval(() => {
+        runDynamicPricingUpdate().catch((err) => {
+          console.error("❌ Recurring dynamic pricing update failed:", err);
+        });
+      }, 15 * 60 * 1000);
     });
     server.on("error", (err) => {
       if (err.code === "EADDRINUSE") {

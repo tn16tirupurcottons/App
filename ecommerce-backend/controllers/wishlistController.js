@@ -39,16 +39,19 @@ const UUID_RE =
 export const addWishlistItem = async (req, res, next) => {
   try {
     const productId = req.body?.productId != null ? String(req.body.productId).trim() : "";
+    
+    // VALIDATION: productId
     if (!productId) {
-      return res.status(400).json({ message: "productId is required" });
+      return res.status(400).json({ success: false, message: "Product ID is required" });
     }
     if (!UUID_RE.test(productId)) {
-      return res.status(400).json({ message: "Invalid product id" });
+      return res.status(400).json({ success: false, message: "Invalid product ID format" });
     }
 
+    // VALIDATION: Product exists
     const product = await Product.findByPk(productId);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     const [record, created] = await Wishlist.findOrCreate({
@@ -63,11 +66,12 @@ export const addWishlistItem = async (req, res, next) => {
 
     res.status(created ? 201 : 200).json({
       success: true,
-      message: created ? "Added to wishlist" : "Already saved to wishlist",
+      message: created ? "Added to wishlist" : "Already in wishlist",
       created,
       item: plainItem,
     });
   } catch (err) {
+    console.error("Add wishlist item error:", err);
     next(err);
   }
 };
@@ -77,20 +81,26 @@ export const removeWishlistItem = async (req, res, next) => {
     const { id } = req.params;
     const fallbackProductId = req.body?.productId || req.query?.productId;
 
+    // VALIDATION: Either id or productId required
     if (!id && !fallbackProductId) {
       return res
         .status(400)
-        .json({ message: "Provide wishlist id or productId to remove" });
+        .json({ success: false, message: "Provide wishlist ID or product ID to remove" });
+    }
+
+    // VALIDATION: ID format if provided
+    if (id && id !== String(id).trim()) {
+      return res.status(400).json({ success: false, message: "Invalid wishlist ID format" });
     }
 
     const whereClause = {
       userId: req.user.id,
-      ...(id ? { id } : { productId: fallbackProductId }),
+      ...(id ? { id } : { productId: String(fallbackProductId).trim() }),
     };
 
     const item = await Wishlist.findOne({ where: whereClause });
     if (!item) {
-      return res.status(404).json({ message: "Wishlist item not found" });
+      return res.status(404).json({ success: false, message: "Wishlist item not found" });
     }
 
     await item.destroy();

@@ -29,6 +29,9 @@ export async function runMigrationsSafely() {
     "scripts/migrations/20260330_add_insider_fields.js",
     "scripts/migrations/20260330_create_coupons_tables.js",
     "scripts/migrations/20260330_add_category_isActive.js",
+    "scripts/migrations/20260403_add_dynamic_pricing_and_spin_wheel_fields.js",
+    "scripts/migrations/20260405_add_category_parentId.js",
+    "scripts/migrations/20260406_add_banner_category_id.js",
   ];
 
   for (const migration of migrations) {

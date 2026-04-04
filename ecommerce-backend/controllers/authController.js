@@ -96,40 +96,46 @@ export const register = async (req, res, next) => {
   try {
     const { name, email, password, mobileNumber } = req.body;
     
-    // Email is required
-    if (!email || !name || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required" });
+    // VALIDATION: Required fields with type checking
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Valid name is required" });
+    }
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({ success: false, message: "Valid email is required" });
+    }
+    if (!password || typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
     }
 
-    // Validate email format
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email.trim())) {
-      return res.status(400).json({ message: "Please enter a valid email address" });
+    // VALIDATION: Email format
+    if (!EMAIL_REGEX.test(email.trim().toLowerCase())) {
+      return res.status(400).json({ success: false, message: "Please enter a valid email address" });
     }
 
-    // Check if email already exists (enforce one account per email)
-    const exist = await User.findOne({ where: { email: email.trim().toLowerCase() } });
-    if (exist) {
-      return res.status(400).json({ message: "An account with this email already exists. Please use a different email or log in." });
+    // VALIDATION: Email uniqueness
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailExists = await User.findOne({ where: { email: normalizedEmail } });
+    if (emailExists) {
+      return res.status(409).json({ success: false, message: "Email is already registered" });
     }
     
-    // Mobile number is optional, but if provided, must be valid and unique
+    // VALIDATION: Mobile number (optional but must be valid if provided)
     let cleanedMobile = null;
-    if (mobileNumber && mobileNumber.trim()) {
+    if (mobileNumber && typeof mobileNumber === "string" && mobileNumber.trim()) {
       cleanedMobile = mobileNumber.replace(/^\+91/, "").replace(/\D/g, "");
-      if (cleanedMobile.length !== 10 || !/^[6-9]/.test(cleanedMobile)) {
-        return res.status(400).json({ message: "Please enter a valid 10-digit Indian mobile number" });
+      if (!MOBILE_REGEX.test(cleanedMobile)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid 10-digit Indian mobile number" });
       }
       const mobileExists = await User.findOne({ where: { mobileNumber: cleanedMobile } });
       if (mobileExists) {
-        return res.status(400).json({ message: "Mobile number already exists" });
+        return res.status(409).json({ success: false, message: "Mobile number is already registered" });
       }
     }
 
     const user = await User.create({ 
       name: name.trim(), 
-      email: email.trim().toLowerCase(), 
-      password, 
+      email: normalizedEmail, 
+      password: password.trim(), 
       mobileNumber: cleanedMobile 
     });
     const tokens = await issueTokensForUser(user, res);
@@ -140,12 +146,13 @@ export const register = async (req, res, next) => {
       ...tokens,
     });
   } catch (err) {
+    console.error("Register error:", err);
     if (err.name === "SequelizeUniqueConstraintError") {
       if (err.errors?.some(e => e.path === "email")) {
-        return res.status(400).json({ message: "An account with this email already exists" });
+        return res.status(409).json({ success: false, message: "Email is already registered" });
       }
       if (err.errors?.some(e => e.path === "mobileNumber")) {
-        return res.status(400).json({ message: "Mobile number already exists" });
+        return res.status(409).json({ success: false, message: "Mobile number is already registered" });
       }
     }
     next(err);

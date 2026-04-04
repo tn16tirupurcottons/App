@@ -22,19 +22,36 @@ const resolveCategoryId = async ({ categoryId, categorySlug }) => {
 };
 
 /* ================================
-     CREATE PRODUCT
+     CREATE PRODUCT (PRODUCTION SAFE)
 ================================ */
 export const createProduct = async (req, res) => {
   try {
-    const { name, price } = req.body;
+    const { name, price, categoryId } = req.body;
 
-    if (!name || !price) {
-      return res.status(400).json({ message: "Name & Price are required" });
+    // VALIDATION: Required fields
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Valid product name is required" });
+    }
+
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      return res.status(400).json({ success: false, message: "Valid price greater than 0 is required" });
+    }
+
+    if (!categoryId) {
+      return res.status(400).json({ success: false, message: "Category is required" });
+    }
+
+    // VALIDATION: Category exists
+    const categoryExists = await Category.findByPk(categoryId);
+    if (!categoryExists) {
+      return res.status(400).json({ success: false, message: "Invalid category" });
     }
 
     const payload = { ...req.body };
+    payload.name = payload.name.trim();
     payload.slug = slugify(payload.slug || payload.name);
 
+    // Check slug uniqueness
     const slugExists = await Product.findOne({ where: { slug: payload.slug } });
     if (slugExists) {
       payload.slug = `${payload.slug}-${Date.now()}`;
@@ -44,54 +61,76 @@ export const createProduct = async (req, res) => {
     payload.colors = parseArrayField(payload.colors);
     payload.gallery = parseArrayField(payload.gallery);
     payload.tags = parseArrayField(payload.tags);
+    payload.price = Number(payload.price);
 
-    const resolvedCategoryId = await resolveCategoryId({
-      categoryId: payload.categoryId,
-      categorySlug: payload.categorySlug,
-    });
-    if (!resolvedCategoryId) {
-      return res.status(400).json({ message: "Valid category required" });
-    }
-    payload.categoryId = resolvedCategoryId;
     if (!payload.thumbnail && payload.gallery.length) {
       payload.thumbnail = payload.gallery[0];
     }
 
     const newProduct = await Product.create(payload);
 
-    return res
-      .status(201)
-      .json({ message: "Product created successfully", item: newProduct });
+    return res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      item: newProduct,
+    });
   } catch (err) {
+    console.error("Create product error:", err);
     return res.status(500).json({
-      message: "Create failed",
-      error: err.message,
+      success: false,
+      message: "Failed to create product",
+      error: process.env.NODE_ENV === "production" ? undefined : err.message,
     });
   }
 };
 
 /* ================================
-     UPDATE PRODUCT
+     UPDATE PRODUCT (PRODUCTION SAFE)
 ================================ */
 export const updateProduct = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Product ID is required" });
+    }
+
     const check = await Product.findByPk(id);
-    if (!check) return res.status(404).json({ message: "Product not found" });
+    if (!check) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
 
     const payload = { ...req.body };
 
-    if (payload.name && !payload.slug) {
-      payload.slug = slugify(payload.name);
+    // VALIDATION: Fields if provided
+    if (payload.name && typeof payload.name === "string") {
+      payload.name = payload.name.trim();
+      if (!payload.name) {
+        return res.status(400).json({ success: false, message: "Product name cannot be empty" });
+      }
+      if (!payload.slug) {
+        payload.slug = slugify(payload.name);
+      }
     }
 
+    if (payload.price && (isNaN(Number(payload.price)) || Number(payload.price) <= 0)) {
+      return res.status(400).json({ success: false, message: "Valid price is required" });
+    }
+
+    if (payload.categoryId) {
+      const catExists = await Category.findByPk(payload.categoryId);
+      if (!catExists) {
+        return res.status(400).json({ success: false, message: "Invalid category" });
+      }
+    }
+
+    // Slug uniqueness check
     if (payload.slug) {
       const exists = await Product.findOne({
         where: { slug: payload.slug, id: { [Op.ne]: id } },
       });
       if (exists) {
-        return res.status(400).json({ message: "Slug already exists" });
+        return res.status(400).json({ success: false, message: "Slug already exists" });
       }
     }
 
@@ -99,46 +138,52 @@ export const updateProduct = async (req, res) => {
     if (payload.colors) payload.colors = parseArrayField(payload.colors);
     if (payload.gallery) payload.gallery = parseArrayField(payload.gallery);
     if (payload.tags) payload.tags = parseArrayField(payload.tags);
-
-    if (payload.categoryId || payload.categorySlug) {
-      const resolvedCategoryId = await resolveCategoryId({
-        categoryId: payload.categoryId,
-        categorySlug: payload.categorySlug,
-      });
-      if (!resolvedCategoryId) {
-        return res.status(400).json({ message: "Valid category required" });
-      }
-      payload.categoryId = resolvedCategoryId;
-    }
+    if (payload.price) payload.price = Number(payload.price);
 
     await check.update(payload);
 
-    return res.json({ message: "Product updated successfully" });
+    return res.json({
+      success: true,
+      message: "Product updated successfully",
+    });
   } catch (err) {
+    console.error("Update product error:", err);
     return res.status(500).json({
-      message: "Update failed",
-      error: err.message,
+      success: false,
+      message: "Failed to update product",
+      error: process.env.NODE_ENV === "production" ? undefined : err.message,
     });
   }
 };
 
 /* ================================
-     DELETE PRODUCT
+     DELETE PRODUCT (PRODUCTION SAFE)
 ================================ */
 export const deleteProduct = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Product ID is required" });
+    }
+
     const check = await Product.findByPk(id);
-    if (!check) return res.status(404).json({ message: "Product not found" });
+    if (!check) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
 
     await Product.destroy({ where: { id } });
 
-    return res.json({ message: "Product deleted successfully" });
+    return res.json({
+      success: true,
+      message: "Product deleted successfully",
+    });
   } catch (err) {
+    console.error("Delete product error:", err);
     return res.status(500).json({
-      message: "Delete failed",
-      error: err.message,
+      success: false,
+      message: "Failed to delete product",
+      error: process.env.NODE_ENV === "production" ? undefined : err.message,
     });
   }
 };

@@ -1,154 +1,113 @@
-import React, { useContext, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import CategoryGrid from "../components/CategoryGrid";
-import ProductCard from "../components/ProductCard";
-import BannerCarousel from "../components/BannerCarousel";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import { getProductImage } from "../utils/imageUtils";
 import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
-import { segmentThemes } from "../data/segments";
-import { categoryStock } from "../data/visualAssets";
-import { handleImageError, FALLBACK_IMAGES } from "../utils/imageUtils";
-import { useSegmentTiles } from "../hooks/useSegmentTiles";
-import {
-  EditorsPicksSection,
-  SeasonalCollectionsSection,
-  SpecialOffersSection,
-  CuratedLooksSection,
-  HeroOfferBanner,
-} from "../components/LuxurySections";
-import { AuthContext } from "../context/AuthContext";
+import BannerCarousel from "../components/BannerCarousel";
+import CategoryRow from "../components/CategoryRow";
+import ProductGrid from "../components/ProductGrid";
+import ProductCard from "../components/ProductCard";
 
-const fallbackFilters = [
-  { label: "Men's Shirts", slug: "mens-shirts" },
-  { label: "Women Kurtas", slug: "women-kurtas" },
-  { label: "Kids Wear", slug: "kids-wear" },
-  { label: "Athleisure", slug: "athleisure" },
-  { label: "Accessories", slug: "accessories" },
+const DEFAULT_FILTERS = [
+  { label: "All", slug: "" },
+  { label: "Men", slug: "men" },
+  { label: "Women", slug: "women" },
+  { label: "Kids", slug: "kids" },
+  { label: "Dresses", slug: "dresses" },
+  { label: "Ethnic", slug: "ethnic" },
 ];
 
-const fallbackProducts = [
-  {
-    id: "fallback-1",
-    name: "TN16 Heritage Cuban Shirt",
-    price: 1899,
-    discount: 200,
-    brand: "TN16",
-    thumbnail: categoryStock.men,
-    Category: { name: "Men" },
-  },
-  {
-    id: "fallback-2",
-    name: "Two-piece Kurta Set",
-    price: 2499,
-    discount: 0,
-    brand: "TN16",
-    thumbnail: categoryStock.women,
-    Category: { name: "Women" },
-  },
-  {
-    id: "fallback-3",
-    name: "Organic Playtime Co-ord",
-    price: 1299,
-    discount: 150,
-    brand: "TN16",
-    thumbnail: categoryStock.kids,
-    Category: { name: "Kids" },
-  },
-  {
-    id: "fallback-4",
-    name: "FlexMove Athleisure Hoodie",
-    price: 1699,
-    discount: 100,
-    brand: "TN16",
-    thumbnail: categoryStock.athleisure,
-    Category: { name: "Athleisure" },
-  },
-  {
-    id: "fallback-5",
-    name: "Premium Cotton Tee",
-    price: 899,
-    discount: 100,
-    brand: "TN16",
-    thumbnail: categoryStock.men,
-    Category: { name: "Men" },
-  },
-  {
-    id: "fallback-6",
-    name: "Cotton Dress",
-    price: 3499,
-    discount: 300,
-    brand: "TN16",
-    thumbnail: categoryStock.women,
-    Category: { name: "Women" },
-  },
-  {
-    id: "fallback-7",
-    name: "Kids Cotton Set",
-    price: 999,
-    discount: 100,
-    brand: "TN16",
-    thumbnail: categoryStock.kids,
-    Category: { name: "Kids" },
-  },
-  {
-    id: "fallback-8",
-    name: "Activewear Pullover",
-    price: 1599,
-    discount: 200,
-    brand: "TN16",
-    thumbnail: categoryStock.athleisure,
-    Category: { name: "Athleisure" },
-  },
-];
-
-const FilterChip = ({ label, active, slug, navigate }) => {
-  const handleClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(slug ? getShopPathForCategorySlug(slug) : "/catalog");
-  };
-
+const FilterChip = memo(function FilterChip({ label, active, onClick }) {
   return (
     <button
       type="button"
-      onClick={handleClick}
-      className={`shrink-0 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm tracking-[0.2em] uppercase transition-all duration-300 ease-in-out border cursor-pointer ${
+      onClick={onClick}
+      className={[
+        "shrink-0 h-8 px-3 rounded-full border text-xs font-medium",
+        "transition-all duration-200 ease-in-out",
         active
-          ? "bg-neutral-900 text-white border-neutral-900 font-semibold shadow-sm"
-          : "bg-white text-neutral-600 border-neutral-200 hover:text-neutral-900 hover:border-neutral-400"
-      }`}
+          ? "bg-neutral-900 text-white border-neutral-900 shadow-sm"
+          : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300 hover:shadow-sm hover:scale-[1.02]",
+      ].join(" ")}
     >
       {label}
     </button>
   );
-};
+});
 
-const fallbackCoupons = [
-  { code: "TN16SAVE", text: "Get 25% off up to ₹200" },
-  { code: "INSIDER", text: "Extra 10% for Insider members" },
-  { code: "FLAT100", text: "Flat ₹100 off on ₹999+" },
-];
+const SectionWrap = memo(function SectionWrap({ children }) {
+  return (
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-3 md:p-4">
+        {children}
+      </div>
+    </div>
+  );
+});
 
-const formatCouponText = (c) => {
-  try {
-    if (!c) return "";
-    if (c.discount_type === "percentage") {
-      const cap = c.max_discount ? ` up to ₹${Math.round(Number(c.max_discount))}` : "";
-      return `Save ${Math.round(Number(c.discount_value))}%${cap}`;
-    }
-    if (c.discount_type === "flat") return `Save ₹${Math.round(Number(c.discount_value))}`;
-    return "";
-  } catch {
-    return "";
-  }
-};
+const DealBlock = memo(function DealBlock({ title, items = [], to = "/catalog" }) {
+  const tiles = (items || []).slice(0, 4);
+  return (
+    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-3 md:p-4 transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5">
+      <div className="text-sm md:text-base font-semibold text-neutral-900">{title}</div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {tiles.map((p) => (
+          <Link
+            key={p.id}
+            to={`/product/${p.id}`}
+            className="rounded-lg border border-neutral-200 overflow-hidden bg-neutral-50 transition-all duration-200 ease-in-out hover:shadow-sm"
+          >
+            <div className="aspect-square bg-neutral-100">
+              <img
+                src={getProductImage(p, p.Category?.name || p.category?.name)}
+                alt={p.name || ""}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                sizes="(max-width: 768px) 50vw, 200px"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = getProductImage({ name: p.name, category: p.Category?.name || p.category?.name }, p.Category?.name || p.category?.name);
+                }}
+              />
+            </div>
+            <div className="p-2">
+              <div className="text-xs text-neutral-600 line-clamp-1">
+                {p.Category?.name || p.brand || "Store"}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <Link
+        to={to}
+        className="mt-3 inline-flex text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200 ease-in-out"
+      >
+        See more
+      </Link>
+    </div>
+  );
+});
 
 export default function Home() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCategorySlug = searchParams.get("category") || "";
-  const { user } = useContext(AuthContext);
+  const [mounted, setMounted] = useState(false);
+  const reduceMotion = useMemo(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setMounted(true);
+      return;
+    }
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
+  }, [reduceMotion]);
 
   const { data: categoryResponse, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
@@ -159,283 +118,257 @@ export default function Home() {
   });
 
   const categories = categoryResponse?.items || [];
+  const chips = useMemo(() => {
+    if (!categories.length) return DEFAULT_FILTERS;
+    return [
+      { label: "All", slug: "" },
+      ...categories.slice(0, 10).map((cat) => ({ label: cat.name, slug: cat.slug })),
+    ];
+  }, [categories]);
 
-  const filterChips = useMemo(() => {
-    if (!categories.length) return fallbackFilters;
-    return categories.map((cat) => ({
-      label: cat.name,
-      slug: cat.slug,
+  const categoryRowItems = useMemo(() => {
+    const base = categories?.length
+      ? categories
+      : [
+          { id: "c1", name: "Men", slug: "men" },
+          { id: "c2", name: "Women", slug: "women" },
+          { id: "c3", name: "Kids", slug: "kids" },
+          { id: "c4", name: "Dresses", slug: "dresses" },
+          { id: "c5", name: "Ethnic", slug: "ethnic" },
+        ];
+    return base.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      href: c.slug ? `/catalog?category=${encodeURIComponent(c.slug)}` : "/catalog",
     }));
   }, [categories]);
 
-  const {
-    data: productResponse,
-    isLoading: productsLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["featuredProducts", activeCategorySlug],
+  const { data: featuredResponse, isLoading: featuredLoading } = useQuery({
+    queryKey: ["homeFeaturedProducts", activeCategorySlug],
     queryFn: async () => {
-      const params = new URLSearchParams({ limit: 12, featured: "true" });
-      if (activeCategorySlug) params.append("categorySlug", activeCategorySlug);
+      const params = new URLSearchParams({ limit: 40, featured: "true" });
+      if (activeCategorySlug) params.append("category", activeCategorySlug);
       const res = await axiosClient.get(`/products?${params.toString()}`);
       return res.data;
     },
   });
 
-  const { data: eligibleCouponsData, isLoading: couponsLoading } = useQuery({
-    queryKey: ["eligibleCouponsHome"],
-    enabled: !!user,
+  const { data: allResponse, isLoading: allLoading } = useQuery({
+    queryKey: ["homeAllProducts", activeCategorySlug],
     queryFn: async () => {
-      const res = await axiosClient.get("/coupons/eligible");
-      return res.data?.items || [];
+      const params = new URLSearchParams({ limit: 60 });
+      if (activeCategorySlug) params.append("category", activeCategorySlug);
+      const res = await axiosClient.get(`/products?${params.toString()}`);
+      return res.data;
     },
   });
-  const coupons = !user
-    ? fallbackCoupons
-    : couponsLoading
-      ? fallbackCoupons
-      : eligibleCouponsData?.length
-        ? eligibleCouponsData.map((c) => ({
-            code: c.code,
-            text: formatCouponText(c),
-          }))
-        : [];
 
-  const products = productResponse?.items || [];
-  const displayProducts =
-    !productsLoading && !products.length ? fallbackProducts : products;
-  const segmentOrder = ["men", "women", "kids", "genz"];
+  const { data: lightningResponse, isLoading: lightningLoading } = useQuery({
+    queryKey: ["lightningDeals"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/products/deals/lightning");
+      return res.data;
+    },
+  });
 
-  return (
-    <div className="text-zinc-100 w-full min-h-screen overflow-x-hidden">
-      <section className="relative w-screen max-w-[100vw] left-1/2 -translate-x-1/2 px-0 pt-2 sm:pt-3 md:pt-4">
-        <BannerCarousel page="home" position="hero" />
-      </section>
+  const featured = featuredResponse?.items || [];
+  const allProducts = allResponse?.items || featured;
+  const lightningDeals = lightningResponse?.items || [];
 
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {coupons.map((coupon) => (
-          <div
-            key={coupon.code}
-            className="rounded-2xl border border-neutral-200 bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-all duration-300 ease-in-out hover:border-neutral-300 hover:shadow-md shadow-sm"
-          >
-            <div>
-              <p className="pill text-neutral-500">Promos</p>
-              <p className="text-neutral-900 font-medium mt-2 text-sm sm:text-base">{coupon.text}</p>
-            </div>
-            <span className="text-neutral-700 tracking-[0.25em] text-xs font-bold shrink-0 font-mono">
-              {coupon.code}
-            </span>
-          </div>
-        ))}
-      </section>
-
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-          <FilterChip
-            label="All Fits"
-            active={!activeCategorySlug}
-            slug={null}
-            navigate={navigate}
-          />
-          {filterChips.map((chip) => (
-            <FilterChip
-              key={chip.slug}
-              label={chip.label}
-              active={activeCategorySlug === chip.slug}
-              slug={chip.slug}
-              navigate={navigate}
-            />
-          ))}
-        </div>
-      </section>
-
-      <CategoryGrid categories={categories} loading={categoriesLoading} />
-
-      {segmentOrder.map((key, index) => {
-        const segment = segmentThemes[key];
-        if (!segment) return null;
-        return (
-          <SegmentBand
-            key={segment.key}
-            segment={segment}
-            flip={index % 2 === 1}
-          />
-        );
-      })}
-
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <p className="pill text-zinc-500">Featured</p>
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-display text-white uppercase tracking-[0.04em]">
-              New drops
-            </h2>
-          </div>
-          <Link
-            to="/catalog"
-            className="text-xs uppercase tracking-[0.25em] text-zinc-500 hover:text-sky-400 transition-colors duration-300 ease-in-out"
-          >
-            View all →
-          </Link>
-        </div>
-
-        {isError && (
-          <div className="p-4 bg-red-50 text-red-800 rounded-2xl border border-red-200 text-sm">
-            Failed to load apparel picks. Please try again.
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-          {productsLoading
-            ? new Array(8).fill(null).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="h-72 sm:h-80 bg-zinc-800 rounded-2xl sm:rounded-3xl animate-pulse"
-                ></div>
-              ))
-            : displayProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-
-          {!productsLoading && !products.length && (
-            <div className="col-span-full text-center text-neutral-500 text-sm">
-              Showing curated picks while live inventory syncs.
-            </div>
-          )}
-        </div>
-      </section>
-
-      <EditorsPicksSection />
-      <SeasonalCollectionsSection />
-      <SpecialOffersSection />
-      <CuratedLooksSection />
-      <HeroOfferBanner />
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-8 sm:p-10 transition-all duration-300 ease-in-out hover:border-white/20">
-          <h3 className="text-3xl sm:text-4xl font-display text-white uppercase tracking-[0.06em]">
-            Tirupur craft
-          </h3>
-          <p className="text-zinc-400 mt-4 text-sm sm:text-base leading-relaxed">
-            Every TN16 weave passes breathable cotton checks, azo-free dyes and
-            festival-ready finishing.
-          </p>
-          <ul className="mt-6 space-y-3 text-sm text-zinc-300 border-t border-white/10 pt-6">
-            <li className="flex gap-2"><span className="text-sky-400">—</span> Hypoallergenic blends for humid climates</li>
-            <li className="flex gap-2"><span className="text-sky-400">—</span> Atelier-grade curation</li>
-            <li className="flex gap-2"><span className="text-sky-400">—</span> Fast dispatch · eco packaging</li>
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-zinc-900 to-black p-8 sm:p-10 transition-all duration-300 ease-in-out hover:border-sky-400/40 hover:shadow-glow">
-          <h3 className="text-3xl sm:text-4xl font-display text-white uppercase tracking-[0.06em]">
-            Insider access
-          </h3>
-          <p className="text-zinc-400 mt-4 text-sm sm:text-base">
-            New arrivals weekly. Join for drops and codes.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/register")}
-            className="mt-8 w-full sm:w-auto bg-white text-black px-8 py-3 rounded-none tracking-[0.25em] uppercase text-xs font-bold hover:bg-sky-400 transition-all duration-300 ease-in-out active:scale-[0.98]"
-          >
-            Join
-          </button>
-        </div>
-      </section>
-    </div>
+  const topDeals = useMemo(() => featured.slice(0, 20), [featured]);
+  const trending = useMemo(() => allProducts.slice(0, 12), [allProducts]);
+  const bestSellers = useMemo(() => allProducts.slice(6, 26), [allProducts]);
+  const under999 = useMemo(
+    () => allProducts.filter((p) => Number(p?.price || 0) <= 999).slice(0, 20),
+    [allProducts]
   );
-}
+  const recommended = useMemo(() => allProducts.slice(12, 32), [allProducts]);
 
-function SegmentBand({ segment, flip }) {
-  const navigate = useNavigate();
-  const dynamicTiles = useSegmentTiles(segment.key);
-  const tiles = dynamicTiles.filter(Boolean).length ? dynamicTiles : segment.tiles?.filter(Boolean) || [];
+  const onChip = useCallback(
+    (slug) => {
+      navigate(slug ? getShopPathForCategorySlug(slug) : "/catalog");
+    },
+    [navigate]
+  );
+
+  const showLoading = featuredLoading || allLoading;
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <div
-        className={`card flex flex-col lg:flex-row gap-0 lg:gap-6 overflow-hidden transition-all duration-300 ease-out hover:shadow-md ${
-          flip ? "lg:flex-row-reverse" : ""
-        }`}
-      >
-        <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center flex-1 min-w-0 bg-white">
-          <p className="pill text-neutral-500">{segment.label} edit</p>
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-display mt-4 text-neutral-900 uppercase tracking-[0.04em] leading-tight">
-            {segment.description}
-          </h3>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  segment.key === "men"
-                    ? "/men"
-                    : segment.key === "women"
-                      ? "/women"
-                      : segment.key === "kids"
-                        ? "/kids"
-                        : `/catalog?segment=${segment.key}`
-                )
-              }
-              className="px-6 py-3 rounded-full bg-neutral-900 text-white text-xs sm:text-sm tracking-[0.2em] font-bold uppercase hover:bg-neutral-800 transition-all duration-300 ease-in-out active:scale-[0.98]"
-            >
-              Shop {segment.label}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/catalog?segment=${segment.key}&view=studio`)
-              }
-              className="px-6 py-3 rounded-full border border-neutral-300 text-xs sm:text-sm tracking-[0.15em] text-neutral-700 hover:text-neutral-900 hover:border-neutral-900 transition-all duration-300 ease-in-out bg-white"
-            >
-              Explore
-            </button>
+    <div className="w-full min-h-screen bg-neutral-100 text-neutral-900 overflow-x-hidden">
+      {/* Dynamic Banner Carousel - Fetches from Admin */}
+      <BannerCarousel page="home" position="hero" />
+
+      <section className="my-4 md:my-6">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div
+            className={[
+              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-3 lg:gap-4",
+              "transition-all duration-200 ease-in-out",
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
+            ].join(" ")}
+          >
+            <DealBlock
+              title="Deals for you"
+              items={allProducts}
+              to="/catalog"
+            />
+            <DealBlock
+              title="New season picks"
+              items={recommended}
+              to="/catalog"
+            />
+            <DealBlock
+              title="Best sellers"
+              items={bestSellers}
+              to="/catalog"
+            />
+            <DealBlock
+              title="Under ₹999"
+              items={under999.length ? under999 : allProducts}
+              to="/catalog"
+            />
           </div>
         </div>
-        <div className="flex-1 min-h-[280px] sm:min-h-[320px] lg:min-h-0 p-3 sm:p-5 lg:max-w-[52%] flex flex-col min-h-0">
-          <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full min-h-[260px] sm:min-h-[300px] flex-1 min-h-0 [grid-template-rows:1fr_1fr]">
-            {tiles[0] && (
-              <div className="row-span-2 col-start-1 rounded-xl overflow-hidden border border-white/10 shadow-medium group min-h-0">
-                <img
-                  src={tiles[0]}
-                  alt={`${segment.label} spotlight`}
-                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width:1024px) 50vw, 400px"
-                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
+      </section>
+
+      <section className="my-4 md:my-6">
+        <SectionWrap>
+          <div
+            className={[
+              "-mx-3 md:-mx-4 px-3 md:px-4 overflow-x-auto scroll-smooth",
+              "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-2 w-max min-w-full pb-1">
+              {chips.map((chip) => (
+                <FilterChip
+                  key={chip.slug || "all"}
+                  label={chip.label}
+                  active={activeCategorySlug === chip.slug}
+                  onClick={() => onChip(chip.slug)}
                 />
+              ))}
+            </div>
+          </div>
+        </SectionWrap>
+      </section>
+
+      <CategoryRow
+        title={categoriesLoading ? "Categories" : "Shop by category"}
+        categories={categoryRowItems}
+      />
+
+      <ProductGrid
+        title="Top deals"
+        products={topDeals}
+        loading={showLoading}
+        viewAllTo="/catalog"
+      />
+
+      {lightningDeals?.length > 0 && (
+        <section className="my-4 md:my-6">
+          <SectionWrap>
+            <DealBlock title="Lightning Deals" items={lightningDeals} />
+          </SectionWrap>
+        </section>
+      )}
+
+      <section className="my-4 md:my-6">
+        <SectionWrap>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-semibold text-neutral-900">Trending now</h2>
+            <Link
+              to="/catalog"
+              className="text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200 ease-in-out"
+            >
+              View all
+            </Link>
+          </div>
+          <div
+            className={[
+              "mt-3 -mx-3 md:-mx-4 px-3 md:px-4 overflow-x-auto scroll-smooth",
+              "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            ].join(" ")}
+          >
+            <div className="flex gap-3 w-max min-w-full pb-1">
+              {(showLoading ? new Array(8).fill(null) : trending).map((item, idx) => (
+                <div key={item?.id || idx} className="w-[170px] sm:w-[190px]">
+                  {showLoading ? (
+                    <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
+                      <div className="aspect-square bg-neutral-200/70 animate-pulse" />
+                      <div className="p-2">
+                        <div className="h-3 w-16 bg-neutral-200/70 rounded animate-pulse" />
+                        <div className="mt-2 h-3 w-full bg-neutral-200/70 rounded animate-pulse" />
+                        <div className="mt-2 h-3 w-3/5 bg-neutral-200/70 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ) : (
+                    <ProductCard product={item} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionWrap>
+      </section>
+
+      <ProductGrid
+        title="Best sellers"
+        products={bestSellers}
+        loading={showLoading}
+        viewAllTo="/catalog"
+      />
+
+      <section className="my-4 md:my-6">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div
+            className={[
+              "relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm h-[150px] md:h-[190px]",
+              "transition-all duration-200 ease-in-out",
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
+            ].join(" ")}
+          >
+            <img
+              src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1600&q=60"
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/10" />
+            <div className="absolute inset-0 p-4 md:p-6 flex items-center">
+              <div className="text-white">
+                <h3 className="text-xl md:text-2xl font-semibold">EXTRA 40% OFF</h3>
+                <p className="mt-1 text-sm md:text-base text-white/90">
+                  Limited-time offer on selected fashion styles.
+                </p>
+                <Link
+                  to="/offers/extra-40-off"
+                  className="mt-3 inline-flex h-9 items-center rounded-md bg-white text-neutral-900 px-3 text-sm font-semibold shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:bg-neutral-50 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                >
+                  Shop offer
+                </Link>
               </div>
-            )}
-            {tiles[1] && (
-              <div className="col-start-2 row-start-1 rounded-2xl overflow-hidden border border-black/[0.08] shadow-soft group min-h-0">
-                <img
-                  src={tiles[1]}
-                  alt={`${segment.label} detail`}
-                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width:1024px) 50vw, 240px"
-                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
-                />
-              </div>
-            )}
-            {tiles[2] && (
-              <div className="col-start-2 row-start-2 rounded-xl overflow-hidden border border-neutral-200 shadow-sm group bg-neutral-50 min-h-0">
-                <img
-                  src={tiles[2]}
-                  alt={`${segment.label} look`}
-                  className="w-full h-full object-cover min-h-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width:1024px) 50vw, 240px"
-                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.default)}
-                />
-              </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <ProductGrid
+        title="Under ₹999"
+        products={under999}
+        loading={showLoading}
+        viewAllTo="/catalog"
+      />
+
+      <ProductGrid
+        title="Recommended for you"
+        products={recommended}
+        loading={showLoading}
+        viewAllTo="/catalog"
+      />
+    </div>
   );
 }

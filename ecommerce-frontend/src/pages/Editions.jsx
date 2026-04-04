@@ -29,7 +29,7 @@ export default function Editions() {
       </section>
 
       {/* Header Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 sm:mb-6">
             Limited Editions
@@ -60,7 +60,7 @@ export default function Editions() {
       </section>
 
       {/* Additional Content Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-semibold mb-4 sm:mb-6">
             What Makes Our Editions Special
