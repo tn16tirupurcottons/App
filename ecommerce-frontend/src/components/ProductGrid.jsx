@@ -37,13 +37,13 @@ const ProductGrid = memo(function ProductGrid({
   }, [reduceMotion]);
 
   return (
-    <section className="my-4 md:my-6">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
+    <section className="mt-10 md:mt-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className={[
             "bg-white rounded-xl border border-neutral-200 shadow-sm",
             "p-3 md:p-4",
-            "transition-all duration-200 ease-in-out",
+            "transition-all duration-200",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
           ].join(" ")}
         >
@@ -55,7 +55,7 @@ const ProductGrid = memo(function ProductGrid({
               </div>
               <Link
                 to={viewAllTo}
-                className="text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200 ease-in-out"
+                className="text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200"
               >
                 View all
               </Link>
@@ -63,7 +63,7 @@ const ProductGrid = memo(function ProductGrid({
           </div>
 
           {loading ? (
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {new Array(10).fill(null).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
@@ -79,7 +79,7 @@ const ProductGrid = memo(function ProductGrid({
                   ))}
                 </div>
               </div>
-              <div className="hidden md:grid mt-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="hidden md:grid mt-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {products.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}

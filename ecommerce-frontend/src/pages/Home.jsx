@@ -24,7 +24,7 @@ const FilterChip = memo(function FilterChip({ label, active, onClick }) {
       onClick={onClick}
       className={[
         "shrink-0 h-8 px-3 rounded-full border text-xs font-medium",
-        "transition-all duration-200 ease-in-out",
+        "transition-all duration-200",
         active
           ? "bg-neutral-900 text-white border-neutral-900 shadow-sm"
           : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300 hover:shadow-sm hover:scale-[1.02]",
@@ -35,27 +35,17 @@ const FilterChip = memo(function FilterChip({ label, active, onClick }) {
   );
 });
 
-const SectionWrap = memo(function SectionWrap({ children }) {
-  return (
-    <div className="w-full px-4 sm:px-6 lg:px-8">
-      <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-3 md:p-4">
-        {children}
-      </div>
-    </div>
-  );
-});
-
 const DealBlock = memo(function DealBlock({ title, items = [], to = "/catalog" }) {
   const tiles = (items || []).slice(0, 4);
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-3 md:p-4 transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5">
+    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
       <div className="text-sm md:text-base font-semibold text-neutral-900">{title}</div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {tiles.map((p) => (
           <Link
             key={p.id}
             to={`/product/${p.id}`}
-            className="rounded-lg border border-neutral-200 overflow-hidden bg-neutral-50 transition-all duration-200 ease-in-out hover:shadow-sm"
+            className="rounded-lg border border-neutral-200 overflow-hidden bg-neutral-50 transition-all duration-200 hover:shadow-sm"
           >
             <div className="aspect-square bg-neutral-100">
               <img
@@ -81,7 +71,7 @@ const DealBlock = memo(function DealBlock({ title, items = [], to = "/catalog" }
       </div>
       <Link
         to={to}
-        className="mt-3 inline-flex text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200 ease-in-out"
+        className="mt-3 inline-flex text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200"
       >
         See more
       </Link>
@@ -195,15 +185,15 @@ export default function Home() {
 
   return (
     <div className="w-full min-h-screen bg-neutral-100 text-neutral-900 overflow-x-hidden">
-      <section className="hero-section full-width">
-        <div className="hero">
+      <section className="w-full">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <BannerCarousel page="home" position="hero" />
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <SectionWrap>
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-4">
             <div
               className={[
                 "overflow-x-auto scroll-smooth",
@@ -221,20 +211,20 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </SectionWrap>
+          </div>
         </div>
       </section>
 
-      <section className="section category-wrapper">
-        <div className="container">
-          <div className="category-grid">
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {categoryRowItems.slice(0, 8).map((category) => {
               const label = category.name || category.slug || "Category";
               return (
                 <a
                   key={category.slug || category.id || label}
                   href={category.href || `/catalog?category=${encodeURIComponent(category.slug || label.toLowerCase())}`}
-                  className="category-card bg-white rounded-xl border border-neutral-200 p-4 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:-translate-y-0.5"
+                  className="bg-white rounded-xl border border-neutral-200 p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                 >
                   <div className="text-xs uppercase tracking-[0.24em] text-neutral-500 mb-3">
                     Category
@@ -249,8 +239,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <DealBlock title="Deals for you" items={allProducts} to="/catalog" />
             <DealBlock title="New season picks" items={recommended} to="/catalog" />
@@ -260,8 +250,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container space-y-6">
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <ProductGrid
             title="Recommended for you"
             products={recommended}
@@ -285,20 +275,22 @@ export default function Home() {
       />
 
       {lightningDeals?.length > 0 && (
-        <section className="my-4 md:my-6">
-          <SectionWrap>
-            <DealBlock title="Lightning Deals" items={lightningDeals} />
-          </SectionWrap>
+        <section className="mt-10 md:mt-12">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-4">
+              <DealBlock title="Lightning Deals" items={lightningDeals} />
+            </div>
+          </div>
         </section>
       )}
 
-      <section className="my-4 md:my-6">
-        <SectionWrap>
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-lg font-semibold text-neutral-900">Trending now</h2>
             <Link
               to="/catalog"
-              className="text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200 ease-in-out"
+              className="text-sm text-neutral-600 hover:text-neutral-900 transition-all duration-200"
             >
               View all
             </Link>
@@ -328,7 +320,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </SectionWrap>
+        </div>
       </section>
 
       <ProductGrid
@@ -338,12 +330,12 @@ export default function Home() {
         viewAllTo="/catalog"
       />
 
-      <section className="my-4 md:my-6">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+      <section className="mt-10 md:mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className={[
               "relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm h-[150px] md:h-[190px]",
-              "transition-all duration-200 ease-in-out",
+              "transition-all duration-200",
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
             ].join(" ")}
           >
@@ -364,7 +356,7 @@ export default function Home() {
                 </p>
                 <Link
                   to="/offers/extra-40-off"
-                  className="mt-3 inline-flex h-9 items-center rounded-md bg-white text-neutral-900 px-3 text-sm font-semibold shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:bg-neutral-50 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className="mt-3 inline-flex h-9 items-center rounded-md bg-white text-neutral-900 px-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:shadow-lg hover:bg-neutral-50 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   Shop offer
                 </Link>

@@ -203,9 +203,9 @@ export default function ProductDetails() {
 
   return (
     <div className="w-full pb-24 sm:pb-8 text-neutral-900">
-      <div className="container">
-        <div className="product-page">
-          <aside className="thumbnail-list">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-6 grid-cols-1 xl:grid-cols-[80px_450px_1fr_320px]">
+          <aside className="flex xl:flex-col gap-3 xl:gap-4 overflow-x-auto xl:overflow-x-visible">
             {mediaItems.map((item, index) => {
               const isActive = index === selectedMediaIndex;
               const thumbSrc = item.type === "spin" ? item.frames[0] : item.src;
@@ -213,7 +213,7 @@ export default function ProductDetails() {
                 <button
                   key={`${item.type}-${index}`}
                   type="button"
-                  className={`thumbnail overflow-hidden rounded-lg border transition ${
+                  className={`shrink-0 xl:shrink w-16 h-20 xl:w-16 xl:h-20 overflow-hidden rounded-lg border transition-all duration-200 ${
                     isActive ? "border-neutral-900 shadow-sm" : "border-neutral-200 hover:border-neutral-400"
                   }`}
                   onClick={() => setSelectedMediaIndex(index)}
@@ -221,6 +221,7 @@ export default function ProductDetails() {
                   <img
                     src={thumbSrc}
                     alt={`${item.type} thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
                     loading="lazy"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -232,7 +233,7 @@ export default function ProductDetails() {
             })}
           </aside>
 
-          <section className="main-image">
+          <section className="w-full">
             <ProductGallery
               images={mediaItems.filter((item) => item.type === "image").map((item) => item.src)}
               spinImages={normalizedSpinImages}
@@ -245,12 +246,12 @@ export default function ProductDetails() {
             />
           </section>
 
-          <section className="product-info space-y-8">
+          <section className="space-y-8">
             <div>
               <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
                 {product.Category?.name || product.brand || "Studio"}
               </p>
-              <h1 className="product-title mt-3 text-neutral-900">
+              <h1 className="text-2xl font-medium mt-3 text-neutral-900 leading-tight">
                 {product.name}
               </h1>
             </div>
@@ -330,7 +331,7 @@ export default function ProductDetails() {
             )}
           </section>
 
-          <aside className="buy-box">
+          <aside className="border border-neutral-200 p-6 rounded-xl bg-white sticky top-24 h-fit">
             <div className="space-y-5">
               <div className="space-y-3">
                 <p className="text-xs uppercase tracking-[0.35em] text-neutral-500">Deal price</p>

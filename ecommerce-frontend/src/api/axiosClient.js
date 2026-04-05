@@ -9,7 +9,19 @@ const API = axios.create({
 });
 
 API.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    // Add CSRF token for state-changing requests
+    if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase())) {
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrf-token='))
+        ?.split('=')[1];
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 

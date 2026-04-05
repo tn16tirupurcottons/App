@@ -114,6 +114,7 @@ import { bootstrapCatalog } from "./utils/bootstrapCatalog.js";
 // Middlewares
 import { errorHandler } from "./middlewares/errorMiddleware.js";
 import { secureHeaders } from "./middlewares/securityMiddleware.js";
+import { csrfProtection } from "./middlewares/csrfMiddleware.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 
 const app = express();
@@ -234,6 +235,9 @@ const sanitizeInput = (req, _res, next) => {
 };
 
 app.use(sanitizeInput);
+
+// CSRF Protection
+app.use(csrfProtection);
 
 // ---------------------------
 // STATIC FILES

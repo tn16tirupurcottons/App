@@ -10,6 +10,7 @@ import PasswordResetToken from "../models/PasswordResetToken.js";
 import OtpToken from "../models/OtpToken.js";
 import { sendPasswordResetNotice, sendSMS } from "../services/notificationService.js";
 import { ensureInsiderUpgraded } from "../services/insiderService.js";
+import { generateCSRFToken } from "../middlewares/csrfMiddleware.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
@@ -104,7 +105,17 @@ export const issueTokensForUser = async (user, res) => {
   await persistRefreshToken(refreshToken, user.id);
   attachAccessCookie(res, accessToken);
   attachRefreshCookie(res, refreshToken);
-  return { accessToken, refreshToken };
+
+  // Set CSRF token
+  const csrfToken = generateCSRFToken();
+  res.cookie('csrf-token', csrfToken, {
+    httpOnly: false, // Allow client-side access
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
+
+  return { accessToken, refreshToken, csrfToken };
 };
 
 export const register = async (req, res, next) => {

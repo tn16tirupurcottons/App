@@ -18,6 +18,7 @@ import BrandSetting from "./BrandSetting.js";
 import AppImage from "./AppImage.js";
 import Coupon from "./Coupon.js";
 import CouponUsage from "./CouponUsage.js";
+import AuditLog from "./AuditLog.js";
 
 // =============================
 //      MODEL ASSOCIATIONS
@@ -66,6 +67,10 @@ CouponUsage.belongsTo(Coupon, { foreignKey: "couponId" });
 CouponUsage.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(CouponUsage, { foreignKey: "userId", onDelete: "CASCADE" });
 
+// Audit log associations
+User.hasMany(AuditLog, { foreignKey: "adminId", onDelete: "CASCADE" });
+AuditLog.belongsTo(User, { foreignKey: "adminId" });
+
 // =============================
 //      SYNC DB
 // =============================
@@ -107,4 +112,5 @@ export {
   AppImage,
   Coupon,
   CouponUsage,
+  AuditLog,
 };

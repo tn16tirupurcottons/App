@@ -4,6 +4,7 @@ import {
   Product,
   OrderItem,
   User,
+  AuditLog,
   sequelize,
 } from "../models/index.js";
 import { notifyOrderPlaced, sendSMS } from "../services/notificationService.js";
@@ -531,10 +532,25 @@ export const updateOrderStatus = async (req, res) => {
 
     const oldStatus = order.status;
     const oldPaymentStatus = order.paymentStatus;
+    const oldValues = { status: oldStatus, paymentStatus: oldPaymentStatus };
 
     if (status) order.status = status;
     if (paymentStatus) order.paymentStatus = paymentStatus;
     await order.save();
+
+    const newValues = { status: order.status, paymentStatus: order.paymentStatus };
+
+    // Audit log for admin action
+    await AuditLog.create({
+      adminId: req.user.id,
+      action: 'UPDATE_ORDER_STATUS',
+      entityType: 'Order',
+      entityId: order.id,
+      oldValues,
+      newValues,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+    });
 
     // Send notifications if status changed
     if ((status && status !== oldStatus) || (paymentStatus && paymentStatus !== oldPaymentStatus)) {
