@@ -13,6 +13,7 @@ import { ensureInsiderUpgraded } from "../services/insiderService.js";
 
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
+const ACCESS_COOKIE = "tn16_access_token";
 const REFRESH_COOKIE = "tn16_refresh_token";
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const OTP_COOLDOWN_MS = 60 * 1000;
@@ -72,12 +73,25 @@ const persistRefreshToken = async (token, userId) => {
   });
 };
 
-const refreshCookieOptions = {
+const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
-  maxAge: ms(REFRESH_TTL),
   path: "/",
+};
+
+const accessCookieOptions = {
+  ...cookieOptions,
+  maxAge: ms(ACCESS_TTL),
+};
+
+const refreshCookieOptions = {
+  ...cookieOptions,
+  maxAge: ms(REFRESH_TTL),
+};
+
+const attachAccessCookie = (res, token) => {
+  res.cookie(ACCESS_COOKIE, token, accessCookieOptions);
 };
 
 const attachRefreshCookie = (res, token) => {
@@ -88,6 +102,7 @@ export const issueTokensForUser = async (user, res) => {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   await persistRefreshToken(refreshToken, user.id);
+  attachAccessCookie(res, accessToken);
   attachRefreshCookie(res, refreshToken);
   return { accessToken, refreshToken };
 };
@@ -262,6 +277,7 @@ export const logout = async (req, res, next) => {
       await RefreshToken.destroy({ where: { token: incoming } });
     }
     res.clearCookie(REFRESH_COOKIE, refreshCookieOptions);
+    res.clearCookie(ACCESS_COOKIE, accessCookieOptions);
     res.json({ success: true, message: "Logged out" });
   } catch (err) {
     next(err);

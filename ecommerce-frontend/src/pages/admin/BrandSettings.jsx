@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "../../admin/components/AdminLayout";
 import ImageUploader from "../../components/ImageUploader";
@@ -37,7 +37,7 @@ export default function BrandSettings() {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (settings) {
       setAssets((prev) => ({
         ...prev,

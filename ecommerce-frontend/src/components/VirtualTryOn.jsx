@@ -95,10 +95,7 @@ export default function VirtualTryOn({ overlayImage }) {
               lineWidth: 1,
             });
 
-            const subtitle = ["leftShoulder", "rightShoulder", "leftHip", "rightHip"];
             const landmarks = results.poseLandmarks;
-
-            const findPoint = (label) => window.POSE_LANDMARKS_LEFT.indexOf(label) !== -1 ? null : null;
 
             const leftShoulder = landmarks[11];
             const rightShoulder = landmarks[12];

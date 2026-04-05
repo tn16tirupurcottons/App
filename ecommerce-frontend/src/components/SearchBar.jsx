@@ -13,7 +13,6 @@ export default function SearchBar({
   onClose,
   showCloseButton = false,
   autoFocus = false,
-  variant = "light",
 }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");

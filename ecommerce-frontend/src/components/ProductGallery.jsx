@@ -150,8 +150,19 @@ function ZoomImage({ src, alt, onZoomTap }) {
   );
 }
 
-export default function ProductGallery({ images = [], spinImages = [], videoUrl = "", productName = "", onImageClick }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+export default function ProductGallery({
+  images = [],
+  spinImages = [],
+  videoUrl = "",
+  productName = "",
+  onImageClick,
+  selectedIndex: controlledSelectedIndex,
+  onSelectedIndexChange,
+  showThumbnails = true,
+}) {
+  const isControlled = typeof controlledSelectedIndex === "number";
+  const [internalSelectedIndex, setInternalSelectedIndex] = useState(0);
+  const selectedIndex = isControlled ? controlledSelectedIndex : internalSelectedIndex;
   const [currentVideoError, setCurrentVideoError] = useState(false);
 
   const mediaItems = useMemo(() => {
@@ -186,15 +197,63 @@ export default function ProductGallery({ images = [], spinImages = [], videoUrl 
     }
   }, [mediaItems.length, selectedIndex]);
 
-  const goPrev = () => setSelectedIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
-  const goNext = () => setSelectedIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
+  const setSelected = (next) => {
+    if (isControlled) {
+      onSelectedIndexChange?.(next);
+    } else {
+      setInternalSelectedIndex(next);
+    }
+  };
+
+  const goPrev = () => setSelected((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
+  const goNext = () => setSelected((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
 
   const isVideo = activeItem.type === "video";
   const isSpin = activeItem.type === "spin";
 
   return (
-    <div className="w-full space-y-4">
-      <div className="relative rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100">
+    <div className="w-full space-y-4 product-gallery">
+      {showThumbnails && (
+        <div className="product-gallery-thumbnails space-y-2">
+          <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Product media</p>
+          <div className="product-gallery-thumbnails-list flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {mediaItems.map((item, index) => {
+              const isActive = index === selectedIndex;
+              const icon = item.type === "video" ? <Video size={14} /> : item.type === "spin" ? <RotateCcw size={14} /> : null;
+              const thumbSrc = item.type === "spin" ? item.frames[0] : item.src;
+
+              return (
+                <button
+                  key={`${item.type}-${index}`}
+                  onClick={() => {
+                    setSelected(index);
+                    if (item.type === "spin") setCurrentVideoError(false);
+                  }}
+                  className={`relative shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
+                    isActive ? "border-neutral-900 shadow-lg" : "border-neutral-200 hover:border-neutral-400"
+                  }`}
+                >
+                  <img
+                    src={thumbSrc}
+                    alt={`${item.type} thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => handleImageError(e, FALLBACK_IMAGES.product)}
+                  />
+                  {icon && (
+                    <div className="absolute top-1 left-1 bg-black/70 rounded-full p-1 text-white">{icon}</div>
+                  )}
+                  {item.type === "spin" && (
+                    <span className="absolute bottom-1 right-1 rounded-full bg-black/70 text-white text-[10px] px-1">360°</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="relative rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 product-gallery-main">
         <div className="relative">
           {isSpin ? (
             <div className="p-2">
@@ -263,44 +322,6 @@ export default function ProductGallery({ images = [], spinImages = [], videoUrl 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/30 text-white text-[10px] tracking-wider uppercase px-3 py-1 rounded-full">
             {selectedIndex + 1} / {mediaItems.length} • {activeItem.type.toUpperCase()}
           </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Product media</p>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {mediaItems.map((item, index) => {
-            const isActive = index === selectedIndex;
-            const icon = item.type === "video" ? <Video size={14} /> : item.type === "spin" ? <RotateCcw size={14} /> : null;
-            const thumbSrc = item.type === "spin" ? item.frames[0] : item.src;
-
-            return (
-              <button
-                key={`${item.type}-${index}`}
-                onClick={() => {
-                  setSelectedIndex(index);
-                  if (item.type === "spin") setCurrentVideoError(false);
-                }}
-                className={`relative shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
-                  isActive ? "border-neutral-900 shadow-lg" : "border-neutral-200 hover:border-neutral-400"
-                }`}
-              >
-                <img
-                  src={thumbSrc}
-                  alt={`${item.type} thumbnail ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => handleImageError(e, FALLBACK_IMAGES.product)}
-                />
-                {icon && (
-                  <div className="absolute top-1 left-1 bg-black/70 rounded-full p-1 text-white">{icon}</div>
-                )}
-                {item.type === "spin" && (
-                  <span className="absolute bottom-1 right-1 rounded-full bg-black/70 text-white text-[10px] px-1">360°</span>
-                )}
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

@@ -34,11 +34,7 @@ async function getCroppedImg(imageSrc, pixelCrop, rotation = 0) {
   }
 
   const rotRad = getRadianAngle(rotation);
-  const { width: rotWidth, height: rotHeight } = rotateSize(
-    image.width,
-    image.height,
-    rotation
-  );
+  rotateSize(image.width, image.height, rotation);
 
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
@@ -120,10 +116,6 @@ export default function ImageCropper({
     window.addEventListener("keydown", trapFocus);
     return () => window.removeEventListener("keydown", trapFocus);
   }, [onCancel]);
-
-  const handleCropAreaChange = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
 
   const getCroppedImage = useCallback(async () => {
     if (!imageSrc || !croppedAreaPixels) {

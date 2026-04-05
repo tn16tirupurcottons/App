@@ -113,6 +113,8 @@ import { bootstrapCatalog } from "./utils/bootstrapCatalog.js";
 
 // Middlewares
 import { errorHandler } from "./middlewares/errorMiddleware.js";
+import { secureHeaders } from "./middlewares/securityMiddleware.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -172,11 +174,17 @@ app.use(
 );
 app.use(compression());
 app.use(cookieParser());
+app.use(secureHeaders);
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 } else {
   app.use(morgan(":method :url :status :response-time ms"));
 }
+
+// ---------------------------
+// WEBHOOKS
+// ---------------------------
+app.use("/api/webhooks", webhookRoutes);
 
 // ---------------------------
 // BODY PARSERS

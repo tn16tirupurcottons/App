@@ -12,28 +12,21 @@ function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
-    const token = localStorage.getItem("tn16_token");
-    if (token) {
-      try {
-        // Try regular auth endpoint first
-        const res = await axiosClient.get("/auth/me");
-        setUser(res.data.user || null);
-        setLoading(false);
-      } catch (err) {
-        // If regular auth fails, try admin profile
-        try {
-          const adminRes = await axiosClient.get("/admin/profile");
-          setUser(adminRes.data.user || null);
-          setLoading(false);
-        } catch (adminErr) {
-          // Both failed, clear token
-          localStorage.removeItem("tn16_token");
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    } else {
+    setLoading(true);
+    try {
+      const res = await axiosClient.get("/auth/me");
+      setUser(res.data.user || null);
       setLoading(false);
+    } catch {
+      try {
+        await axiosClient.post("/auth/refresh");
+        const refreshed = await axiosClient.get("/auth/me");
+        setUser(refreshed.data.user || null);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -55,30 +48,18 @@ function AuthProvider({ children }) {
 
   const login = async (identifier, password) => {
     const res = await postLogin({ identifier, password });
-    // Handle both token and accessToken formats
-    const token = res.data.accessToken || res.data.token;
-    if (token) {
-      localStorage.setItem("tn16_token", token);
-    }
     setUser(res.data.user);
     return res;
   };
 
   const register = async (payload) => {
     const res = await axiosClient.post("/auth/register", payload);
-    // Handle both token and accessToken formats
-    const token = res.data.accessToken || res.data.token;
-    if (token) {
-      localStorage.setItem("tn16_token", token);
-    }
     setUser(res.data.user);
     return res;
   };
 
   const logout = (callback) => {
-    // Best-effort server logout to clear refresh cookie.
     axiosClient.post("/auth/logout").catch(() => {});
-    localStorage.removeItem("tn16_token");
     setUser(null);
     if (callback && typeof callback === "function") {
       callback();

@@ -92,7 +92,7 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
   const isExplicitCategoryPage = Boolean(categoryFromUrl);
 
   return (
-    <div className="w-full space-y-12 sm:space-y-16 text-neutral-900">
+    <div className="w-full text-neutral-900">
       {isExplicitCategoryPage ? (
         <CategoryMarketing categorySlug={categoryFromUrl} />
       ) : segmentTheme ? (
@@ -133,21 +133,25 @@ export default function Catalog({ embeddedSegment = null, embeddedCategorySlug =
 
       {!isExplicitCategoryPage && (
         <>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
-              {titleSegmentLabel || (categoryFromUrl ? categoryFromUrl.replace(/-/g, " ") : "Catalog")}
-            </p>
-            <h2 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 mt-2">
-              {headingText}
-            </h2>
-            <p className="text-neutral-600 mt-4 text-sm max-w-2xl leading-relaxed">
-              {searchParams.get("query")
-                ? "Find your piece in the grid below."
-                : "Filter, sort, and scroll — minimal chrome, maximum product."}
-            </p>
+          <div className="container">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
+                {titleSegmentLabel || (categoryFromUrl ? categoryFromUrl.replace(/-/g, " ") : "Catalog")}
+              </p>
+              <h2 className="text-3xl sm:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 mt-2">
+                {headingText}
+              </h2>
+              <p className="text-neutral-600 mt-4 text-sm max-w-2xl leading-relaxed">
+                {searchParams.get("query")
+                  ? "Find your piece in the grid below."
+                  : "Filter, sort, and scroll — minimal chrome, maximum product."}
+              </p>
+            </div>
           </div>
 
-          <ProductList initialQuery={initialQuery} />
+          <div className="container">
+            <ProductList initialQuery={initialQuery} />
+          </div>
         </>
       )}
     </div>

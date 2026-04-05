@@ -178,8 +178,8 @@ export default function BannerCarousel({ page = "home", position = "hero", categ
           aria-hidden
         />
 
-        <div className="absolute inset-0 z-[3] flex items-end sm:items-center justify-start px-5 py-12 sm:px-10 md:px-14 lg:px-20">
-          <div className="w-full max-w-3xl">
+        <div className="absolute inset-0 z-[3] px-5 py-12 sm:px-10 md:px-14 lg:px-20">
+          <div className="hero-content w-full max-w-3xl">
             <div
               className="rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-neutral-200/90 sm:max-w-xl transition-all duration-300 ease-in-out shadow-sm"
               style={{

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaHeart } from "react-icons/fa";
@@ -18,14 +18,13 @@ export default function ProductCard({ product }) {
   const { getImage } = useAppImages();
   const globalFallback = getImage("GLOBAL_FALLBACK_IMAGE");
   const [imageError, setImageError] = useState(false);
-  const [currentImage, setCurrentImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const categoryName = product?.Category?.name || product?.category?.name || "";
   
   // Get primary image from gallery - FIX FOR SHARED REFERENCE BUG
   // Always get a fresh copy to prevent shared references between products
-  const productGallery = React.useMemo(() => {
+  const productGallery = useMemo(() => {
     if (!product) return [];
     
     // Ensure gallery is a fresh copy, not shared with other products
@@ -47,9 +46,12 @@ export default function ProductCard({ product }) {
       ? Math.round((Number(product.discount) / Number(product.price)) * 100)
       : 0;
 
-  useEffect(() => {
+  const currentImage = useMemo(() => {
     const validImage = image || globalFallback;
-    setCurrentImage(validImage);
+    return validImage;
+  }, [image, globalFallback]);
+
+  useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
   }, [image, product?.id, globalFallback]); // product?.id ensures fresh render per product
@@ -88,9 +90,9 @@ export default function ProductCard({ product }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="group flex flex-col bg-white border border-neutral-200 rounded-xl overflow-hidden transition-all duration-200 ease-in-out hover:border-neutral-300 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5 w-full fade-in-up"
+      className="product-card group bg-white border border-neutral-200 rounded-xl overflow-hidden transition-all duration-200 ease-in-out hover:border-neutral-300 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5 w-full fade-in-up"
     >
-      <div className="relative bg-neutral-100 overflow-hidden w-full aspect-square">
+      <div className="relative bg-neutral-100 overflow-hidden w-full">
         <button
           type="button"
           onClick={handleWishlist}
@@ -110,14 +112,13 @@ export default function ProductCard({ product }) {
           <img
             src={currentImage || image || globalFallback}
             alt={product.name || 'Product'}
-            className="w-full h-full object-cover transition-all duration-200 ease-in-out group-hover:scale-[1.05]"
+            className="product-card-image transition-all duration-200 ease-in-out group-hover:scale-[1.05]"
             loading="lazy"
             decoding="async"
             sizes="(max-width:640px) 50vw, (max-width:768px) 33vw, (max-width:1024px) 25vw, (max-width:1280px) 20vw, 16vw"
             onError={(e) => {
               if (!imageError) {
                 setImageError(true);
-                setCurrentImage(globalFallback);
                 e.target.src = globalFallback;
                 e.target.onerror = null;
               }
@@ -150,11 +151,11 @@ export default function ProductCard({ product }) {
         <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 line-clamp-1">
           {product.Category?.name || product.brand || "Studio"}
         </p>
-        <h3 className="text-sm font-semibold text-neutral-900 line-clamp-2 min-h-[2.25rem] leading-snug group-hover:text-neutral-700 transition-colors duration-200">
+        <h3 className="product-title font-semibold text-neutral-900 line-clamp-2 leading-snug group-hover:text-neutral-700 transition-colors duration-200">
           {product.name}
         </h3>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-base font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
+          <span className="price font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
           {product.discount > 0 && (
             <span className="text-xs text-neutral-400 line-through tabular-nums">
               ₹{Number(product.price).toFixed(0)}

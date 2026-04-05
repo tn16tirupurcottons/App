@@ -96,13 +96,6 @@ export default function ImageUploader({
     toast.success("Primary image updated");
   };
 
-  const moveImage = (fromIndex, toIndex) => {
-    const newImages = [...images];
-    const [moved] = newImages.splice(fromIndex, 1);
-    newImages.splice(toIndex, 0, moved);
-    onChange(newImages);
-  };
-
   const handleDragStart = (index) => {
     setDraggedIndex(index);
   };

@@ -29,8 +29,11 @@ export default function Header({ onOpenMenu }) {
   const accountLabel = user ? "Account" : "Login";
 
   useEffect(() => {
-    if (pathname !== "/profile") setProfileMenuOpen(false);
-  }, [pathname]);
+    // Close profile menu when navigating away from profile page
+    if (pathname !== "/profile") {
+      setProfileMenuOpen(false);
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!profileMenuOpen) return;

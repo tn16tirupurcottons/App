@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { AuthContext } from "../context/AuthContext";
@@ -11,7 +11,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   // If already logged in, redirect to home (for both admin and regular users)
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate("/");
     }
@@ -40,7 +40,7 @@ export default function Login() {
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       try {
         const identifier = values.identifier.trim();
-        const response = await login(identifier, values.password.trim());
+        await login(identifier, values.password.trim());
         // Always redirect to home page after login (for both admin and regular users)
         navigate("/");
       } catch (err) {

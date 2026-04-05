@@ -5,7 +5,6 @@ import axiosClient from "../api/axiosClient";
 import { getProductImage } from "../utils/imageUtils";
 import { getShopPathForCategorySlug } from "../utils/catalogRoutes";
 import BannerCarousel from "../components/BannerCarousel";
-import CategoryRow from "../components/CategoryRow";
 import ProductGrid from "../components/ProductGrid";
 import ProductCard from "../components/ProductCard";
 
@@ -109,7 +108,7 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [reduceMotion]);
 
-  const { data: categoryResponse, isLoading: categoriesLoading } = useQuery({
+  const { data: categoryResponse } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await axiosClient.get("/categories");
@@ -196,68 +195,87 @@ export default function Home() {
 
   return (
     <div className="w-full min-h-screen bg-neutral-100 text-neutral-900 overflow-x-hidden">
-      {/* Dynamic Banner Carousel - Fetches from Admin */}
-      <BannerCarousel page="home" position="hero" />
+      <section className="hero-section full-width">
+        <div className="hero">
+          <BannerCarousel page="home" position="hero" />
+        </div>
+      </section>
 
-      <section className="my-4 md:my-6">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div
-            className={[
-              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-3 lg:gap-4",
-              "transition-all duration-200 ease-in-out",
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
-            ].join(" ")}
-          >
-            <DealBlock
-              title="Deals for you"
-              items={allProducts}
-              to="/catalog"
-            />
-            <DealBlock
-              title="New season picks"
-              items={recommended}
-              to="/catalog"
-            />
-            <DealBlock
-              title="Best sellers"
-              items={bestSellers}
-              to="/catalog"
-            />
-            <DealBlock
-              title="Under ₹999"
-              items={under999.length ? under999 : allProducts}
-              to="/catalog"
-            />
+      <section className="section">
+        <div className="container">
+          <SectionWrap>
+            <div
+              className={[
+                "overflow-x-auto scroll-smooth",
+                "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+              ].join(" ")}
+            >
+              <div className="flex items-center gap-2 w-max min-w-full pb-1">
+                {chips.map((chip) => (
+                  <FilterChip
+                    key={chip.slug || "all"}
+                    label={chip.label}
+                    active={activeCategorySlug === chip.slug}
+                    onClick={() => onChip(chip.slug)}
+                  />
+                ))}
+              </div>
+            </div>
+          </SectionWrap>
+        </div>
+      </section>
+
+      <section className="section category-wrapper">
+        <div className="container">
+          <div className="category-grid">
+            {categoryRowItems.slice(0, 8).map((category) => {
+              const label = category.name || category.slug || "Category";
+              return (
+                <a
+                  key={category.slug || category.id || label}
+                  href={category.href || `/catalog?category=${encodeURIComponent(category.slug || label.toLowerCase())}`}
+                  className="category-card bg-white rounded-xl border border-neutral-200 p-4 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:-translate-y-0.5"
+                >
+                  <div className="text-xs uppercase tracking-[0.24em] text-neutral-500 mb-3">
+                    Category
+                  </div>
+                  <div className="text-lg font-semibold text-neutral-900 leading-snug">
+                    {label}
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="my-4 md:my-6">
-        <SectionWrap>
-          <div
-            className={[
-              "-mx-3 md:-mx-4 px-3 md:px-4 overflow-x-auto scroll-smooth",
-              "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-            ].join(" ")}
-          >
-            <div className="flex items-center gap-2 w-max min-w-full pb-1">
-              {chips.map((chip) => (
-                <FilterChip
-                  key={chip.slug || "all"}
-                  label={chip.label}
-                  active={activeCategorySlug === chip.slug}
-                  onClick={() => onChip(chip.slug)}
-                />
-              ))}
-            </div>
+      <section className="section">
+        <div className="container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <DealBlock title="Deals for you" items={allProducts} to="/catalog" />
+            <DealBlock title="New season picks" items={recommended} to="/catalog" />
+            <DealBlock title="Best sellers" items={bestSellers} to="/catalog" />
+            <DealBlock title="Under ₹999" items={under999.length ? under999 : allProducts} to="/catalog" />
           </div>
-        </SectionWrap>
+        </div>
       </section>
 
-      <CategoryRow
-        title={categoriesLoading ? "Categories" : "Shop by category"}
-        categories={categoryRowItems}
-      />
+      <section className="section">
+        <div className="container space-y-6">
+          <ProductGrid
+            title="Recommended for you"
+            products={recommended}
+            loading={featuredLoading || allLoading}
+            viewAllTo="/catalog"
+          />
+          <ProductGrid
+            title="Top picks"
+            products={topDeals}
+            loading={featuredLoading || allLoading}
+            viewAllTo="/catalog"
+          />
+        </div>
+      </section>
 
       <ProductGrid
         title="Top deals"

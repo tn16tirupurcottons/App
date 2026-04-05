@@ -8,7 +8,6 @@ export default function SafeImage({
   src,
   alt = "",
   className = "",
-  seed: _seed,
   onError: onErrorProp,
   ...rest
 }) {

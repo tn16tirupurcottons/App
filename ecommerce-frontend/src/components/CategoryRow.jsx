@@ -150,11 +150,11 @@ const CategoryRow = memo(function CategoryRow({
 
           <div
             className={[
-              "mt-3 -mx-3 md:-mx-4 px-3 md:px-4 overflow-x-auto scroll-smooth",
+              "mt-3 px-0 overflow-x-auto scroll-smooth",
               "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
             ].join(" ")}
           >
-            <div className="flex gap-3 w-max min-w-full pb-1">
+            <div className="flex gap-3 w-max min-w-full pb-1 pl-3 md:pl-4">
               {items.map((c) => {
                 const categorySlug = c.slug || (c.name ? c.name.toLowerCase().replace(/\s+/g, "-") : "");
                 const isActive = categorySlug === currentCategory;

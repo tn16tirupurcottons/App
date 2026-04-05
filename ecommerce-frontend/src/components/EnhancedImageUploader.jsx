@@ -12,7 +12,6 @@ export default function EnhancedImageUploader({
   acceptedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"],
 }) {
   const [uploading, setUploading] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState(null);
   const [croppingImage, setCroppingImage] = useState(null);
   const [pendingFile, setPendingFile] = useState(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState(null);
@@ -134,7 +133,7 @@ export default function EnhancedImageUploader({
       setCroppingImage(null);
       setPendingFile(null);
       setPendingPreviewUrl(null);
-    } catch (err) {
+    } catch {
       toast.error("Failed to upload cropped image");
     } finally {
       setUploading(false);

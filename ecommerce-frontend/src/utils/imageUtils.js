@@ -28,15 +28,6 @@ const PEXELS_PRODUCT_PHOTOS = {
   default: [1625536, 1048274, 2255044, 3299932, 3011656, 928294],
 };
 
-function kebabCase(text) {
-  return String(text || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/--+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 function numericHash(value) {
   const str = String(value || "");
   let hash = 0;

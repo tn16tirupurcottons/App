@@ -11,13 +11,12 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
 export default function Register() {
-  const { login } = useContext(AuthContext);
+  const {  } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1: Details, 2: OTP Verification
   const [otpMethod, setOtpMethod] = useState("email"); // email or mobile
-  const [otpSent, setOtpSent] = useState(false);
   const [otpIdentifier, setOtpIdentifier] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [verificationError, setVerificationError] = useState("");
@@ -140,7 +139,6 @@ export default function Register() {
           mobileNumber: normalizedMobileDigits,
         });
 
-        setOtpSent(true);
         setStep(2);
 
         toast.success(
@@ -202,15 +200,8 @@ export default function Register() {
 
         // Clear pending registration
         localStorage.removeItem("pendingRegistration");
-        
-        // Store token if provided
-        const token = res.data.accessToken || res.data.token;
-        if (token) {
-          localStorage.setItem("tn16_token", token);
-          // Trigger auth update
-          window.dispatchEvent(new Event("auth-update"));
-        }
-
+        // Trigger auth update so cookies are recognized
+        window.dispatchEvent(new Event("auth-update"));
         toast.success(res.data.message || "Registration successful!");
         
         // Redirect to home
@@ -265,7 +256,6 @@ export default function Register() {
 
   const handleBackToDetails = () => {
     setStep(1);
-    setOtpSent(false);
     setVerificationError("");
     otpFormik.resetForm();
   };

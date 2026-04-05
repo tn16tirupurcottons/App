@@ -416,7 +416,7 @@ function AddressStep({ shipping, onChange, onNext }) {
 }
 
 // Step 2: Payment Method
-function PaymentStep({ paymentMethod, onPaymentMethodChange, orderData, clientSecret, onNext, onBack }) {
+function PaymentStep({ paymentMethod, onPaymentMethodChange, onNext, onBack }) {
   return (
     <div className="card p-4 sm:p-6 space-y-4">
       <h2 className="text-lg sm:text-xl font-semibold text-dark">Select Payment Method</h2>
@@ -651,7 +651,7 @@ function VerificationStep({ verification, onChange, paymentMethod, orderData, cl
 }
 
 // Step 4: Confirmation
-function ConfirmationStep({ orderId, orderData, shipping, paymentMethod, onViewOrder, onContinueShopping }) {
+function ConfirmationStep({ orderId, paymentMethod, onViewOrder, onContinueShopping }) {
   return (
     <div className="card p-4 sm:p-6 text-center space-y-6">
       <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">

@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../api/axiosClient";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-import { getProductImage, handleImageError, FALLBACK_IMAGES, isValidImageUrl, normalizeImageArray } from "../utils/imageUtils";
+import { getProductImage, FALLBACK_IMAGES, isValidImageUrl, normalizeImageArray } from "../utils/imageUtils";
 import { isUuid } from "../utils/validation";
 import ProductGallery from "../components/ProductGallery.jsx";
 import ProductCard from "../components/ProductCard";
@@ -17,11 +17,12 @@ const FALLBACK_IMAGE = FALLBACK_IMAGES.product;
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = React.useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const toast = useToast();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState("");
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ["product", id],
@@ -84,6 +85,7 @@ export default function ProductDetails() {
   useEffect(() => {
     if (product?.sizes?.length) setSelectedSize(product.sizes[0]);
     if (product?.colors?.length) setSelectedColor(product.colors[0]);
+    setSelectedMediaIndex(0);
   }, [product]);
 
   useEffect(() => {
@@ -200,211 +202,259 @@ export default function ProductDetails() {
     }`;
 
   return (
-    <div className="w-full px-4 md:px-6 lg:px-8 pb-24 sm:pb-8 text-neutral-900">
-      <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 lg:items-start">
-        <div className="w-full lg:sticky lg:top-28">
-          <ProductGallery
-            images={mediaItems.filter((item) => item.type === "image").map((item) => item.src)}
-            spinImages={normalizedSpinImages}
-            videoUrl={product?.videoUrl || ""}
-            productName={product?.name || ""}
-            onImageClick={() => null}
-          />
-        </div>
+    <div className="w-full pb-24 sm:pb-8 text-neutral-900">
+      <div className="container">
+        <div className="product-page">
+          <aside className="thumbnail-list">
+            {mediaItems.map((item, index) => {
+              const isActive = index === selectedMediaIndex;
+              const thumbSrc = item.type === "spin" ? item.frames[0] : item.src;
+              return (
+                <button
+                  key={`${item.type}-${index}`}
+                  type="button"
+                  className={`thumbnail overflow-hidden rounded-lg border transition ${
+                    isActive ? "border-neutral-900 shadow-sm" : "border-neutral-200 hover:border-neutral-400"
+                  }`}
+                  onClick={() => setSelectedMediaIndex(index)}
+                >
+                  <img
+                    src={thumbSrc}
+                    alt={`${item.type} thumbnail ${index + 1}`}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </button>
+              );
+            })}
+          </aside>
 
-        <div className="space-y-8 lg:sticky lg:top-28">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
-              {product.Category?.name || product.brand || "Studio"}
-            </p>
-            <h1 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-display uppercase tracking-[0.04em] text-neutral-900 leading-[1.05]">
-              {product.name}
-            </h1>
-          </div>
+          <section className="main-image">
+            <ProductGallery
+              images={mediaItems.filter((item) => item.type === "image").map((item) => item.src)}
+              spinImages={normalizedSpinImages}
+              videoUrl={product?.videoUrl || ""}
+              productName={product?.name || ""}
+              selectedIndex={selectedMediaIndex}
+              onSelectedIndexChange={setSelectedMediaIndex}
+              showThumbnails={false}
+              onImageClick={() => null}
+            />
+          </section>
 
-          <div className="flex flex-wrap items-baseline gap-4 border-b border-neutral-200 pb-8">
-            <span className="text-3xl sm:text-4xl font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
-            {product.discount > 0 && (
-              <>
-                <span className="text-lg text-neutral-400 line-through tabular-nums">₹{Number(product.price || 0).toFixed(0)}</span>
-                <span className="text-xs uppercase tracking-widest text-neutral-500">Save ₹{Number(product.discount || 0).toFixed(0)}</span>
-              </>
-            )}
-          </div>
-
-          {product.description && (
-            <p className="text-sm text-neutral-600 leading-relaxed max-w-prose">{product.description}</p>
-          )}
-
-          <div className="flex flex-wrap gap-3 mt-4 mb-8">
-            {hasTryOnImage && (
-              <button
-                type="button"
-                onClick={() => setTryOnOpen((v) => !v)}
-                className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
-              >
-                Try On
-              </button>
-            )}
-            {hasARModel && (
-              <button
-                type="button"
-                onClick={() => setArOpen((v) => !v)}
-                className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
-              >
-                View in AR
-              </button>
-            )}
-          </div>
-
-          {tryOnOpen && (
+          <section className="product-info space-y-8">
             <div>
-              {hasTryOnImage ? (
-                <VirtualTryOn
-                  overlayImage={normalizedTryOnImages.find(isValidImageUrl) || ""}
-                />
-              ) : (
-                <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
-                  Virtual try-on is not available for this product.
-                </div>
+              <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
+                {product.Category?.name || product.brand || "Studio"}
+              </p>
+              <h1 className="product-title mt-3 text-neutral-900">
+                {product.name}
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-baseline gap-4 border-b border-neutral-200 pb-8">
+              <span className="text-3xl sm:text-4xl font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
+              {product.discount > 0 && (
+                <>
+                  <span className="text-lg text-neutral-400 line-through tabular-nums">₹{Number(product.price || 0).toFixed(0)}</span>
+                  <span className="text-xs uppercase tracking-widest text-neutral-500">Save ₹{Number(product.discount || 0).toFixed(0)}</span>
+                </>
               )}
             </div>
-          )}
 
-          {arOpen && (
-            <div>
-              {hasARModel ? (
-                <ARViewer model3dUrl={product.model3dUrl} arModelUrl={product.arModelUrl} />
-              ) : (
-                <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
-                  3D product preview is not available for this item.
-                </div>
+            {product.description && (
+              <p className="text-sm text-neutral-600 leading-relaxed max-w-prose">{product.description}</p>
+            )}
+
+            <div className="flex flex-wrap gap-3 mt-4 mb-8">
+              {hasTryOnImage && (
+                <button
+                  type="button"
+                  onClick={() => setTryOnOpen((v) => !v)}
+                  className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
+                >
+                  Try On
+                </button>
+              )}
+              {hasARModel && (
+                <button
+                  type="button"
+                  onClick={() => setArOpen((v) => !v)}
+                  className="px-4 py-2 rounded-lg border border-neutral-300 text-sm font-semibold bg-white hover:bg-neutral-50 transition duration-200 ease-in-out"
+                >
+                  View in AR
+                </button>
               )}
             </div>
-          )}
 
-          {product.sizes?.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Size</p>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size) => (
-                  <button key={size} type="button" onClick={() => setSelectedSize(size)} className={sizeBtn(selectedSize === size)}>
-                    {size}
-                  </button>
-                ))}
+            {tryOnOpen && (
+              <div>
+                {hasTryOnImage ? (
+                  <VirtualTryOn
+                    overlayImage={normalizedTryOnImages.find(isValidImageUrl) || ""}
+                  />
+                ) : (
+                  <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
+                    Virtual try-on is not available for this product.
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-
-          {product.colors?.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Color</p>
-              <div className="flex flex-wrap gap-2">
-                {product.colors.map((color) => (
-                  <button key={color} type="button" onClick={() => setSelectedColor(color)} className={sizeBtn(selectedColor === color)}>
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Qty</p>
-            <div className="inline-flex items-center gap-0 border border-neutral-200 rounded-lg overflow-hidden w-fit bg-white">
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
-              >
-                −
-              </button>
-              <span className="w-12 text-center font-semibold tabular-nums">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.min(product.inventory || 99, quantity + 1))}
-                className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
-              >
-                +
-              </button>
-            </div>
-            {product.inventory != null && (
-              <p className="text-xs text-neutral-500 mt-2">{product.inventory} in stock</p>
             )}
-          </div>
 
-          {feedback && (
-            <div
-              className={`text-sm font-medium px-4 py-3 border ${
-                feedback.includes("Added") ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/30" : "border-red-500/40 text-red-300 bg-red-950/20"
-              }`}
-            >
-              {feedback}
-            </div>
-          )}
+            {arOpen && (
+              <div>
+                {hasARModel ? (
+                  <ARViewer model3dUrl={product.model3dUrl} arModelUrl={product.arModelUrl} />
+                ) : (
+                  <div className="rounded-xl border border-neutral-200 p-4 bg-white text-sm text-neutral-600">
+                    3D product preview is not available for this item.
+                  </div>
+                )}
+              </div>
+            )}
 
-          <div className="space-y-3 pt-2">
-            <button
-              type="button"
-              onClick={() => addToCart.mutate()}
-              disabled={
-                addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
-              }
-              className="w-full bg-neutral-900 text-white py-4 text-xs font-bold uppercase tracking-[0.3em] hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 ease-in-out active:scale-[0.99] rounded-lg"
-            >
-              {addToCart.isLoading ? "Adding…" : "Add to cart"}
-            </button>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                    return;
+            <AiStylistSection userId={user?.id} />
+
+            {recommended.length > 0 && (
+              <div className="mt-8">
+                <p className="text-sm font-semibold text-neutral-900 mb-3">Recommended for you</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {recommended.map((item) => (
+                    <ProductCard key={item.id} product={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <aside className="buy-box">
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <p className="text-xs uppercase tracking-[0.35em] text-neutral-500">Deal price</p>
+                <div className="flex items-end gap-3">
+                  <span className="text-4xl font-bold text-neutral-900 tabular-nums">₹{finalPrice.toFixed(0)}</span>
+                  {product.discount > 0 && (
+                    <span className="text-sm text-neutral-400 line-through tabular-nums">₹{Number(product.price || 0).toFixed(0)}</span>
+                  )}
+                </div>
+                {product.discount > 0 && (
+                  <p className="text-sm text-neutral-500">You save ₹{Number(product.discount || 0).toFixed(0)}</p>
+                )}
+              </div>
+
+              {product.sizes?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Size</p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((size) => (
+                      <button key={size} type="button" onClick={() => setSelectedSize(size)} className={sizeBtn(selectedSize === size)}>
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.colors?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Color</p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map((color) => (
+                      <button key={color} type="button" onClick={() => setSelectedColor(color)} className={sizeBtn(selectedColor === color)}>
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-3">Qty</p>
+                <div className="inline-flex items-center gap-0 border border-neutral-200 rounded-lg overflow-hidden w-fit bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 text-center font-semibold tabular-nums">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.min(product.inventory || 99, quantity + 1))}
+                    className="w-12 h-12 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition ease-in-out"
+                  >
+                    +
+                  </button>
+                </div>
+                {product.inventory != null && (
+                  <p className="text-xs text-neutral-500 mt-2">{product.inventory} in stock</p>
+                )}
+              </div>
+
+              {feedback && (
+                <div
+                  className={`text-sm font-medium px-4 py-3 border ${
+                    feedback.includes("Added") ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/30" : "border-red-500/40 text-red-300 bg-red-950/20"
+                  }`}
+                >
+                  {feedback}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => addToCart.mutate()}
+                  disabled={
+                    addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
                   }
-                  addToCart.mutate(undefined, {
-                    onSuccess: () => navigate("/checkout"),
-                  });
-                }}
-                disabled={
-                  addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
-                }
-                className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-900 text-neutral-900 hover:bg-neutral-50 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
-              >
-                Buy now
-              </button>
-              <button
-                type="button"
-                onClick={() => wishlistMutation.mutate()}
-                disabled={wishlistMutation.isPending}
-                className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:border-neutral-400 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
-              >
-                {wishlistMutation.isPending ? "…" : "Wishlist"}
-              </button>
-            </div>
-          </div>
-
-          <ul className="text-xs text-neutral-500 space-y-2 border-t border-neutral-200 pt-8 uppercase tracking-widest">
-            <li>Free ship · ₹1499+</li>
-            <li>Returns · 7 days</li>
-            <li>Ships from · Tirupur</li>
-          </ul>
-
-          <AiStylistSection userId={user?.id} />
-
-          {recommended.length > 0 && (
-            <div className="mt-8">
-              <p className="text-sm font-semibold text-neutral-900 mb-3">Recommended for you</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {recommended.map((item) => (
-                  <ProductCard key={item.id} product={item} />
-                ))}
+                  className="w-full bg-neutral-900 text-white py-4 text-xs font-bold uppercase tracking-[0.3em] hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 ease-in-out active:scale-[0.99] rounded-lg"
+                >
+                  {addToCart.isLoading ? "Adding…" : "Add to cart"}
+                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                        return;
+                      }
+                      addToCart.mutate(undefined, {
+                        onSuccess: () => navigate("/checkout"),
+                      });
+                    }}
+                    disabled={
+                      addToCart.isLoading || (product.sizes?.length && !selectedSize) || (product.colors?.length && !selectedColor)
+                    }
+                    className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-900 text-neutral-900 hover:bg-neutral-50 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
+                  >
+                    Buy now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => wishlistMutation.mutate()}
+                    disabled={wishlistMutation.isPending}
+                    className="py-3.5 text-xs font-bold uppercase tracking-[0.2em] border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:border-neutral-400 disabled:opacity-40 transition duration-300 ease-in-out rounded-lg"
+                  >
+                    {wishlistMutation.isPending ? "…" : "Wishlist"}
+                  </button>
+                </div>
               </div>
+
+              <ul className="text-xs text-neutral-500 space-y-2 border-t border-neutral-200 pt-8 uppercase tracking-widest">
+                <li>Free ship · ₹1499+</li>
+                <li>Returns · 7 days</li>
+                <li>Ships from · Tirupur</li>
+              </ul>
             </div>
-          )}
+          </aside>
         </div>
       </div>
-
     </div>
   );
 }

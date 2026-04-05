@@ -27,7 +27,7 @@ export default function ARViewer({ model3dUrl, arModelUrl }) {
       try {
         await loadScript(MODEL_VIEWER_SCRIPT);
         setScriptReady(true);
-      } catch (e) {
+      } catch {
         setError("Unable to load AR toolkit. Try again later.");
       }
     };

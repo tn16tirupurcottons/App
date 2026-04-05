@@ -18,7 +18,7 @@ export default function BannerManagement() {
       try {
         const res = await axiosClient.get("/admin/banners");
         return res.data.items || [];
-      } catch (err) {
+      } catch {
         // If endpoint doesn't exist, return empty array
         return [];
       }

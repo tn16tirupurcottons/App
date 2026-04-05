@@ -172,8 +172,21 @@ export default function ProductList({ initialQuery = {} }) {
         </select>
       </div>
 
+      <div className="top-filter-bar rounded-2xl border border-neutral-200 bg-white p-4">
+        <button
+          type="button"
+          onClick={() => setIsMobileFiltersOpen(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:border-neutral-300"
+        >
+          Filters
+        </button>
+        <span className="text-sm text-neutral-600">
+          {isLoading ? "Loading products…" : `${products.length} items`}
+        </span>
+      </div>
+
       {/* Main Content Layout */}
-      <div className="flex gap-8">
+      <div className="catalog-layout">
         {/* Sidebar */}
         <FilterSidebar
           query={query}
@@ -185,7 +198,7 @@ export default function ProductList({ initialQuery = {} }) {
 
         {/* Product Grid */}
         <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+          <div className="product-grid-layout">
             {isLoading
               ? new Array(12).fill(null).map((_, idx) => <SkeletonCard key={`skeleton-${idx}`} />)
               : products.map((product) => <ProductCard key={product.id} product={product} />)}

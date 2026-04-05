@@ -57,14 +57,14 @@ const DealCard = ({ product }) => {
 export default function CategoryMarketing({ categorySlug }) {
   const categoryLabel = formatCategoryLabel(categorySlug);
 
-  const { data: offersResponse, isLoading: offersLoading, isError: offersError } = useQuery({
+  const { data: offersResponse } = useQuery({
     queryKey: ["categoryOffers", categorySlug],
     queryFn: () => fetchOffers(categorySlug),
     enabled: Boolean(categorySlug),
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: lightningResponse, isLoading: lightningLoading, isError: lightningError } = useQuery({
+  const { data: lightningResponse, isLoading: lightningLoading } = useQuery({
     queryKey: ["categoryLightning", categorySlug],
     queryFn: () => fetchLightningDeals(categorySlug),
     enabled: Boolean(categorySlug),

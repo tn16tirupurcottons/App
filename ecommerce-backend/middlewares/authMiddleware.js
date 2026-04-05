@@ -3,12 +3,14 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ")
+  const bearerToken = authHeader?.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : null;
+  const cookieToken = req.cookies?.tn16_access_token || null;
+  const token = bearerToken || cookieToken;
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(401).json({ message: "Authentication required" });
   }
 
   try {

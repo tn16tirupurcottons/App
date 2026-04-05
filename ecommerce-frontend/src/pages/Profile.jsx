@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -26,19 +26,19 @@ export default function Profile() {
   const toast = useToast();
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
-  const [editOpen, setEditOpen] = React.useState(false);
-  const [profileForm, setProfileForm] = React.useState({
+  const [editOpen, setEditOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
   });
-  const [passwordForm, setPasswordForm] = React.useState({
+  const [passwordForm, setPasswordForm] = useState({
     oldPassword: "",
     newPassword: "",
   });
-  const [savingProfile, setSavingProfile] = React.useState(false);
-  const [changingPassword, setChangingPassword] = React.useState(false);
-  const [profileError, setProfileError] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const { data: meData, refetch: refetchMe } = useQuery({
     queryKey: ["meProfile"],
@@ -59,7 +59,7 @@ export default function Profile() {
   const orders = data || [];
   const effectiveUser = meData || user || {};
 
-  React.useEffect(() => {
+  useEffect(() => {
     setProfileForm({
       name: effectiveUser?.name || "",
       email: effectiveUser?.email || "",

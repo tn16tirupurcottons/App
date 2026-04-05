@@ -169,7 +169,7 @@ const FilterSidebar = memo(function FilterSidebar({
 
   return (
     <>
-      <div className="md:hidden mb-4">
+      <div className="lg:hidden mb-4">
         <button
           type="button"
           onClick={onMobileToggle}
@@ -183,9 +183,9 @@ const FilterSidebar = memo(function FilterSidebar({
       </div>
 
       {isMobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onMobileToggle} />
-          <div className="absolute right-0 top-0 h-full w-80 bg-white p-6 overflow-y-auto">
+          <div className="absolute left-0 top-0 h-full w-[80%] bg-white p-6 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-neutral-900">Filters</h2>
               <button
@@ -203,8 +203,8 @@ const FilterSidebar = memo(function FilterSidebar({
         </div>
       )}
 
-      <div className="hidden md:block w-64 flex-shrink-0">
-        <div className="sticky top-20 bg-white border border-neutral-200 rounded-lg p-6">
+      <div className="hidden lg:block w-64 flex-shrink-0 filters">
+        <div className="bg-white border border-neutral-200 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Filters</h2>
           {sidebarContent}
         </div>
